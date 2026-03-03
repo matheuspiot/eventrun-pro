@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  events    Event[]
+  costItems CostItem[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  email          String       @unique
+  passwordHash   String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Event {
+  id              String       @id @default(cuid())
+  organizationId  String
+  nomeEvento      String
+  dataEvento      DateTime
+  cidade          String
+  estado          String
+  localLargada    String
+  organizador     String
+  cnpjOrganizador String
+  status          EventStatus  @default(PLANEJAMENTO)
+  criadoEm        DateTime     @default(now())
+  atualizadoEm    DateTime     @updatedAt
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  budget          EventBudget?
+  regulation      RegulationConfig?
+
+  @@index([organizationId])
+  @@index([dataEvento])
+}
+
+enum EventStatus {
+  PLANEJAMENTO
+  EM_ANDAMENTO
+  FINALIZADO
+}
+
+model CostItem {
+  id             String        @id @default(cuid())
+  organizationId String
+  nome           String
+  categoria      CostCategory
+  tipoCusto      CostType
+  unidade        CostUnit
+  custoPadrao    Decimal       @db.Decimal(10, 2)
+  descricao      String?
+  criadoEm       DateTime      @default(now())
+  atualizadoEm   DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  budgetItems    EventBudgetItem[]
+
+  @@index([organizationId])
+  @@index([categoria])
+}
+
+enum CostCategory {
+  ESTRUTURA
+  STAFF
+  SEGURANCA
+  MATERIAIS
+  COMUNICACAO
+  TAXAS
+  LOGISTICA
+  OUTROS
+}
+
+enum CostType {
+  FIXO
+  VARIAVEL_ATLETA
+  VARIAVEL_UNIDADE
+}
+
+enum CostUnit {
+  UN
+  PESSOA
+  HORA
+  KM
+  LOTE
+  ATLETA
+}
+
+model EventBudget {
+  id                        String            @id @default(cuid())
+  eventId                   String            @unique
+  metaInscritos             Int
+  patrocinioPrevisto        Decimal           @db.Decimal(10, 2)
+  lucroAlvoPercentual       Decimal           @db.Decimal(6, 2)
+  taxaPlataformaPercentual  Decimal           @db.Decimal(6, 2)
+  impostoPercentual         Decimal           @db.Decimal(6, 2)
+  taxaCancelamentoReembolsoPercentual Decimal  @default(0) @db.Decimal(6, 2)
+  criadoEm                  DateTime          @default(now())
+  atualizadoEm              DateTime          @updatedAt
+  event                     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  items                     EventBudgetItem[]
+}
+
+model EventBudgetItem {
+  id            String      @id @default(cuid())
+  eventBudgetId String
+  costItemId    String
+  quantidade    Decimal     @db.Decimal(10, 2)
+  valorUnitario Decimal     @db.Decimal(10, 2)
+  tipoCusto     CostType
+  eventBudget   EventBudget @relation(fields: [eventBudgetId], references: [id], onDelete: Cascade)
+  costItem      CostItem    @relation(fields: [costItemId], references: [id], onDelete: Cascade)
+
+  @@index([eventBudgetId])
+  @@index([costItemId])
+}
+
+model RegulationConfig {
+  id                       String   @id @default(cuid())
+  eventId                  String   @unique
+  possuiKids               Boolean  @default(false)
+  possuiChip               Boolean  @default(true)
+  possuiPremiacaoDinheiro  Boolean  @default(false)
+  tempoLimiteMinutos       Int
+  plataformaInscricao      String[]
+  valorInscricao           Decimal  @db.Decimal(10, 2)
+  limiteVagas              Int
+  emailContato             String
+  whatsappContato          String
+  dataInicioInscricao      DateTime
+  dataFimInscricao         DateTime
+  criadoEm                 DateTime @default(now())
+  atualizadoEm             DateTime @updatedAt
+  event                    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,58 @@
+{
+  "name": "eventrun-pro-desktop",
+  "version": "1.0.0",
+  "description": "EventRun Pro desktop shell",
+  "main": "src/main.js",
+  "author": "Clube Piot",
+  "scripts": {
+    "dist:win": "electron-builder --win nsis",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.clubepiot.eventrunpro",
+    "productName": "EventRun Pro",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "updater.config.json"
+    ],
+    "extraResources": [
+      {
+        "from": "app-bundle",
+        "to": "app-bundle"
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "matheuspiot",
+        "repo": "eventrun-pro",
+        "releaseType": "release",
+        "private": false
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9",
+    "eventrun-pro": "file:.."
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}
