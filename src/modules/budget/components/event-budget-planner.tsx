@@ -53,12 +53,13 @@ type PendingAction =
 
 const selectedEventStorageKey = "eventrun:budget:selected-event-id";
 
-function getDraftStorageKey(eventId: string) {
-  return `eventrun:budget:draft:${eventId}`;
-}
-
 function brl(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatEventLabel(event: EventDto) {
+  const date = new Date(event.dataEvento).toLocaleDateString("pt-BR");
+  return `${event.nomeEvento} - ${event.cidade}/${event.estado} - ${date}`;
 }
 
 function toNumberSafe(value: string) {
@@ -219,23 +220,6 @@ export function EventBudgetPlanner() {
       setSavedSnapshot(serializeDraft(serverDraft));
 
       if (typeof window !== "undefined") {
-        const rawDraft = window.localStorage.getItem(getDraftStorageKey(eventId));
-        if (rawDraft) {
-          try {
-            const parsed = JSON.parse(rawDraft) as BudgetDraft;
-            setMetaInscritos(parsed.metaInscritos);
-            setPatrocinioPrevisto(parsed.patrocinioPrevisto);
-            setLucroAlvoPercentual(parsed.lucroAlvoPercentual);
-            setTaxaPlataformaPercentual(parsed.taxaPlataformaPercentual);
-            setImpostoPercentual(parsed.impostoPercentual);
-            setTaxaCancelamentoReembolsoPercentual(
-              parsed.taxaCancelamentoReembolsoPercentual,
-            );
-            setItems(parsed.items);
-          } catch {
-            // Ignore local draft parse failures
-          }
-        }
         window.localStorage.setItem(selectedEventStorageKey, eventId);
       }
 
@@ -250,7 +234,6 @@ export function EventBudgetPlanner() {
       return;
     }
 
-    window.localStorage.setItem(getDraftStorageKey(selectedEventId), currentSnapshot);
     window.localStorage.setItem(selectedEventStorageKey, selectedEventId);
   }, [selectedEventId, loadedBudget, currentSnapshot]);
 
@@ -488,12 +471,6 @@ export function EventBudgetPlanner() {
         setItems(persistedDraft.items);
         setSavedSnapshot(serializeDraft(persistedDraft));
 
-        if (typeof window !== "undefined") {
-          window.localStorage.setItem(
-            getDraftStorageKey(selectedEventId),
-            serializeDraft(persistedDraft),
-          );
-        }
       }
 
       setSuccess("Orçamento salvo com sucesso.");
@@ -612,7 +589,7 @@ export function EventBudgetPlanner() {
               >
                 {events.map((event) => (
                   <option key={event.id} value={event.id}>
-                    {event.nomeEvento}
+                    {formatEventLabel(event)}
                   </option>
                 ))}
               </select>

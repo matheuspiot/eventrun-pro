@@ -19,12 +19,16 @@ export function calculateBudgetMetrics(input: BudgetCalcInput): EventBudgetCalcu
     .filter((item) => item.tipoCusto === "FIXO")
     .reduce((acc, item) => acc + item.quantidade * item.valorUnitario, 0);
 
+  const totalVariavelUnidade = input.items
+    .filter((item) => item.tipoCusto === "VARIAVEL_UNIDADE")
+    .reduce((acc, item) => acc + item.quantidade * item.valorUnitario, 0);
+
   const custoVariavelPorAtleta = input.items
-    .filter((item) => item.tipoCusto !== "FIXO")
+    .filter((item) => item.tipoCusto === "VARIAVEL_ATLETA")
     .reduce((acc, item) => acc + item.quantidade * item.valorUnitario, 0);
 
   const custoVariavelTotal = custoVariavelPorAtleta * input.metaInscritos;
-  const custoTotalEstimado = totalCustosFixos + custoVariavelTotal;
+  const custoTotalEstimado = totalCustosFixos + totalVariavelUnidade + custoVariavelTotal;
   const breakEvenInscritos =
     input.metaInscritos > 0 ? custoTotalEstimado / input.metaInscritos : 0;
   const aliquotaTotalPercentual =

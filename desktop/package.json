@@ -1,6 +1,6 @@
 {
   "name": "eventrun-pro-desktop",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "EventRun Pro desktop shell",
   "main": "src/main.js",
   "author": "Clube Piot",
@@ -41,7 +41,7 @@
       ],
       "signAndEditExecutable": false
     },
-    "compression": "store",
+    "compression": "normal",
     "nsis": {
       "oneClick": true,
       "allowToChangeInstallationDirectory": false,
@@ -50,8 +50,7 @@
     }
   },
   "dependencies": {
-    "electron-updater": "^6.3.9",
-    "eventrun-pro": "file:.."
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
     "electron": "^35.0.0",
