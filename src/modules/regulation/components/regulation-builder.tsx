@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { EventDto } from "@/modules/events/types";
@@ -8,18 +8,19 @@ import { RegulationConfigDto } from "../types";
 const steps = [
   "Etapa 1 - Identidade",
   "Etapa 2 - Modalidades",
-  "Etapa 3 - Inscrição",
+  "Etapa 3 - Inscricao",
   "Etapa 4 - Kit",
-  "Etapa 5 - Premiação",
+  "Etapa 5 - Premiacao",
   "Etapa 6 - Contatos",
 ];
 
-const platformOptions = ["TicketSports", "Sympla", "Minhas Inscrições", "Site Próprio"];
+const platformOptions = ["TicketSports", "Sympla", "Minhas Inscricoes", "Site Proprio"];
 
 const defaultConfig = {
   possuiKids: false,
   possuiChip: true,
   possuiPremiacaoDinheiro: false,
+  logoDataUrl: "",
   tempoLimiteMinutos: "180",
   plataformaInscricao: ["TicketSports"],
   valorInscricao: "0",
@@ -50,7 +51,7 @@ export function RegulationBuilder() {
       setLoading(true);
       const response = await fetch("/api/events", { cache: "no-store" });
       if (!response.ok) {
-        setError("Não foi possível carregar eventos");
+        setError("Nao foi possivel carregar eventos");
         setLoading(false);
         return;
       }
@@ -76,7 +77,7 @@ export function RegulationBuilder() {
       });
 
       if (!response.ok) {
-        setError("Não foi possível carregar configuração do regulamento");
+        setError("Nao foi possivel carregar configuracao do regulamento");
         return;
       }
 
@@ -90,6 +91,7 @@ export function RegulationBuilder() {
         possuiKids: data.config.possuiKids,
         possuiChip: data.config.possuiChip,
         possuiPremiacaoDinheiro: data.config.possuiPremiacaoDinheiro,
+        logoDataUrl: data.config.logoDataUrl ?? "",
         tempoLimiteMinutos: String(data.config.tempoLimiteMinutos),
         plataformaInscricao: data.config.plataformaInscricao,
         valorInscricao: data.config.valorInscricao,
@@ -116,6 +118,27 @@ export function RegulationBuilder() {
     });
   }
 
+  function handleLogoUpload(file: File | null) {
+    if (!file) {
+      setForm((prev) => ({ ...prev, logoDataUrl: "" }));
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Selecione um arquivo de imagem valido para a logo.");
+      return;
+    }
+
+    setError("");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+      setForm((prev) => ({ ...prev, logoDataUrl: dataUrl }));
+    };
+    reader.onerror = () => setError("Nao foi possivel ler o arquivo da logo.");
+    reader.readAsDataURL(file);
+  }
+
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedEventId) {
@@ -135,6 +158,7 @@ export function RegulationBuilder() {
         possuiKids: form.possuiKids,
         possuiChip: form.possuiChip,
         possuiPremiacaoDinheiro: form.possuiPremiacaoDinheiro,
+        logoDataUrl: form.logoDataUrl || null,
         tempoLimiteMinutos: Number(form.tempoLimiteMinutos),
         plataformaInscricao: form.plataformaInscricao,
         valorInscricao: Number(form.valorInscricao),
@@ -148,7 +172,7 @@ export function RegulationBuilder() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Não foi possível salvar");
+      setError(data.error ?? "Nao foi possivel salvar");
       setSaving(false);
       return;
     }
@@ -169,6 +193,7 @@ export function RegulationBuilder() {
         possuiKids: form.possuiKids,
         possuiChip: form.possuiChip,
         possuiPremiacaoDinheiro: form.possuiPremiacaoDinheiro,
+        logoDataUrl: form.logoDataUrl || null,
         tempoLimiteMinutos: Number(form.tempoLimiteMinutos || 0),
         plataformaInscricao: form.plataformaInscricao,
         valorInscricao: form.valorInscricao || "0",
@@ -204,7 +229,7 @@ export function RegulationBuilder() {
     <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
       <div>
         <h2 className="text-3xl font-heading text-zinc-900">Regulamento</h2>
-        <p className="text-sm text-zinc-600">Quiz em etapas com geração automática de texto.</p>
+        <p className="text-sm text-zinc-600">Quiz em etapas com geracao automatica de texto.</p>
       </div>
 
       <form onSubmit={handleSave} className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_1fr]">
@@ -234,9 +259,7 @@ export function RegulationBuilder() {
                   type="button"
                   onClick={() => setStep(index)}
                   className={`rounded-lg px-3 py-1 text-xs font-medium ${
-                    step === index
-                      ? "bg-accent text-white"
-                      : "bg-surface-muted text-zinc-700"
+                    step === index ? "bg-accent text-white" : "bg-surface-muted text-zinc-700"
                   }`}
                 >
                   {label}
@@ -246,6 +269,27 @@ export function RegulationBuilder() {
 
             {step === 0 && (
               <div className="space-y-2 text-sm text-zinc-700">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                    Logo do regulamento
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => handleLogoUpload(event.target.files?.[0] ?? null)}
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  {form.logoDataUrl && (
+                    <div className="mt-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={form.logoDataUrl}
+                        alt="Logo do regulamento"
+                        className="h-16 w-auto rounded-md border border-border bg-white p-1"
+                      />
+                    </div>
+                  )}
+                </div>
                 <p>
                   Evento: <strong>{selectedEvent?.nomeEvento ?? "-"}</strong>
                 </p>
@@ -315,7 +359,7 @@ export function RegulationBuilder() {
               <div className="space-y-3">
                 <div>
                   <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                    Plataformas de inscrição
+                    Plataformas de inscricao
                   </label>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {platformOptions.map((platform) => (
@@ -333,7 +377,7 @@ export function RegulationBuilder() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                    Valor inscrição
+                      Valor inscricao
                     </label>
                     <input
                       type="number"
@@ -364,7 +408,7 @@ export function RegulationBuilder() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Início inscrição
+                      Inicio inscricao
                     </label>
                     <input
                       type="date"
@@ -380,7 +424,7 @@ export function RegulationBuilder() {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Fim inscrição
+                      Fim inscricao
                     </label>
                     <input
                       type="date"
@@ -397,11 +441,11 @@ export function RegulationBuilder() {
 
             {step === 3 && (
               <div className="space-y-2 text-sm text-zinc-700">
-                <p>Configuração de kit com base nos recursos do evento:</p>
+                <p>Configuracao de kit com base nos recursos do evento:</p>
                 <p>
-                  Chip incluso: <strong>{form.possuiChip ? "Sim" : "Não"}</strong>
+                  Chip incluso: <strong>{form.possuiChip ? "Sim" : "Nao"}</strong>
                 </p>
-                <p>Número de peito e itens promocionais poderão ser ajustados na versão final.</p>
+                <p>Numero de peito e itens promocionais poderao ser ajustados na versao final.</p>
               </div>
             )}
 
@@ -418,7 +462,7 @@ export function RegulationBuilder() {
                       }))
                     }
                   />
-                  Possui premiação em dinheiro
+                  Possui premiacao em dinheiro
                 </label>
               </div>
             )}
@@ -468,7 +512,7 @@ export function RegulationBuilder() {
                 onClick={() => setStep((prev) => Math.min(steps.length - 1, prev + 1))}
                 className="rounded-lg border border-border px-3 py-2 text-sm text-zinc-700 disabled:opacity-50"
               >
-                Próximo
+                Proximo
               </button>
             </div>
           </div>
@@ -495,6 +539,12 @@ export function RegulationBuilder() {
 
         <div className="rounded-2xl border border-border bg-surface-muted/40 p-4">
           <h3 className="text-xl font-heading text-zinc-900">Preview do regulamento</h3>
+          {form.logoDataUrl && (
+            <div className="mt-3 rounded-xl border border-border bg-white p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={form.logoDataUrl} alt="Logo" className="mx-auto max-h-24 w-auto" />
+            </div>
+          )}
           <pre className="mt-3 max-h-[780px] overflow-auto whitespace-pre-wrap font-sans text-sm leading-6 text-zinc-800">
             {previewText}
           </pre>

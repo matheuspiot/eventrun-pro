@@ -136,6 +136,7 @@ model RegulationConfig {
   possuiKids               Boolean  @default(false)
   possuiChip               Boolean  @default(true)
   possuiPremiacaoDinheiro  Boolean  @default(false)
+  logoDataUrl              String?
   tempoLimiteMinutos       Int
   plataformaInscricao      String[]
   valorInscricao           Decimal  @db.Decimal(10, 2)

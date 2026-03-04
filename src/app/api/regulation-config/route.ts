@@ -17,6 +17,7 @@ function serializeConfig(config: Awaited<ReturnType<typeof getRegulationConfigBy
     possuiKids: config.possuiKids,
     possuiChip: config.possuiChip,
     possuiPremiacaoDinheiro: config.possuiPremiacaoDinheiro,
+    logoDataUrl: config.logoDataUrl,
     tempoLimiteMinutos: config.tempoLimiteMinutos,
     plataformaInscricao: config.plataformaInscricao,
     valorInscricao: config.valorInscricao.toString(),

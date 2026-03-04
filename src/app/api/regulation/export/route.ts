@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
     "Regulamento Oficial",
     `${event.nomeEvento} | ${event.cidade}/${event.estado}`,
     text,
+    config.logoDataUrl ?? undefined,
   );
   const normalizedBytes = new Uint8Array(pdfBytes.length);
   normalizedBytes.set(pdfBytes);

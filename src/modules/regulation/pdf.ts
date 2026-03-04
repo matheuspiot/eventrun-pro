@@ -24,7 +24,12 @@ function wrapLine(text: string, maxWidth: number, measure: (value: string) => nu
   return lines;
 }
 
-export async function createRegulationPdfBuffer(title: string, subtitle: string, body: string) {
+export async function createRegulationPdfBuffer(
+  title: string,
+  subtitle: string,
+  body: string,
+  logoDataUrl?: string,
+) {
   const pdfDoc = await PDFDocument.create();
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -52,7 +57,41 @@ export async function createRegulationPdfBuffer(title: string, subtitle: string,
   let pageNumber = 1;
   const pages = [page];
 
-  const drawHeader = (targetPage: typeof page) => {
+  async function drawLogo(targetPage: typeof page) {
+    if (!logoDataUrl) {
+      return 0;
+    }
+
+    const match = logoDataUrl.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
+    if (!match) {
+      return 0;
+    }
+
+    const mime = match[1];
+    const bytes = Uint8Array.from(Buffer.from(match[2], "base64"));
+    const image =
+      mime === "png"
+        ? await pdfDoc.embedPng(bytes)
+        : await pdfDoc.embedJpg(bytes);
+
+    const maxWidth = 140;
+    const maxHeight = 56;
+    const ratio = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
+    const width = image.width * ratio;
+    const height = image.height * ratio;
+
+    targetPage.drawImage(image, {
+      x: pageWidth - margin - width,
+      y: pageHeight - margin - height + 8,
+      width,
+      height,
+    });
+
+    return height;
+  }
+
+  const drawHeader = async (targetPage: typeof page) => {
+    const logoHeight = await drawLogo(targetPage);
     targetPage.drawText(title, {
       x: margin,
       y: pageHeight - margin,
@@ -73,6 +112,7 @@ export async function createRegulationPdfBuffer(title: string, subtitle: string,
       thickness: 1,
       color: rgb(0.85, 0.87, 0.9),
     });
+    return logoHeight;
   };
 
   const drawFooter = (targetPage: typeof page, number: number) => {
@@ -91,8 +131,8 @@ export async function createRegulationPdfBuffer(title: string, subtitle: string,
     });
   };
 
-  drawHeader(page);
-  cursorY = pageHeight - margin - 48;
+  const firstHeaderLogoHeight = await drawHeader(page);
+  cursorY = pageHeight - margin - Math.max(48, firstHeaderLogoHeight + 20);
 
   for (const line of lines) {
     if (cursorY < margin + 16) {
@@ -100,8 +140,8 @@ export async function createRegulationPdfBuffer(title: string, subtitle: string,
       page = pdfDoc.addPage([pageWidth, pageHeight]);
       pages.push(page);
       pageNumber += 1;
-      drawHeader(page);
-      cursorY = pageHeight - margin - 48;
+      const nextHeaderLogoHeight = await drawHeader(page);
+      cursorY = pageHeight - margin - Math.max(48, nextHeaderLogoHeight + 20);
     }
 
     page.drawText(line, {

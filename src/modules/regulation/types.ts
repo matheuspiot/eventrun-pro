@@ -4,6 +4,7 @@ export type RegulationConfigDto = {
   possuiKids: boolean;
   possuiChip: boolean;
   possuiPremiacaoDinheiro: boolean;
+  logoDataUrl: string | null;
   tempoLimiteMinutos: number;
   plataformaInscricao: string[];
   valorInscricao: string;
@@ -31,6 +32,7 @@ export type RegulationConfigInput = {
   possuiKids: boolean;
   possuiChip: boolean;
   possuiPremiacaoDinheiro: boolean;
+  logoDataUrl?: string | null;
   tempoLimiteMinutos: number;
   plataformaInscricao: string[];
   valorInscricao: number;
