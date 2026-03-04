@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 export const regulationConfigSchema = z.object({
-  eventId: z.string().min(1, "Evento e obrigatorio"),
+  eventId: z.string().min(1, "Evento é obrigatório"),
   possuiKids: z.boolean(),
   possuiChip: z.boolean(),
   possuiPremiacaoDinheiro: z.boolean(),
   logoDataUrl: z
     .string()
-    .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, "Logo invalida")
+    .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, "Logo inválida")
     .max(1_500_000, "Logo muito grande")
     .nullable()
     .optional(),

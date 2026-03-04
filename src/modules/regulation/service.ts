@@ -36,7 +36,7 @@ export async function upsertRegulationConfig(
 ) {
   const event = await getEventForRegulation(organizationId, input.eventId);
   if (!event) {
-    return { error: "Evento nao encontrado" as const };
+    return { error: "Evento não encontrado" as const };
   }
 
   const config = await prisma.regulationConfig.upsert({

@@ -10,12 +10,12 @@ import {
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   const eventId = request.nextUrl.searchParams.get("eventId");
   if (!eventId) {
-    return NextResponse.json({ error: "eventId e obrigatorio" }, { status: 400 });
+    return NextResponse.json({ error: "eventId é obrigatório" }, { status: 400 });
   }
 
   const [event, config] = await Promise.all([
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   if (!event || !config) {
     return NextResponse.json(
-      { error: "Evento ou configuracao de regulamento nao encontrado" },
+      { error: "Evento ou configuração de regulamento não encontrado" },
       { status: 404 },
     );
   }

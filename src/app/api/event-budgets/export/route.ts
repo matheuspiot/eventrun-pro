@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getAuthFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateBudgetMetrics } from "@/modules/budget/event-budget.calculations";
@@ -6,6 +6,10 @@ import { createBudgetPdfBuffer } from "@/modules/budget/pdf";
 
 function brl(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function numberPt(value: number) {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 export async function GET(request: NextRequest) {
@@ -41,10 +45,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   if (!event || !budget) {
-    return NextResponse.json(
-      { error: "Evento ou orçamento não encontrado" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "Evento ou orçamento não encontrado" }, { status: 404 });
   }
 
   const calculations = calculateBudgetMetrics({
@@ -52,9 +53,7 @@ export async function GET(request: NextRequest) {
     lucroAlvoPercentual: Number(budget.lucroAlvoPercentual),
     taxaPlataformaPercentual: Number(budget.taxaPlataformaPercentual),
     impostoPercentual: Number(budget.impostoPercentual),
-    taxaCancelamentoReembolsoPercentual: Number(
-      budget.taxaCancelamentoReembolsoPercentual,
-    ),
+    taxaCancelamentoReembolsoPercentual: Number(budget.taxaCancelamentoReembolsoPercentual),
     items: budget.items.map((item) => ({
       tipoCusto: item.tipoCusto,
       quantidade: Number(item.quantidade),
@@ -62,45 +61,75 @@ export async function GET(request: NextRequest) {
     })),
   });
 
-  const lines = [
-    "1. Dados Gerais",
-    `Evento: ${event.nomeEvento}`,
-    `Data: ${event.dataEvento.toLocaleDateString("pt-BR")}`,
-    `Cidade/UF: ${event.cidade}/${event.estado}`,
-    `Meta de inscritos: ${budget.metaInscritos}`,
-    "",
-    "2. Premissas Financeiras",
-    `Patrocínio previsto: ${brl(Number(budget.patrocinioPrevisto))}`,
-    `Lucro-alvo: ${Number(budget.lucroAlvoPercentual).toFixed(2)}%`,
-    `Taxa da plataforma: ${Number(budget.taxaPlataformaPercentual).toFixed(2)}%`,
-    `Imposto: ${Number(budget.impostoPercentual).toFixed(2)}%`,
-    `Cancelamento/reembolso: ${Number(budget.taxaCancelamentoReembolsoPercentual).toFixed(2)}%`,
-    "",
-    "3. Indicadores",
-    `Total de custos fixos: ${brl(calculations.totalCustosFixos)}`,
-    `Custo variável por atleta: ${brl(calculations.custoVariavelPorAtleta)}`,
-    `Custo total estimado: ${brl(calculations.custoTotalEstimado)}`,
-    `Break-even por inscrito: ${brl(calculations.breakEvenInscritos)}`,
-    `Preço mínimo de inscrição: ${brl(calculations.precoMinimoInscricao)}`,
-    `Preço recomendado para lucro: ${brl(calculations.precoRecomendadoParaLucro)}`,
-    `Lucro líquido por inscrição: ${brl(calculations.lucroLiquidoEstimado)}`,
-    "",
-    "4. Itens do Orçamento",
-    ...budget.items.map((item, index) => {
-      const subtotal = Number(item.quantidade) * Number(item.valorUnitario);
-      return `${index + 1}) ${item.costItem.nome} | Tipo: ${item.tipoCusto} | Qtd: ${Number(
-        item.quantidade,
-      ).toFixed(2)} ${item.costItem.unidade.toLowerCase()} | Unitário: ${brl(
-        Number(item.valorUnitario),
-      )} | Subtotal: ${brl(subtotal)}`;
-    }),
+  const summarySections = [
+    {
+      title: "1. Dados gerais",
+      rows: [
+        { label: "Evento:", value: event.nomeEvento, emphasis: true },
+        { label: "Data:", value: event.dataEvento.toLocaleDateString("pt-BR") },
+        { label: "Cidade/UF:", value: `${event.cidade}/${event.estado}` },
+        { label: "Meta de inscritos:", value: numberPt(budget.metaInscritos), emphasis: true },
+      ],
+    },
+    {
+      title: "2. Premissas financeiras",
+      rows: [
+        { label: "Patrocínio previsto:", value: brl(Number(budget.patrocinioPrevisto)), emphasis: true },
+        { label: "Lucro-alvo:", value: `${Number(budget.lucroAlvoPercentual).toFixed(2)}%` },
+        { label: "Taxa da plataforma:", value: `${Number(budget.taxaPlataformaPercentual).toFixed(2)}%` },
+        { label: "Imposto:", value: `${Number(budget.impostoPercentual).toFixed(2)}%` },
+        {
+          label: "Cancelamento/reembolso:",
+          value: `${Number(budget.taxaCancelamentoReembolsoPercentual).toFixed(2)}%`,
+        },
+      ],
+    },
+    {
+      title: "3. Indicadores principais",
+      rows: [
+        { label: "Total de custos fixos:", value: brl(calculations.totalCustosFixos), emphasis: true },
+        {
+          label: "Custo variável por atleta:",
+          value: brl(calculations.custoVariavelPorAtleta),
+          emphasis: true,
+        },
+        { label: "Custo total estimado:", value: brl(calculations.custoTotalEstimado), emphasis: true },
+        { label: "Break-even por inscrito:", value: brl(calculations.breakEvenInscritos), emphasis: true },
+        { label: "Preço mínimo de inscrição:", value: brl(calculations.precoMinimoInscricao), emphasis: true },
+        {
+          label: "Preço recomendado para lucro:",
+          value: brl(calculations.precoRecomendadoParaLucro),
+          emphasis: true,
+        },
+        {
+          label: "Lucro líquido por inscrição:",
+          value: brl(calculations.lucroLiquidoEstimado),
+          emphasis: true,
+        },
+      ],
+    },
   ];
 
-  const pdfBytes = await createBudgetPdfBuffer(
-    "Orçamento do Evento",
-    `${event.nomeEvento} | ${event.cidade}/${event.estado}`,
-    lines.join("\n"),
-  );
+  const costRows = budget.items.map((item) => {
+    const quantidade = Number(item.quantidade);
+    const valorUnitario = Number(item.valorUnitario);
+    const subtotal = quantidade * valorUnitario;
+
+    return {
+      nome: item.costItem.nome,
+      quantidade: `${numberPt(quantidade)} ${item.costItem.unidade.toLowerCase()}`,
+      valorUnitario: brl(valorUnitario),
+      subtotal: brl(subtotal),
+    };
+  });
+
+  const pdfBytes = await createBudgetPdfBuffer({
+    title: "Orçamento do Evento",
+    subtitle: `${event.nomeEvento} | ${event.cidade}/${event.estado}`,
+    sections: summarySections,
+    costRows,
+  });
+
   const normalizedBytes = new Uint8Array(pdfBytes.length);
   normalizedBytes.set(pdfBytes);
   const pdfBlob = new Blob([normalizedBytes], { type: "application/pdf" });

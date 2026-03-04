@@ -34,12 +34,12 @@ function serializeConfig(config: Awaited<ReturnType<typeof getRegulationConfigBy
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   const eventId = request.nextUrl.searchParams.get("eventId");
   if (!eventId) {
-    return NextResponse.json({ error: "eventId e obrigatorio" }, { status: 400 });
+    return NextResponse.json({ error: "eventId é obrigatório" }, { status: 400 });
   }
 
   const config = await getRegulationConfigByEvent(auth.organizationId, eventId);
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   const body = await request.json();
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados invalidos", details: parsed.error.flatten() },
+      { error: "Dados inválidos", details: parsed.error.flatten() },
       { status: 400 },
     );
   }
