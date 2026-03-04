@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require("electron");
+const { app, BrowserWindow, Menu, dialog } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -11,6 +11,7 @@ let mainWindow = null;
 let serverProcess = null;
 let restartingServer = false;
 let logFilePath = "";
+let updaterConfigured = false;
 
 function log(message, extra = "") {
   try {
@@ -127,8 +128,10 @@ async function waitForServer(maxTries = 60) {
 function setupAutoUpdater() {
   const updaterConfig = loadUpdaterConfig();
   if (!updaterConfig) {
+    updaterConfigured = false;
     return;
   }
+  updaterConfigured = true;
 
   const githubToken = updaterConfig.githubToken;
   if (githubToken && githubToken !== "PASTE_GITHUB_TOKEN_HERE") {
@@ -168,6 +171,88 @@ function setupAutoUpdater() {
   }, 2500);
 }
 
+async function checkForUpdatesManually() {
+  if (!updaterConfigured) {
+    await dialog.showMessageBox(mainWindow, {
+      type: "warning",
+      title: "EventRun Pro",
+      message: "Atualizações automáticas não estão configuradas.",
+      detail: "Verifique o arquivo updater.config.json do aplicativo.",
+    });
+    return;
+  }
+
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    if (!result || !result.updateInfo || !result.updateInfo.version) {
+      await dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "EventRun Pro",
+        message: "Nenhuma atualização disponível no momento.",
+      });
+      return;
+    }
+
+    if (result.updateInfo.version === app.getVersion()) {
+      await dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "EventRun Pro",
+        message: `Você já está na versão mais recente (${app.getVersion()}).`,
+      });
+    } else {
+      await dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "EventRun Pro",
+        message: `Nova versão encontrada: ${result.updateInfo.version}.`,
+        detail: "O download será iniciado automaticamente.",
+      });
+    }
+  } catch (error) {
+    await dialog.showMessageBox(mainWindow, {
+      type: "error",
+      title: "EventRun Pro",
+      message: "Falha ao verificar atualizações.",
+      detail: String(error?.message || error),
+    });
+  }
+}
+
+function setupAppMenu() {
+  const menu = Menu.buildFromTemplate([
+    {
+      label: "Sobre",
+      submenu: [
+        {
+          label: `Versão ${app.getVersion()}`,
+          enabled: false,
+        },
+        {
+          label: "Informações do programa",
+          click: async () => {
+            await dialog.showMessageBox(mainWindow, {
+              type: "info",
+              title: "Sobre o EventRun Pro",
+              message: "EventRun Pro",
+              detail:
+                "Sistema para gestão de eventos esportivos com foco em corridas.\n\nInclui projetos, custos, orçamento e regulamento.",
+            });
+          },
+        },
+        {
+          label: "Verificar atualizações",
+          click: async () => {
+            await checkForUpdatesManually();
+          },
+        },
+        { type: "separator" },
+        { label: "Sair", role: "quit" },
+      ],
+    },
+  ]);
+
+  Menu.setApplicationMenu(menu);
+}
+
 async function createWindow() {
   startServer();
   await waitForServer();
@@ -204,6 +289,7 @@ async function createWindow() {
 app.whenReady().then(async () => {
   logFilePath = path.join(app.getPath("userData"), "eventrun-desktop.log");
   log("app:ready", `isPackaged=${app.isPackaged}`);
+  setupAppMenu();
   try {
     await createWindow();
     if (!isDev) {
