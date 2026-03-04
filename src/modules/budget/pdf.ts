@@ -1,4 +1,4 @@
-﻿import { PDFDocument, StandardFonts, rgb, PDFFont } from "pdf-lib";
+﻿import { PDFDocument, StandardFonts, rgb, PDFFont, PDFImage } from "pdf-lib";
 
 type SummaryRow = {
   label: string;
@@ -21,6 +21,7 @@ type CostTableRow = {
 type BudgetPdfInput = {
   title: string;
   subtitle: string;
+  logoDataUrl?: string;
   sections: SummarySection[];
   costRows: CostTableRow[];
 };
@@ -42,6 +43,23 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
   const pdfDoc = await PDFDocument.create();
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  let logoImage: PDFImage | null = null;
+  let logoWidth = 0;
+  let logoHeight = 0;
+
+  if (input.logoDataUrl) {
+    const match = input.logoDataUrl.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
+    if (match) {
+      const mime = match[1];
+      const imageBytes = Uint8Array.from(Buffer.from(match[2], "base64"));
+      logoImage = mime === "png" ? await pdfDoc.embedPng(imageBytes) : await pdfDoc.embedJpg(imageBytes);
+      const maxWidth = 140;
+      const maxHeight = 52;
+      const ratio = Math.min(maxWidth / logoImage.width, maxHeight / logoImage.height, 1);
+      logoWidth = logoImage.width * ratio;
+      logoHeight = logoImage.height * ratio;
+    }
+  }
 
   const pageWidth = 595.28;
   const pageHeight = 841.89;
@@ -53,6 +71,15 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
   let cursorY = pageHeight - margin - 50;
 
   const drawHeader = (targetPage: typeof page) => {
+    if (logoImage) {
+      targetPage.drawImage(logoImage, {
+        x: pageWidth - margin - logoWidth,
+        y: pageHeight - margin - logoHeight + 6,
+        width: logoWidth,
+        height: logoHeight,
+      });
+    }
+
     targetPage.drawText(input.title, {
       x: margin,
       y: pageHeight - margin,

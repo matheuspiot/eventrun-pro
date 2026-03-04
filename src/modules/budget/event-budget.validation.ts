@@ -8,6 +8,12 @@ export const eventBudgetItemInputSchema = z.object({
 
 export const eventBudgetInputSchema = z.object({
   eventId: z.string().min(1, "Evento e obrigatorio"),
+  logoDataUrl: z
+    .string()
+    .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, "Logo invalida")
+    .max(1_500_000, "Logo muito grande")
+    .nullable()
+    .optional(),
   metaInscritos: z.coerce.number().int().positive("Meta de inscritos invalida"),
   patrocinioPrevisto: z.coerce.number().nonnegative(),
   lucroAlvoPercentual: z.coerce.number().nonnegative(),

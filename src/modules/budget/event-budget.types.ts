@@ -13,6 +13,7 @@ export type EventBudgetItemDto = {
 export type EventBudgetDto = {
   id: string;
   eventId: string;
+  logoDataUrl: string | null;
   metaInscritos: number;
   patrocinioPrevisto: string;
   lucroAlvoPercentual: string;

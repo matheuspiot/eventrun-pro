@@ -249,6 +249,28 @@ export function RegulationBuilder() {
                 </option>
               ))}
             </select>
+
+            <div className="mt-4">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                Logo do regulamento
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => handleLogoUpload(event.target.files?.[0] ?? null)}
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
+              />
+              {form.logoDataUrl && (
+                <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.logoDataUrl}
+                    alt="Logo do regulamento"
+                    className="h-16 w-auto rounded-md border border-border bg-white p-1"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-border p-4">
@@ -269,27 +291,6 @@ export function RegulationBuilder() {
 
             {step === 0 && (
               <div className="space-y-2 text-sm text-zinc-700">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                    Logo do regulamento
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => handleLogoUpload(event.target.files?.[0] ?? null)}
-                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
-                  />
-                  {form.logoDataUrl && (
-                    <div className="mt-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={form.logoDataUrl}
-                        alt="Logo do regulamento"
-                        className="h-16 w-auto rounded-md border border-border bg-white p-1"
-                      />
-                    </div>
-                  )}
-                </div>
                 <p>
                   Evento: <strong>{selectedEvent?.nomeEvento ?? "-"}</strong>
                 </p>

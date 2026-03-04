@@ -41,7 +41,7 @@ export async function saveEventBudgetForOrganization(
   });
 
   if (!event) {
-    return { error: "Evento nao encontrado" as const };
+    return { error: "Evento não encontrado" as const };
   }
 
   const uniqueIds = Array.from(new Set(input.items.map((item) => item.costItemId)));
@@ -59,7 +59,7 @@ export async function saveEventBudgetForOrganization(
   const costMap = new Map(costItems.map((item) => [item.id, item]));
 
   if (uniqueIds.some((id) => !costMap.has(id))) {
-    return { error: "Um ou mais custos selecionados nao pertencem a organizacao" as const };
+    return { error: "Um ou mais custos selecionados não pertencem à organização" as const };
   }
 
   const budget = await prisma.$transaction(async (tx) => {
@@ -67,6 +67,7 @@ export async function saveEventBudgetForOrganization(
       where: { eventId: input.eventId },
       create: {
         eventId: input.eventId,
+        logoDataUrl: input.logoDataUrl ?? null,
         metaInscritos: input.metaInscritos,
         patrocinioPrevisto: input.patrocinioPrevisto,
         lucroAlvoPercentual: input.lucroAlvoPercentual,
@@ -76,6 +77,7 @@ export async function saveEventBudgetForOrganization(
           input.taxaCancelamentoReembolsoPercentual,
       },
       update: {
+        logoDataUrl: input.logoDataUrl ?? null,
         metaInscritos: input.metaInscritos,
         patrocinioPrevisto: input.patrocinioPrevisto,
         lucroAlvoPercentual: input.lucroAlvoPercentual,

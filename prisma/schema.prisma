@@ -104,6 +104,7 @@ enum CostUnit {
 model EventBudget {
   id                        String            @id @default(cuid())
   eventId                   String            @unique
+  logoDataUrl               String?
   metaInscritos             Int
   patrocinioPrevisto        Decimal           @db.Decimal(10, 2)
   lucroAlvoPercentual       Decimal           @db.Decimal(6, 2)

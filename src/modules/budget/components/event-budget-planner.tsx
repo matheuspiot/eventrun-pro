@@ -19,6 +19,7 @@ type EventBudgetResponse = {
   budget: {
     id: string;
     eventId: string;
+    logoDataUrl: string | null;
     metaInscritos: number;
     patrocinioPrevisto: string;
     lucroAlvoPercentual: string;
@@ -37,6 +38,7 @@ type Scenario = {
 };
 
 type BudgetDraft = {
+  logoDataUrl: string;
   metaInscritos: string;
   patrocinioPrevisto: string;
   lucroAlvoPercentual: string;
@@ -89,6 +91,7 @@ export function EventBudgetPlanner() {
   const [costItems, setCostItems] = useState<CostItemDto[]>([]);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [metaInscritos, setMetaInscritos] = useState("1000");
+  const [logoDataUrl, setLogoDataUrl] = useState("");
   const [patrocinioPrevisto, setPatrocinioPrevisto] = useState("0");
   const [lucroAlvoPercentual, setLucroAlvoPercentual] = useState("20");
   const [taxaPlataformaPercentual, setTaxaPlataformaPercentual] = useState("0");
@@ -110,6 +113,7 @@ export function EventBudgetPlanner() {
 
   const currentDraft = useMemo<BudgetDraft>(
     () => ({
+      logoDataUrl,
       metaInscritos,
       patrocinioPrevisto,
       lucroAlvoPercentual,
@@ -120,6 +124,7 @@ export function EventBudgetPlanner() {
     }),
     [
       metaInscritos,
+      logoDataUrl,
       patrocinioPrevisto,
       lucroAlvoPercentual,
       taxaPlataformaPercentual,
@@ -226,6 +231,7 @@ export function EventBudgetPlanner() {
 
       const serverDraft: BudgetDraft = data.budget
         ? {
+            logoDataUrl: data.budget.logoDataUrl ?? "",
             metaInscritos: String(data.budget.metaInscritos),
             patrocinioPrevisto: data.budget.patrocinioPrevisto,
             lucroAlvoPercentual: data.budget.lucroAlvoPercentual,
@@ -236,6 +242,7 @@ export function EventBudgetPlanner() {
             items: data.budget.items,
           }
         : {
+            logoDataUrl: "",
             metaInscritos: "1000",
             patrocinioPrevisto: "0",
             lucroAlvoPercentual: "20",
@@ -245,6 +252,7 @@ export function EventBudgetPlanner() {
             items: [],
           };
 
+      setLogoDataUrl(serverDraft.logoDataUrl);
       setMetaInscritos(serverDraft.metaInscritos);
       setPatrocinioPrevisto(serverDraft.patrocinioPrevisto);
       setLucroAlvoPercentual(serverDraft.lucroAlvoPercentual);
@@ -337,6 +345,29 @@ export function EventBudgetPlanner() {
       document.removeEventListener("click", handleDocumentClick, true);
     };
   }, [isDirty]);
+
+  function handleBudgetLogoUpload(file: File | null) {
+    if (!file) {
+      setHasUserInteracted(true);
+      setLogoDataUrl("");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setError("Selecione um arquivo de imagem válido para a logo do orçamento.");
+      return;
+    }
+
+    setError("");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+      setHasUserInteracted(true);
+      setLogoDataUrl(dataUrl);
+    };
+    reader.onerror = () => setError("Não foi possível ler o arquivo da logo.");
+    reader.readAsDataURL(file);
+  }
 
   function addCostItem() {
     const selected = costItems.find((item) => item.id === newCostItemId);
@@ -469,6 +500,7 @@ export function EventBudgetPlanner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           eventId: selectedEventId,
+          logoDataUrl: logoDataUrl || null,
           metaInscritos: Number(metaInscritos),
           patrocinioPrevisto: Number(patrocinioPrevisto),
           lucroAlvoPercentual: Number(lucroAlvoPercentual),
@@ -495,6 +527,7 @@ export function EventBudgetPlanner() {
       const data = (await response.json()) as EventBudgetResponse;
       if (data.budget) {
         const persistedDraft: BudgetDraft = {
+          logoDataUrl: data.budget.logoDataUrl ?? "",
           metaInscritos: String(data.budget.metaInscritos),
           patrocinioPrevisto: data.budget.patrocinioPrevisto,
           lucroAlvoPercentual: data.budget.lucroAlvoPercentual,
@@ -505,6 +538,7 @@ export function EventBudgetPlanner() {
           items: data.budget.items,
         };
 
+        setLogoDataUrl(persistedDraft.logoDataUrl);
         setMetaInscritos(persistedDraft.metaInscritos);
         setPatrocinioPrevisto(persistedDraft.patrocinioPrevisto);
         setLucroAlvoPercentual(persistedDraft.lucroAlvoPercentual);
@@ -735,6 +769,24 @@ export function EventBudgetPlanner() {
                 className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+              Logo para o PDF do orçamento
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => handleBudgetLogoUpload(event.target.files?.[0] ?? null)}
+              className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
+            />
+            {logoDataUrl && (
+              <div className="mt-3 rounded-xl border border-border bg-white p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logoDataUrl} alt="Logo do orçamento" className="max-h-20 w-auto" />
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">

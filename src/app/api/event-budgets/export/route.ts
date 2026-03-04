@@ -126,6 +126,7 @@ export async function GET(request: NextRequest) {
   const pdfBytes = await createBudgetPdfBuffer({
     title: "Orçamento do Evento",
     subtitle: `${event.nomeEvento} | ${event.cidade}/${event.estado}`,
+    logoDataUrl: budget.logoDataUrl ?? undefined,
     sections: summarySections,
     costRows,
   });
