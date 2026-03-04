@@ -12,6 +12,8 @@ let serverProcess = null;
 let restartingServer = false;
 let logFilePath = "";
 let updaterConfigured = false;
+let manualCheckInProgress = false;
+let updateDownloadRequested = false;
 
 function log(message, extra = "") {
   try {
@@ -140,32 +142,84 @@ function setupAutoUpdater() {
     };
   }
 
-  autoUpdater.autoDownload = true;
+  autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
-  autoUpdater.on("error", (error) => {
+  autoUpdater.on("error", async (error) => {
+    log("updater:error", String(error?.message || error));
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("app:update-error", error.message);
+      await dialog.showMessageBox(mainWindow, {
+        type: "error",
+        title: "Atualização",
+        message: "Falha no processo de atualização.",
+        detail: String(error?.message || error),
+      });
     }
+    manualCheckInProgress = false;
+    updateDownloadRequested = false;
+  });
+
+  autoUpdater.on("checking-for-update", () => {
+    log("updater:checking");
+  });
+
+  autoUpdater.on("update-not-available", async () => {
+    log("updater:not-available");
+    if (manualCheckInProgress && mainWindow && !mainWindow.isDestroyed()) {
+      await dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "Atualização",
+        message: `Você já está na versão mais recente (${app.getVersion()}).`,
+      });
+    }
+    manualCheckInProgress = false;
+  });
+
+  autoUpdater.on("update-available", async (info) => {
+    log("updater:available", `version=${info.version}`);
+
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: "question",
+      title: "Atualização disponível",
+      message: `Nova versão encontrada: ${info.version}.`,
+      detail: "Deseja baixar e instalar agora?",
+      buttons: ["Baixar e instalar", "Agora não"],
+      defaultId: 0,
+      cancelId: 1,
+    });
+
+    if (result.response === 0) {
+      updateDownloadRequested = true;
+      await autoUpdater.downloadUpdate();
+      return;
+    }
+
+    manualCheckInProgress = false;
   });
 
   autoUpdater.on("update-downloaded", async () => {
+    log("updater:downloaded");
     const result = await dialog.showMessageBox({
       type: "info",
-      title: "Atualizacao pronta",
-      message: "Uma atualizacao foi baixada. Deseja reiniciar para instalar agora?",
+      title: "Atualização pronta",
+      message: "Atualização baixada com sucesso.",
+      detail: "O aplicativo será reiniciado para concluir a instalação.",
       buttons: ["Instalar agora", "Depois"],
       defaultId: 0,
       cancelId: 1,
     });
 
     if (result.response === 0) {
-      autoUpdater.quitAndInstall(true, true);
+      autoUpdater.quitAndInstall(false, true);
     }
+
+    manualCheckInProgress = false;
+    updateDownloadRequested = false;
   });
 
   setTimeout(() => {
-    autoUpdater.checkForUpdates().catch(() => {
+    autoUpdater.checkForUpdates().catch((error) => {
+      log("updater:initial-check-error", String(error?.message || error));
       // ignore check errors
     });
   }, 2500);
@@ -182,32 +236,20 @@ async function checkForUpdatesManually() {
     return;
   }
 
-  try {
-    const result = await autoUpdater.checkForUpdates();
-    if (!result || !result.updateInfo || !result.updateInfo.version) {
-      await dialog.showMessageBox(mainWindow, {
-        type: "info",
-        title: "EventRun Pro",
-        message: "Nenhuma atualização disponível no momento.",
-      });
-      return;
-    }
+  if (manualCheckInProgress || updateDownloadRequested) {
+    await dialog.showMessageBox(mainWindow, {
+      type: "info",
+      title: "Atualização",
+      message: "Já existe uma verificação/download de atualização em andamento.",
+    });
+    return;
+  }
 
-    if (result.updateInfo.version === app.getVersion()) {
-      await dialog.showMessageBox(mainWindow, {
-        type: "info",
-        title: "EventRun Pro",
-        message: `Você já está na versão mais recente (${app.getVersion()}).`,
-      });
-    } else {
-      await dialog.showMessageBox(mainWindow, {
-        type: "info",
-        title: "EventRun Pro",
-        message: `Nova versão encontrada: ${result.updateInfo.version}.`,
-        detail: "O download será iniciado automaticamente.",
-      });
-    }
+  manualCheckInProgress = true;
+  try {
+    await autoUpdater.checkForUpdates();
   } catch (error) {
+    manualCheckInProgress = false;
     await dialog.showMessageBox(mainWindow, {
       type: "error",
       title: "EventRun Pro",
