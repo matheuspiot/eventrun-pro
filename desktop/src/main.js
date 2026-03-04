@@ -9,6 +9,23 @@ const serverPort = 3210;
 const serverUrl = `http://127.0.0.1:${serverPort}`;
 let mainWindow = null;
 let serverProcess = null;
+let restartingServer = false;
+let logFilePath = "";
+
+function log(message, extra = "") {
+  try {
+    if (!logFilePath) {
+      return;
+    }
+    fs.appendFileSync(
+      logFilePath,
+      `[${new Date().toISOString()}] ${message}${extra ? ` | ${extra}` : ""}\n`,
+      "utf8",
+    );
+  } catch {
+    // noop
+  }
+}
 
 function loadUpdaterConfig() {
   try {
@@ -42,13 +59,47 @@ function startServer() {
   serverProcess = spawn(process.execPath, [serverScript], {
     cwd: bundleRoot,
     env,
-    stdio: "ignore",
+    stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,
   });
 
-  serverProcess.on("exit", () => {
-    serverProcess = null;
+  serverProcess.stdout.on("data", (chunk) => {
+    log("server:stdout", String(chunk).trim());
   });
+  serverProcess.stderr.on("data", (chunk) => {
+    log("server:stderr", String(chunk).trim());
+  });
+
+  serverProcess.on("exit", async (code, signal) => {
+    log("server:exit", `code=${code ?? "null"} signal=${signal ?? "null"}`);
+    serverProcess = null;
+
+    if (restartingServer || !mainWindow || mainWindow.isDestroyed()) {
+      return;
+    }
+
+    restartingServer = true;
+    try {
+      startServer();
+      await waitForServer(20);
+      if (!mainWindow.isDestroyed()) {
+        await mainWindow.loadURL(serverUrl);
+      }
+    } catch (error) {
+      if (!mainWindow.isDestroyed()) {
+        await dialog.showMessageBox(mainWindow, {
+          type: "error",
+          title: "EventRun Pro",
+          message: "O servidor interno caiu e nao conseguiu reiniciar.",
+          detail: String(error?.message || error),
+        });
+      }
+    } finally {
+      restartingServer = false;
+    }
+  });
+
+  log("server:start", serverScript);
 }
 
 function stopServer() {
@@ -135,9 +186,24 @@ async function createWindow() {
   });
 
   await mainWindow.loadURL(serverUrl);
+
+  mainWindow.webContents.on("render-process-gone", async (_event, details) => {
+    log("renderer:gone", JSON.stringify(details));
+    await dialog.showMessageBox(mainWindow, {
+      type: "error",
+      title: "EventRun Pro",
+      message: "A interface travou e sera recarregada.",
+      detail: `reason=${details.reason} exitCode=${details.exitCode}`,
+    });
+    if (!mainWindow.isDestroyed()) {
+      await mainWindow.loadURL(serverUrl);
+    }
+  });
 }
 
 app.whenReady().then(async () => {
+  logFilePath = path.join(app.getPath("userData"), "eventrun-desktop.log");
+  log("app:ready", `isPackaged=${app.isPackaged}`);
   try {
     await createWindow();
     if (!isDev) {

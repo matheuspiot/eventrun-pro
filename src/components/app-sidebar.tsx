@@ -10,10 +10,10 @@ type AppSidebarProps = {
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Orcamento", href: "/orcamento" },
+  { label: "Orçamento", href: "/orcamento" },
   { label: "Marketing", href: "/marketing" },
   { label: "Regulamento", href: "/regulamento" },
-  { label: "Configuracoes", href: "/configuracoes" },
+  { label: "Configurações", href: "/configuracoes" },
 ];
 
 export function AppSidebar({ organizationName, userName }: AppSidebarProps) {

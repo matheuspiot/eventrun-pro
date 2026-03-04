@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { EventDto } from "@/modules/events/types";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 type EventPayload = {
   nomeEvento: string;
@@ -33,28 +33,44 @@ export function EventsManager() {
   const [error, setError] = useState("");
 
   const buttonLabel = useMemo(() => (editingId ? "Salvar projeto" : "Criar novo projeto"), [editingId]);
+  const [submitting, setSubmitting] = useState(false);
 
-  async function loadEvents(showLoading = true) {
-    if (showLoading) {
-      setLoading(true);
+  async function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      return await fetch(input, { ...init, signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
     }
-    const response = await fetch("/api/events", { cache: "no-store" });
-
-    if (!response.ok) {
-      setError("Nao foi possivel carregar os projetos");
-      setLoading(false);
-      return;
-    }
-
-    const data = (await response.json()) as { events: EventDto[] };
-    setEvents(data.events);
-    setLoading(false);
   }
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadEvents(false);
+  const loadEvents = useCallback(async (showLoading = true) => {
+    try {
+      setError("");
+      if (showLoading) {
+        setLoading(true);
+      }
+      const response = await fetchWithTimeout("/api/events", { cache: "no-store" });
+
+      if (!response.ok) {
+        setError("Não foi possível carregar os projetos");
+        setLoading(false);
+        return;
+      }
+
+      const data = (await response.json()) as { events?: EventDto[] };
+      setEvents(Array.isArray(data.events) ? data.events : []);
+      setLoading(false);
+    } catch {
+      setError("Falha de conexão ao carregar projetos");
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadEvents(false);
+  }, [loadEvents]);
 
   function resetForm() {
     setForm(initialForm);
@@ -64,35 +80,46 @@ export function EventsManager() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    setSubmitting(true);
 
     const url = editingId ? `/api/events/${editingId}` : "/api/events";
     const method = editingId ? "PATCH" : "POST";
 
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const response = await fetchWithTimeout(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Nao foi possivel salvar o projeto");
-      return;
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error ?? "Não foi possível salvar o projeto");
+        return;
+      }
+
+      resetForm();
+      await loadEvents();
+    } catch {
+      setError("Falha de conexão ao salvar projeto");
+    } finally {
+      setSubmitting(false);
     }
-
-    resetForm();
-    await loadEvents();
   }
 
   async function handleDelete(id: string) {
-    const response = await fetch(`/api/events/${id}`, { method: "DELETE" });
+    try {
+      const response = await fetchWithTimeout(`/api/events/${id}`, { method: "DELETE" });
 
-    if (!response.ok) {
-      setError("Nao foi possivel remover o projeto");
-      return;
+      if (!response.ok) {
+        setError("Não foi possível remover o projeto");
+        return;
+      }
+
+      await loadEvents();
+    } catch {
+      setError("Falha de conexão ao remover projeto");
     }
-
-    await loadEvents();
   }
 
   function handleEdit(event: EventDto) {
@@ -189,9 +216,10 @@ export function EventsManager() {
         <div className="flex gap-2">
           <button
             type="submit"
-            className="flex-1 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+            disabled={submitting}
+            className="flex-1 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {buttonLabel}
+            {submitting ? "Salvando..." : buttonLabel}
           </button>
           {editingId && (
             <button
@@ -218,7 +246,7 @@ export function EventsManager() {
                   <th className="px-3 py-2">Data</th>
                   <th className="px-3 py-2">Cidade</th>
                   <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Acoes</th>
+                  <th className="px-3 py-2">Ações</th>
                 </tr>
               </thead>
               <tbody>

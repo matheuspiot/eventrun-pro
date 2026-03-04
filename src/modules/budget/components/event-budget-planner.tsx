@@ -46,6 +46,22 @@ type Scenario = {
   resultado: number;
 };
 
+type BudgetDraft = {
+  metaInscritos: string;
+  patrocinioPrevisto: string;
+  lucroAlvoPercentual: string;
+  taxaPlataformaPercentual: string;
+  impostoPercentual: string;
+  taxaCancelamentoReembolsoPercentual: string;
+  items: BudgetItemForm[];
+};
+
+const selectedEventStorageKey = "eventrun:budget:selected-event-id";
+
+function getDraftStorageKey(eventId: string) {
+  return `eventrun:budget:draft:${eventId}`;
+}
+
 function brl(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -65,6 +81,8 @@ export function EventBudgetPlanner() {
   const [newCostItemId, setNewCostItemId] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [loadedBudget, setLoadedBudget] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -77,7 +95,7 @@ export function EventBudgetPlanner() {
       ]);
 
       if (!eventsResponse.ok || !costItemsResponse.ok) {
-        setError("Nao foi possivel carregar eventos e custos");
+        setError("Não foi possível carregar eventos e custos");
         setLoading(false);
         return;
       }
@@ -86,7 +104,15 @@ export function EventBudgetPlanner() {
       const costItemsData = (await costItemsResponse.json()) as { items: CostItemDto[] };
       setEvents(eventsData.events);
       setCostItems(costItemsData.items);
-      setSelectedEventId(eventsData.events[0]?.id ?? "");
+
+      const storedEventId =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem(selectedEventStorageKey)
+          : null;
+      const initialEventId = eventsData.events.some((event) => event.id === storedEventId)
+        ? storedEventId ?? ""
+        : (eventsData.events[0]?.id ?? "");
+      setSelectedEventId(initialEventId);
       setNewCostItemId(costItemsData.items[0]?.id ?? "");
       setLoading(false);
     }
@@ -97,16 +123,19 @@ export function EventBudgetPlanner() {
   useEffect(() => {
     async function loadBudget(eventId: string) {
       if (!eventId) {
+        setLoadedBudget(true);
         return;
       }
 
+      setLoadedBudget(false);
       setError("");
       const response = await fetch(`/api/event-budgets?eventId=${eventId}`, {
         cache: "no-store",
       });
 
       if (!response.ok) {
-        setError("Nao foi possivel carregar o orcamento deste evento");
+        setError("Não foi possível carregar o orçamento deste evento");
+        setLoadedBudget(true);
         return;
       }
 
@@ -120,22 +149,73 @@ export function EventBudgetPlanner() {
         setImpostoPercentual("0");
         setTaxaCancelamentoReembolsoPercentual("0");
         setItems([]);
-        return;
+      } else {
+        setMetaInscritos(String(data.budget.metaInscritos));
+        setPatrocinioPrevisto(data.budget.patrocinioPrevisto);
+        setLucroAlvoPercentual(data.budget.lucroAlvoPercentual);
+        setTaxaPlataformaPercentual(data.budget.taxaPlataformaPercentual);
+        setImpostoPercentual(data.budget.impostoPercentual);
+        setTaxaCancelamentoReembolsoPercentual(
+          data.budget.taxaCancelamentoReembolsoPercentual,
+        );
+        setItems(data.budget.items);
       }
 
-      setMetaInscritos(String(data.budget.metaInscritos));
-      setPatrocinioPrevisto(data.budget.patrocinioPrevisto);
-      setLucroAlvoPercentual(data.budget.lucroAlvoPercentual);
-      setTaxaPlataformaPercentual(data.budget.taxaPlataformaPercentual);
-      setImpostoPercentual(data.budget.impostoPercentual);
-      setTaxaCancelamentoReembolsoPercentual(
-        data.budget.taxaCancelamentoReembolsoPercentual,
-      );
-      setItems(data.budget.items);
+      if (typeof window !== "undefined") {
+        const rawDraft = window.localStorage.getItem(getDraftStorageKey(eventId));
+        if (rawDraft) {
+          try {
+            const parsed = JSON.parse(rawDraft) as BudgetDraft;
+            setMetaInscritos(parsed.metaInscritos);
+            setPatrocinioPrevisto(parsed.patrocinioPrevisto);
+            setLucroAlvoPercentual(parsed.lucroAlvoPercentual);
+            setTaxaPlataformaPercentual(parsed.taxaPlataformaPercentual);
+            setImpostoPercentual(parsed.impostoPercentual);
+            setTaxaCancelamentoReembolsoPercentual(
+              parsed.taxaCancelamentoReembolsoPercentual,
+            );
+            setItems(parsed.items);
+          } catch {
+            // Ignore local draft parse failures
+          }
+        }
+        window.localStorage.setItem(selectedEventStorageKey, eventId);
+      }
+
+      setLoadedBudget(true);
     }
 
     void loadBudget(selectedEventId);
   }, [selectedEventId]);
+
+  useEffect(() => {
+    if (!selectedEventId || !loadedBudget || typeof window === "undefined") {
+      return;
+    }
+
+    const draft: BudgetDraft = {
+      metaInscritos,
+      patrocinioPrevisto,
+      lucroAlvoPercentual,
+      taxaPlataformaPercentual,
+      impostoPercentual,
+      taxaCancelamentoReembolsoPercentual,
+      items,
+    };
+
+    window.localStorage.setItem(getDraftStorageKey(selectedEventId), JSON.stringify(draft));
+    window.localStorage.setItem(selectedEventStorageKey, selectedEventId);
+  }, [
+    selectedEventId,
+    loadedBudget,
+    metaInscritos,
+    patrocinioPrevisto,
+    lucroAlvoPercentual,
+    taxaPlataformaPercentual,
+    impostoPercentual,
+    taxaCancelamentoReembolsoPercentual,
+    items,
+  ]);
 
   function addCostItem() {
     const selected = costItems.find((item) => item.id === newCostItemId);
@@ -206,8 +286,7 @@ export function EventBudgetPlanner() {
 
     return [0.6, 0.8, 1].map((ratio) => {
       const inscritos = Math.round(meta * ratio);
-      const receita =
-        inscritos * calculations.precoRecomendadoParaLucro + patrocinio;
+      const receita = inscritos * calculations.precoRecomendadoParaLucro + patrocinio;
       return {
         label: `${Math.round(ratio * 100)}%`,
         inscritos,
@@ -221,7 +300,7 @@ export function EventBudgetPlanner() {
     event.preventDefault();
 
     if (!selectedEventId) {
-      setError("Selecione um evento para salvar o orcamento");
+      setError("Selecione um evento para salvar o orçamento");
       return;
     }
 
@@ -252,19 +331,59 @@ export function EventBudgetPlanner() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Nao foi possivel salvar o orcamento");
+      setError(data.error ?? "Não foi possível salvar o orçamento");
       setSaving(false);
       return;
     }
 
-    setSuccess("Orcamento salvo com sucesso");
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(getDraftStorageKey(selectedEventId));
+    }
+
+    setSuccess("Orçamento salvo com sucesso");
     setSaving(false);
+  }
+
+  async function handleExportPdf() {
+    if (!selectedEventId) {
+      setError("Selecione um evento para exportar o orçamento");
+      return;
+    }
+
+    setError("");
+    setExporting(true);
+    try {
+      const response = await fetch(`/api/event-budgets/export?eventId=${selectedEventId}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error ?? "Não foi possível exportar o orçamento em PDF");
+        return;
+      }
+
+      const blob = await response.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `orcamento-${selectedEventId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(objectUrl);
+    } catch {
+      setError("Falha de conexão ao exportar o orçamento");
+    } finally {
+      setExporting(false);
+    }
   }
 
   if (loading) {
     return (
       <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-        <p className="text-sm text-zinc-600">Carregando modulo de orcamento...</p>
+        <p className="text-sm text-zinc-600">Carregando módulo de orçamento...</p>
       </section>
     );
   }
@@ -272,9 +391,9 @@ export function EventBudgetPlanner() {
   return (
     <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
       <div>
-        <h2 className="text-3xl font-heading text-zinc-900">Orcamento do Evento</h2>
+        <h2 className="text-3xl font-heading text-zinc-900">Orçamento do Evento</h2>
         <p className="text-sm text-zinc-600">
-          Selecione custos da biblioteca e simule cenarios de inscricao.
+          Selecione custos da biblioteca e simule cenários de inscrição.
         </p>
       </div>
 
@@ -298,7 +417,7 @@ export function EventBudgetPlanner() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-              Meta inscritos
+              Meta de inscritos
             </label>
             <input
               type="number"
@@ -310,7 +429,7 @@ export function EventBudgetPlanner() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-              Patrocinio previsto
+              Patrocínio previsto
             </label>
             <input
               type="number"
@@ -323,7 +442,7 @@ export function EventBudgetPlanner() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-              Lucro alvo (%)
+              Lucro-alvo (%)
             </label>
             <input
               type="number"
@@ -336,7 +455,7 @@ export function EventBudgetPlanner() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-              Taxa plataforma (%)
+              Taxa da plataforma (%)
             </label>
             <input
               type="number"
@@ -362,7 +481,7 @@ export function EventBudgetPlanner() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-              Taxa cancel/reembolso (%)
+              Taxa de cancelamento/reembolso (%)
             </label>
             <input
               type="number"
@@ -412,16 +531,16 @@ export function EventBudgetPlanner() {
                 <th className="px-3 py-2">Custo</th>
                 <th className="px-3 py-2">Tipo</th>
                 <th className="px-3 py-2">Quantidade</th>
-                <th className="px-3 py-2">Valor unitario</th>
+                <th className="px-3 py-2">Valor unitário</th>
                 <th className="px-3 py-2">Subtotal</th>
-                <th className="px-3 py-2">Acao</th>
+                <th className="px-3 py-2">Ação</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-3 py-6 text-center text-zinc-500">
-                    Selecione custos da biblioteca para montar o orcamento.
+                    Selecione custos da biblioteca para montar o orçamento.
                   </td>
                 </tr>
               ) : (
@@ -480,13 +599,15 @@ export function EventBudgetPlanner() {
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Total custos fixos</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Total de custos fixos</p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(calculations.totalCustosFixos)}
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Custo variavel por atleta</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">
+              Custo variável por atleta
+            </p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(calculations.custoVariavelPorAtleta)}
             </p>
@@ -504,22 +625,20 @@ export function EventBudgetPlanner() {
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Preco minimo inscricao</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Preço mínimo inscrição</p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(calculations.precoMinimoInscricao)}
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-              Preco recomendado (lucro)
-            </p>
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Preço recomendado (lucro)</p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(calculations.precoRecomendadoParaLucro)}
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
             <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-              Aliquota total de taxas
+              Alíquota total de taxas
             </p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {calculations.aliquotaTotalPercentual.toFixed(2)}%
@@ -527,7 +646,7 @@ export function EventBudgetPlanner() {
           </div>
           <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
             <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-              Receita liquida por inscricao
+              Receita líquida por inscrição
             </p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(calculations.receitaLiquidaPorInscricao)}
@@ -535,7 +654,7 @@ export function EventBudgetPlanner() {
           </div>
           <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
             <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-              Lucro liquido por inscricao
+              Lucro líquido por inscrição
             </p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(calculations.lucroLiquidoEstimado)}
@@ -544,7 +663,7 @@ export function EventBudgetPlanner() {
         </div>
 
         <div className="rounded-2xl border border-border bg-surface-muted/50 p-4">
-          <h3 className="text-xl font-heading text-zinc-900">Cenario de receita (60%, 80%, 100%)</h3>
+          <h3 className="text-xl font-heading text-zinc-900">Cenário de receita (60%, 80%, 100%)</h3>
           <div className="mt-4 space-y-3">
             {scenarios.map((scenario) => {
               const maxRevenue = Math.max(...scenarios.map((item) => item.receita), 1);
@@ -578,13 +697,28 @@ export function EventBudgetPlanner() {
         {error && <p className="text-sm text-red-600">{error}</p>}
         {success && <p className="text-sm text-emerald-700">{success}</p>}
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
-        >
-          {saving ? "Salvando..." : "Salvar orcamento"}
-        </button>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
+            >
+              {saving ? "Salvando..." : "Salvar orçamento"}
+            </button>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={exporting}
+              className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-surface-muted disabled:opacity-70"
+            >
+              {exporting ? "Exportando..." : "Exportar orçamento em PDF"}
+            </button>
+          </div>
+          <p className="text-xs text-zinc-500">
+            Rascunho salvo automaticamente neste navegador para o evento selecionado.
+          </p>
+        </div>
       </form>
     </section>
   );
