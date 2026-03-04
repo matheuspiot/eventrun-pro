@@ -40,6 +40,7 @@
       ],
       "signAndEditExecutable": false
     },
+    "compression": "normal",
     "nsis": {
       "oneClick": true,
       "allowToChangeInstallationDirectory": false,
