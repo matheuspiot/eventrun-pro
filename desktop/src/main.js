@@ -14,6 +14,7 @@ let logFilePath = "";
 let updaterConfigured = false;
 let manualCheckInProgress = false;
 let updateDownloadRequested = false;
+let updatePercent = 0;
 
 function log(message, extra = "") {
   try {
@@ -145,8 +146,22 @@ function setupAutoUpdater() {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  function setUpdaterProgress(percent) {
+    updatePercent = percent;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (percent <= 0) {
+        mainWindow.setProgressBar(-1);
+        mainWindow.setTitle("EventRun Pro");
+        return;
+      }
+      mainWindow.setProgressBar(Math.min(percent / 100, 1));
+      mainWindow.setTitle(`EventRun Pro - Atualizando ${Math.floor(percent)}%`);
+    }
+  }
+
   autoUpdater.on("error", async (error) => {
     log("updater:error", String(error?.message || error));
+    setUpdaterProgress(0);
     if (mainWindow && !mainWindow.isDestroyed()) {
       await dialog.showMessageBox(mainWindow, {
         type: "error",
@@ -183,13 +198,20 @@ function setupAutoUpdater() {
       title: "Atualização disponível",
       message: `Nova versão encontrada: ${info.version}.`,
       detail: "Deseja baixar e instalar agora?",
-      buttons: ["Baixar e instalar", "Agora não"],
+      buttons: ["Atualizar agora", "Depois"],
       defaultId: 0,
       cancelId: 1,
     });
 
     if (result.response === 0) {
       updateDownloadRequested = true;
+      setUpdaterProgress(1);
+      await dialog.showMessageBox(mainWindow, {
+        type: "info",
+        title: "Atualização",
+        message: "Download da atualização iniciado.",
+        detail: "Você pode continuar usando o programa enquanto baixa.",
+      });
       await autoUpdater.downloadUpdate();
       return;
     }
@@ -197,24 +219,26 @@ function setupAutoUpdater() {
     manualCheckInProgress = false;
   });
 
+  autoUpdater.on("download-progress", (progress) => {
+    const percent = Number(progress?.percent || 0);
+    setUpdaterProgress(percent);
+    log("updater:download-progress", `${percent.toFixed(2)}%`);
+  });
+
   autoUpdater.on("update-downloaded", async () => {
     log("updater:downloaded");
-    const result = await dialog.showMessageBox({
+    setUpdaterProgress(100);
+    await dialog.showMessageBox({
       type: "info",
       title: "Atualização pronta",
       message: "Atualização baixada com sucesso.",
-      detail: "O aplicativo será reiniciado para concluir a instalação.",
-      buttons: ["Instalar agora", "Depois"],
-      defaultId: 0,
-      cancelId: 1,
+      detail: "O aplicativo será fechado e reiniciado para concluir a instalação.",
+      buttons: ["OK"],
     });
-
-    if (result.response === 0) {
-      autoUpdater.quitAndInstall(false, true);
-    }
 
     manualCheckInProgress = false;
     updateDownloadRequested = false;
+    autoUpdater.quitAndInstall(true, true);
   });
 
   setTimeout(() => {
