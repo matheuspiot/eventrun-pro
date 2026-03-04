@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAuthToken, setAuthCookie } from "@/lib/auth";
+import { toApiErrorMessage } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
 
 const registerSchema = z.object({
@@ -21,8 +22,11 @@ export async function POST(request: Request) {
     }
 
     const { organizationName, name, email, password } = parsed.data;
+    const normalizedEmail = email.trim().toLowerCase();
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
 
     if (existingUser) {
       return NextResponse.json({ error: "E-mail ja cadastrado" }, { status: 409 });
@@ -36,7 +40,7 @@ export async function POST(request: Request) {
         users: {
           create: {
             name,
-            email,
+            email: normalizedEmail,
             passwordHash,
           },
         },
@@ -69,8 +73,7 @@ export async function POST(request: Request) {
     setAuthCookie(response, token);
 
     return response;
-  } catch {
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: toApiErrorMessage(error) }, { status: 500 });
   }
 }
-
