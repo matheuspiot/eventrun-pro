@@ -53,8 +53,8 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
       const mime = match[1];
       const imageBytes = Uint8Array.from(Buffer.from(match[2], "base64"));
       logoImage = mime === "png" ? await pdfDoc.embedPng(imageBytes) : await pdfDoc.embedJpg(imageBytes);
-      const maxWidth = 110;
-      const maxHeight = 32;
+      const maxWidth = 100;
+      const maxHeight = 26;
       const ratio = Math.min(maxWidth / logoImage.width, maxHeight / logoImage.height, 1);
       logoWidth = logoImage.width * ratio;
       logoHeight = logoImage.height * ratio;
@@ -74,7 +74,7 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
     if (logoImage) {
       targetPage.drawImage(logoImage, {
         x: pageWidth - margin - logoWidth,
-        y: pageHeight - margin - logoHeight + 2,
+        y: pageHeight - margin - logoHeight + 10,
         width: logoWidth,
         height: logoHeight,
       });

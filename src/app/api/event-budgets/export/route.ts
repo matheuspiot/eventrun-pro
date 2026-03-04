@@ -12,6 +12,25 @@ function numberPt(value: number) {
   return value.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
+function formatUnitLabel(unit: string, quantity: number) {
+  const singular = quantity <= 1;
+  switch (unit.toUpperCase()) {
+    case "ATLETA":
+      return singular ? "atleta" : "atletas";
+    case "PESSOA":
+      return singular ? "pessoa" : "pessoas";
+    case "HORA":
+      return singular ? "hora" : "horas";
+    case "LOTE":
+      return singular ? "lote" : "lotes";
+    case "KM":
+      return "km";
+    case "UN":
+    default:
+      return singular ? "unidade" : "unidades";
+  }
+}
+
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
@@ -121,7 +140,10 @@ export async function GET(request: NextRequest) {
 
     return {
       nome: item.costItem.nome,
-      quantidade: `${numberPt(quantidadeEfetiva)} ${item.costItem.unidade.toLowerCase()}`,
+      quantidade: `${numberPt(quantidadeEfetiva)} ${formatUnitLabel(
+        item.costItem.unidade,
+        quantidadeEfetiva,
+      )}`,
       valorUnitario: brl(valorUnitario),
       subtotal: brl(subtotal),
     };
