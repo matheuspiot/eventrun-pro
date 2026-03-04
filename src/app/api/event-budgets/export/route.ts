@@ -113,11 +113,15 @@ export async function GET(request: NextRequest) {
   const costRows = budget.items.map((item) => {
     const quantidade = Number(item.quantidade);
     const valorUnitario = Number(item.valorUnitario);
-    const subtotal = quantidade * valorUnitario;
+    const quantidadeEfetiva =
+      item.tipoCusto === "VARIAVEL_ATLETA"
+        ? quantidade * budget.metaInscritos
+        : quantidade;
+    const subtotal = quantidadeEfetiva * valorUnitario;
 
     return {
       nome: item.costItem.nome,
-      quantidade: `${numberPt(quantidade)} ${item.costItem.unidade.toLowerCase()}`,
+      quantidade: `${numberPt(quantidadeEfetiva)} ${item.costItem.unidade.toLowerCase()}`,
       valorUnitario: brl(valorUnitario),
       subtotal: brl(subtotal),
     };

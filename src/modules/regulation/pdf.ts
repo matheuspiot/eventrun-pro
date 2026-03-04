@@ -74,15 +74,15 @@ export async function createRegulationPdfBuffer(
         ? await pdfDoc.embedPng(bytes)
         : await pdfDoc.embedJpg(bytes);
 
-    const maxWidth = 140;
-    const maxHeight = 56;
+    const maxWidth = 110;
+    const maxHeight = 32;
     const ratio = Math.min(maxWidth / image.width, maxHeight / image.height, 1);
     const width = image.width * ratio;
     const height = image.height * ratio;
 
     targetPage.drawImage(image, {
       x: pageWidth - margin - width,
-      y: pageHeight - margin - height + 8,
+      y: pageHeight - margin - height + 2,
       width,
       height,
     });
