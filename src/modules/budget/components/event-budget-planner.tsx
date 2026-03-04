@@ -66,6 +66,12 @@ function brl(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function toNumberSafe(value: string) {
+  const normalized = value.replace(",", ".").trim();
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : NaN;
+}
+
 export function EventBudgetPlanner() {
   const [events, setEvents] = useState<EventDto[]>([]);
   const [costItems, setCostItems] = useState<CostItemDto[]>([]);
@@ -308,40 +314,80 @@ export function EventBudgetPlanner() {
     setError("");
     setSuccess("");
 
-    const response = await fetch("/api/event-budgets", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        eventId: selectedEventId,
-        metaInscritos: Number(metaInscritos),
-        patrocinioPrevisto: Number(patrocinioPrevisto),
-        lucroAlvoPercentual: Number(lucroAlvoPercentual),
-        taxaPlataformaPercentual: Number(taxaPlataformaPercentual),
-        impostoPercentual: Number(impostoPercentual),
-        taxaCancelamentoReembolsoPercentual: Number(
-          taxaCancelamentoReembolsoPercentual,
-        ),
-        items: items.map((item) => ({
-          costItemId: item.costItemId,
-          quantidade: Number(item.quantidade),
-          valorUnitario: Number(item.valorUnitario),
-        })),
-      }),
-    });
+    const normalizedItems = items.map((item) => ({
+      ...item,
+      quantidadeNumber: toNumberSafe(item.quantidade),
+      valorUnitarioNumber: toNumberSafe(item.valorUnitario),
+    }));
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Não foi possível salvar o orçamento");
+    const invalidItem = normalizedItems.find(
+      (item) =>
+        !Number.isFinite(item.quantidadeNumber) ||
+        item.quantidadeNumber <= 0 ||
+        !Number.isFinite(item.valorUnitarioNumber) ||
+        item.valorUnitarioNumber < 0,
+    );
+
+    if (invalidItem) {
+      setError(
+        `Preencha quantidade e valor unitário válidos para o custo "${invalidItem.nome}".`,
+      );
       setSaving(false);
       return;
     }
 
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(getDraftStorageKey(selectedEventId));
-    }
+    try {
+      const response = await fetch("/api/event-budgets", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventId: selectedEventId,
+          metaInscritos: Number(metaInscritos),
+          patrocinioPrevisto: Number(patrocinioPrevisto),
+          lucroAlvoPercentual: Number(lucroAlvoPercentual),
+          taxaPlataformaPercentual: Number(taxaPlataformaPercentual),
+          impostoPercentual: Number(impostoPercentual),
+          taxaCancelamentoReembolsoPercentual: Number(
+            taxaCancelamentoReembolsoPercentual,
+          ),
+          items: normalizedItems.map((item) => ({
+            costItemId: item.costItemId,
+            quantidade: item.quantidadeNumber,
+            valorUnitario: item.valorUnitarioNumber,
+          })),
+        }),
+      });
 
-    setSuccess("Orçamento salvo com sucesso");
-    setSaving(false);
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error ?? "Não foi possível salvar o orçamento");
+        setSaving(false);
+        return;
+      }
+
+      const data = (await response.json()) as EventBudgetResponse;
+      if (data.budget) {
+        setMetaInscritos(String(data.budget.metaInscritos));
+        setPatrocinioPrevisto(data.budget.patrocinioPrevisto);
+        setLucroAlvoPercentual(data.budget.lucroAlvoPercentual);
+        setTaxaPlataformaPercentual(data.budget.taxaPlataformaPercentual);
+        setImpostoPercentual(data.budget.impostoPercentual);
+        setTaxaCancelamentoReembolsoPercentual(
+          data.budget.taxaCancelamentoReembolsoPercentual,
+        );
+        setItems(data.budget.items);
+      }
+
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(getDraftStorageKey(selectedEventId));
+      }
+
+      setSuccess("Orçamento salvo com sucesso");
+      setSaving(false);
+    } catch {
+      setError("Falha de conexão ao salvar o orçamento");
+      setSaving(false);
+    }
   }
 
   async function handleExportPdf() {
