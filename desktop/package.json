@@ -1,6 +1,6 @@
 {
   "name": "eventrun-pro-desktop",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "EventRun Pro desktop shell",
   "main": "src/main.js",
   "author": "Clube Piot",
@@ -35,12 +35,13 @@
       }
     ],
     "win": {
+      "artifactName": "EventRun.Pro.Setup.${version}.${ext}",
       "target": [
         "nsis"
       ],
       "signAndEditExecutable": false
     },
-    "compression": "normal",
+    "compression": "store",
     "nsis": {
       "oneClick": true,
       "allowToChangeInstallationDirectory": false,

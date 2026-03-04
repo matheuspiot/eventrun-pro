@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog } = require("electron");
+﻿const { app, BrowserWindow, Menu, dialog } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -49,7 +49,7 @@ function startServer() {
   const serverScript = path.join(bundleRoot, "server.js");
 
   if (!fs.existsSync(serverScript)) {
-    throw new Error(`server.js nao encontrado em ${serverScript}`);
+    throw new Error(`server.js não encontrado em ${serverScript}`);
   }
 
   const env = {
@@ -93,7 +93,7 @@ function startServer() {
         await dialog.showMessageBox(mainWindow, {
           type: "error",
           title: "EventRun Pro",
-          message: "O servidor interno caiu e nao conseguiu reiniciar.",
+          message: "O servidor interno caiu e não conseguiu reiniciar.",
           detail: String(error?.message || error),
         });
       }
@@ -124,7 +124,7 @@ async function waitForServer(maxTries = 60) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
-  throw new Error("Servidor Next nao respondeu a tempo.");
+  throw new Error("Servidor Next não respondeu a tempo.");
 }
 
 function setupAutoUpdater() {
@@ -319,7 +319,7 @@ async function createWindow() {
     await dialog.showMessageBox(mainWindow, {
       type: "error",
       title: "EventRun Pro",
-      message: "A interface travou e sera recarregada.",
+      message: "A interface travou e será recarregada.",
       detail: `reason=${details.reason} exitCode=${details.exitCode}`,
     });
     if (!mainWindow.isDestroyed()) {
