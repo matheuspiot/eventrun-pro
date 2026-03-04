@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createAuthToken, setAuthCookie } from "@/lib/auth";
 import { toApiErrorMessage } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
+import { defaultCostItemsSeed } from "@/modules/budget/default-cost-items";
 
 const registerSchema = z.object({
   organizationName: z.string().min(2),
@@ -37,6 +38,9 @@ export async function POST(request: Request) {
     const result = await prisma.organization.create({
       data: {
         name: organizationName,
+        costItems: {
+          create: defaultCostItemsSeed,
+        },
         users: {
           create: {
             name,

@@ -8,13 +8,13 @@ import { RegulationConfigDto } from "../types";
 const steps = [
   "Etapa 1 - Identidade",
   "Etapa 2 - Modalidades",
-  "Etapa 3 - Inscricao",
+  "Etapa 3 - Inscrição",
   "Etapa 4 - Kit",
-  "Etapa 5 - Premiacao",
+  "Etapa 5 - Premiação",
   "Etapa 6 - Contatos",
 ];
 
-const platformOptions = ["TicketSports", "Sympla", "Minhas Inscricoes", "Site Proprio"];
+const platformOptions = ["TicketSports", "Sympla", "Minhas Inscrições", "Site Próprio"];
 
 const defaultConfig = {
   possuiKids: false,
@@ -50,7 +50,7 @@ export function RegulationBuilder() {
       setLoading(true);
       const response = await fetch("/api/events", { cache: "no-store" });
       if (!response.ok) {
-        setError("Nao foi possivel carregar eventos");
+        setError("Não foi possível carregar eventos");
         setLoading(false);
         return;
       }
@@ -76,7 +76,7 @@ export function RegulationBuilder() {
       });
 
       if (!response.ok) {
-        setError("Nao foi possivel carregar configuracao do regulamento");
+        setError("Não foi possível carregar configuração do regulamento");
         return;
       }
 
@@ -148,7 +148,7 @@ export function RegulationBuilder() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Nao foi possivel salvar");
+      setError(data.error ?? "Não foi possível salvar");
       setSaving(false);
       return;
     }
@@ -204,7 +204,7 @@ export function RegulationBuilder() {
     <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
       <div>
         <h2 className="text-3xl font-heading text-zinc-900">Regulamento</h2>
-        <p className="text-sm text-zinc-600">Quiz em etapas com geracao automatica de texto.</p>
+        <p className="text-sm text-zinc-600">Quiz em etapas com geração automática de texto.</p>
       </div>
 
       <form onSubmit={handleSave} className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_1fr]">
@@ -220,7 +220,7 @@ export function RegulationBuilder() {
             >
               {events.map((event) => (
                 <option key={event.id} value={event.id}>
-                  {event.nomeEvento}
+                  {event.nomeEvento} - {event.cidade}/{event.estado}
                 </option>
               ))}
             </select>
@@ -315,7 +315,7 @@ export function RegulationBuilder() {
               <div className="space-y-3">
                 <div>
                   <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                    Plataformas de inscricao
+                    Plataformas de inscrição
                   </label>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {platformOptions.map((platform) => (
@@ -333,7 +333,7 @@ export function RegulationBuilder() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Valor inscricao
+                    Valor inscrição
                     </label>
                     <input
                       type="number"
@@ -364,7 +364,7 @@ export function RegulationBuilder() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Inicio inscricao
+                      Início inscrição
                     </label>
                     <input
                       type="date"
@@ -380,7 +380,7 @@ export function RegulationBuilder() {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Fim inscricao
+                      Fim inscrição
                     </label>
                     <input
                       type="date"
@@ -397,11 +397,11 @@ export function RegulationBuilder() {
 
             {step === 3 && (
               <div className="space-y-2 text-sm text-zinc-700">
-                <p>Configuracao de kit com base nos recursos do evento:</p>
+                <p>Configuração de kit com base nos recursos do evento:</p>
                 <p>
-                  Chip incluso: <strong>{form.possuiChip ? "Sim" : "Nao"}</strong>
+                  Chip incluso: <strong>{form.possuiChip ? "Sim" : "Não"}</strong>
                 </p>
-                <p>Numero de peito e itens promocionais poderao ser ajustados na versao final.</p>
+                <p>Número de peito e itens promocionais poderão ser ajustados na versão final.</p>
               </div>
             )}
 
@@ -418,7 +418,7 @@ export function RegulationBuilder() {
                       }))
                     }
                   />
-                  Possui premiacao em dinheiro
+                  Possui premiação em dinheiro
                 </label>
               </div>
             )}
@@ -468,7 +468,7 @@ export function RegulationBuilder() {
                 onClick={() => setStep((prev) => Math.min(steps.length - 1, prev + 1))}
                 className="rounded-lg border border-border px-3 py-2 text-sm text-zinc-700 disabled:opacity-50"
               >
-                Proximo
+                Próximo
               </button>
             </div>
           </div>

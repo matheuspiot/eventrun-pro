@@ -133,6 +133,7 @@ export function CostLibrary() {
 
     setIsModalOpen(false);
     await loadItems();
+    window.dispatchEvent(new Event("eventrun:cost-items-updated"));
   }
 
   async function handleDelete(id: string) {
@@ -144,6 +145,7 @@ export function CostLibrary() {
     }
 
     await loadItems();
+    window.dispatchEvent(new Event("eventrun:cost-items-updated"));
   }
 
   return (

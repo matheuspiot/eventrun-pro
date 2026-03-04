@@ -1,11 +1,22 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { CostItemInput } from "./validation";
+import { defaultCostItemsSeed } from "./default-cost-items";
 
 export async function listCostItemsByOrganization(
   organizationId: string,
   filters?: { categoria?: string; search?: string },
 ) {
+  const count = await prisma.costItem.count({ where: { organizationId } });
+  if (count === 0) {
+    await prisma.costItem.createMany({
+      data: defaultCostItemsSeed.map((item) => ({
+        organizationId,
+        ...item,
+      })),
+    });
+  }
+
   const where: Prisma.CostItemWhereInput = {
     organizationId,
     ...(filters?.categoria ? { categoria: filters.categoria as never } : {}),

@@ -1,4 +1,4 @@
-import { RegulationConfigDto, RegulationEventDto } from "./types";
+﻿import { RegulationConfigDto, RegulationEventDto } from "./types";
 
 function formatDate(dateInput: string) {
   const date = new Date(dateInput);
@@ -15,83 +15,121 @@ export function generateRegulationText(
   config: RegulationConfigDto,
   event: RegulationEventDto,
 ) {
-  const sections: Array<{ title: string; body: string[] }> = [];
-
-  sections.push({
-    title: "Identidade do Evento",
-    body: [
-      `O evento ${event.nomeEvento} sera realizado em ${formatDate(event.dataEvento)}, na cidade de ${event.cidade}/${event.estado}, com largada em ${event.localLargada}.`,
-      `A organizacao tecnica e responsabilidade de ${event.organizador}.`,
-    ],
-  });
-
-  sections.push({
-    title: "Modalidades e Regras de Participacao",
-    body: [
-      config.possuiKids
-        ? "O evento contempla modalidade Kids, com supervisao obrigatoria de responsavel."
-        : "O evento nao possui modalidade Kids nesta edicao.",
-      `O tempo limite oficial para conclusao da prova e de ${config.tempoLimiteMinutos} minutos.`,
-      config.possuiChip
-        ? "A cronometragem sera realizada com chip eletronico."
-        : "A cronometragem sera realizada sem chip eletronico, por controle oficial da organizacao.",
-    ],
-  });
-
-  sections.push({
-    title: "Inscricao",
-    body: [
-      `As inscricoes estarao abertas de ${formatDate(config.dataInicioInscricao)} ate ${formatDate(config.dataFimInscricao)}.`,
-      `O valor base da inscricao e ${brl(config.valorInscricao)} por participante.`,
-      `A capacidade maxima prevista para esta edicao e de ${config.limiteVagas} vagas.`,
-      `Plataformas oficiais de inscricao: ${config.plataformaInscricao.join(", ")}.`,
-    ],
-  });
-
-  sections.push({
-    title: "Kit do Atleta",
-    body: [
-      "O kit sera disponibilizado conforme cronograma divulgado pela organizacao.",
-      config.possuiChip
-        ? "O kit inclui chip de cronometragem e numero de peito."
-        : "O kit inclui numero de peito, sem fornecimento de chip eletronico.",
-    ],
-  });
-
-  if (config.possuiPremiacaoDinheiro) {
-    sections.push({
-      title: "Premiacao",
-      body: [
-        "Havera premiacao em dinheiro para categorias previstas no anexo tecnico.",
-        "O pagamento da premiacao seguira validacao oficial de resultados e regras de elegibilidade.",
+  const sections: Array<{ title: string; lines: string[] }> = [
+    {
+      title: "Da Prova",
+      lines: [
+        `A prova ${event.nomeEvento}, doravante denominada EVENTO, sera realizada em ${formatDate(event.dataEvento)}, em ${event.cidade}/${event.estado}, com largada em ${event.localLargada}.`,
+        `A organizacao e responsabilidade tecnica e de ${event.organizador}.`,
       ],
-    });
-  } else {
-    sections.push({
-      title: "Premiacao",
-      body: [
-        "Nao havera premiacao em dinheiro nesta edicao.",
-        "A organizacao podera oferecer trofeus e medalhas conforme categorias e regulamento tecnico.",
+    },
+    {
+      title: "Cronograma do Evento",
+      lines: [
+        "Os horarios oficiais de largada e concentracao serao divulgados pelos canais oficiais.",
+        `Tempo limite para conclusao do percurso principal: ${config.tempoLimiteMinutos} minutos.`,
       ],
-    });
-  }
-
-  sections.push({
-    title: "Contatos Oficiais",
-    body: [
-      `Canal oficial por e-mail: ${config.emailContato}.`,
-      `Canal oficial por WhatsApp: ${config.whatsappContato}.`,
-      "Duvidas, recursos e comunicacoes formais devem ser realizados por um dos canais acima.",
-    ],
-  });
+    },
+    {
+      title: "Regras Gerais",
+      lines: [
+        "Ao participar, o atleta assume total responsabilidade pelos dados fornecidos e aceita integralmente este regulamento.",
+        "O atleta declara estar apto fisicamente para participacao no EVENTO.",
+        config.possuiChip
+          ? "A cronometragem oficial sera realizada por chip eletronico."
+          : "A cronometragem oficial nao utilizara chip eletronico.",
+      ],
+    },
+    {
+      title: "Kit de Participacao",
+      lines: [
+        "A retirada do kit seguira datas, horarios e local divulgados pela organizacao.",
+        config.possuiChip
+          ? "O kit contem numero de peito e chip de cronometragem."
+          : "O kit contem numero de peito, sem chip de cronometragem.",
+        "Itens promocionais e brindes podem variar conforme disponibilidade dos patrocinadores.",
+      ],
+    },
+    {
+      title: "Regras de Participacao",
+      lines: [
+        config.possuiKids
+          ? "O EVENTO possui modalidade Kids, mediante autorizacao do responsavel legal."
+          : "O EVENTO nao possui modalidade Kids nesta edicao.",
+        "A participacao e pessoal e intransferivel.",
+        "A organizacao podera retirar do percurso atletas fora do tempo limite por seguranca operacional.",
+      ],
+    },
+    {
+      title: "Inscricoes",
+      lines: [
+        `Periodo de inscricao: ${formatDate(config.dataInicioInscricao)} a ${formatDate(config.dataFimInscricao)}.`,
+        `Valor base da inscricao: ${brl(config.valorInscricao)}.`,
+        `Limite tecnico de vagas: ${config.limiteVagas}.`,
+        `Plataformas oficiais: ${config.plataformaInscricao.join(", ")}.`,
+      ],
+    },
+    {
+      title: "Retirada de Kit",
+      lines: [
+        "A retirada por terceiros podera ocorrer mediante autorizacao por escrito e documento das partes.",
+      ],
+    },
+    {
+      title: "Termo de Responsabilidade",
+      lines: [
+        "Ao se inscrever, o atleta declara estar de acordo com este regulamento e autoriza o uso de imagem para fins promocionais do evento.",
+      ],
+    },
+    {
+      title: "Chip e Numero de Peito",
+      lines: [
+        "O numero de peito e de uso obrigatorio e deve permanecer visivel durante todo o percurso.",
+        "Numero adulterado, danificado ou oculto pode acarretar desclassificacao.",
+      ],
+    },
+    {
+      title: "Classificacao",
+      lines: [
+        "A classificacao oficial sera divulgada conforme criterio tecnico definido pela organizacao e equipe de cronometragem.",
+      ],
+    },
+    {
+      title: "Premiacao",
+      lines: config.possuiPremiacaoDinheiro
+        ? [
+            "Havera premiacao em dinheiro conforme categorias e regras divulgadas no anexo tecnico.",
+            "A liberacao da premiacao depende da homologacao oficial dos resultados.",
+          ]
+        : [
+            "Nao havera premiacao em dinheiro nesta edicao.",
+            "Podem ser concedidos trofeus e medalhas conforme categorias oficiais.",
+          ],
+    },
+    {
+      title: "Consideracoes Gerais",
+      lines: [
+        "A organizacao podera alterar este regulamento por necessidade tecnica, de seguranca ou por exigencia legal.",
+        "Casos omissos serao resolvidos pela comissao organizadora.",
+      ],
+    },
+    {
+      title: "Contatos Oficiais",
+      lines: [
+        `E-mail: ${config.emailContato}.`,
+        `WhatsApp: ${config.whatsappContato}.`,
+        "Duvidas e comunicacoes oficiais devem ser feitas pelos canais acima.",
+      ],
+    },
+  ];
 
   const structured = sections
     .map((section, index) => {
       const header = `${index + 1}. ${section.title}`;
-      const body = section.body.map((line) => `- ${line}`).join("\n");
+      const body = section.lines.map((line) => `- ${line}`).join("\n");
       return `${header}\n${body}`;
     })
     .join("\n\n");
 
-  return `REGULAMENTO OFICIAL\n\n${structured}`;
+  return `REGULAMENTO GERAL\n\n${structured}`;
 }

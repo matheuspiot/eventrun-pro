@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CostItemDto } from "../types";
 import { EventDto } from "@/modules/events/types";
@@ -52,6 +52,7 @@ type PendingAction =
   | null;
 
 const selectedEventStorageKey = "eventrun:budget:selected-event-id";
+const costItemsUpdatedEvent = "eventrun:cost-items-updated";
 
 function brl(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -105,6 +106,7 @@ export function EventBudgetPlanner() {
   const [savedSnapshot, setSavedSnapshot] = useState("");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   const currentDraft = useMemo<BudgetDraft>(
     () => ({
@@ -128,7 +130,32 @@ export function EventBudgetPlanner() {
   );
 
   const currentSnapshot = useMemo(() => serializeDraft(currentDraft), [currentDraft]);
-  const isDirty = loadedBudget && savedSnapshot.length > 0 && currentSnapshot !== savedSnapshot;
+  const isDirty =
+    hasUserInteracted &&
+    loadedBudget &&
+    savedSnapshot.length > 0 &&
+    currentSnapshot !== savedSnapshot;
+
+  const loadCostItems = useCallback(async (categoria?: string, search?: string) => {
+    const params = new URLSearchParams();
+    if (categoria) {
+      params.set("categoria", categoria);
+    }
+    if (search) {
+      params.set("search", search);
+    }
+    const response = await fetch(`/api/cost-items?${params.toString()}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      return;
+    }
+    const data = (await response.json()) as { items: CostItemDto[] };
+    setCostItems(data.items);
+    if (data.items.length > 0 && !data.items.some((item) => item.id === newCostItemId)) {
+      setNewCostItemId(data.items[0].id);
+    }
+  }, [newCostItemId]);
 
   useEffect(() => {
     async function loadBase() {
@@ -163,6 +190,16 @@ export function EventBudgetPlanner() {
 
     void loadBase();
   }, []);
+
+  useEffect(() => {
+    function handleCostItemsUpdated() {
+      void loadCostItems();
+    }
+    window.addEventListener(costItemsUpdatedEvent, handleCostItemsUpdated);
+    return () => {
+      window.removeEventListener(costItemsUpdatedEvent, handleCostItemsUpdated);
+    };
+  }, [loadCostItems]);
 
   useEffect(() => {
     async function loadBudget(eventId: string) {
@@ -218,6 +255,7 @@ export function EventBudgetPlanner() {
       );
       setItems(serverDraft.items);
       setSavedSnapshot(serializeDraft(serverDraft));
+      setHasUserInteracted(false);
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem(selectedEventStorageKey, eventId);
@@ -306,6 +344,7 @@ export function EventBudgetPlanner() {
       return;
     }
 
+    setHasUserInteracted(true);
     setItems((prev) => [
       ...prev,
       {
@@ -324,6 +363,7 @@ export function EventBudgetPlanner() {
     field: "quantidade" | "valorUnitario",
     value: string,
   ) {
+    setHasUserInteracted(true);
     setItems((prev) =>
       prev.map((item) =>
         item.costItemId === costItemId ? { ...item, [field]: value } : item,
@@ -332,6 +372,7 @@ export function EventBudgetPlanner() {
   }
 
   function removeItem(costItemId: string) {
+    setHasUserInteracted(true);
     setItems((prev) => prev.filter((item) => item.costItemId !== costItemId));
   }
 
@@ -357,7 +398,10 @@ export function EventBudgetPlanner() {
         Number(taxaCancelamentoReembolsoPercentual) || 0,
       items: items.map((item) => ({
         tipoCusto: item.tipoCusto,
-        quantidade: Number(item.quantidade) || 0,
+        quantidade:
+          item.tipoCusto === "VARIAVEL_ATLETA"
+            ? 1
+            : Number(item.quantidade) || 0,
         valorUnitario: Number(item.valorUnitario) || 0,
       })),
     });
@@ -398,7 +442,8 @@ export function EventBudgetPlanner() {
 
     const normalizedItems = items.map((item) => ({
       ...item,
-      quantidadeNumber: toNumberSafe(item.quantidade),
+      quantidadeNumber:
+        item.tipoCusto === "VARIAVEL_ATLETA" ? 1 : toNumberSafe(item.quantidade),
       valorUnitarioNumber: toNumberSafe(item.valorUnitario),
     }));
 
@@ -470,6 +515,7 @@ export function EventBudgetPlanner() {
         );
         setItems(persistedDraft.items);
         setSavedSnapshot(serializeDraft(persistedDraft));
+        setHasUserInteracted(false);
 
       }
 
@@ -602,7 +648,10 @@ export function EventBudgetPlanner() {
                 type="number"
                 min="1"
                 value={metaInscritos}
-                onChange={(event) => setMetaInscritos(event.target.value)}
+                onChange={(event) => {
+                  setHasUserInteracted(true);
+                  setMetaInscritos(event.target.value);
+                }}
                 className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
@@ -615,7 +664,10 @@ export function EventBudgetPlanner() {
                 min="0"
                 step="0.01"
                 value={patrocinioPrevisto}
-                onChange={(event) => setPatrocinioPrevisto(event.target.value)}
+                onChange={(event) => {
+                  setHasUserInteracted(true);
+                  setPatrocinioPrevisto(event.target.value);
+                }}
                 className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
@@ -628,7 +680,10 @@ export function EventBudgetPlanner() {
                 min="0"
                 step="0.01"
                 value={lucroAlvoPercentual}
-                onChange={(event) => setLucroAlvoPercentual(event.target.value)}
+                onChange={(event) => {
+                  setHasUserInteracted(true);
+                  setLucroAlvoPercentual(event.target.value);
+                }}
                 className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
@@ -641,7 +696,10 @@ export function EventBudgetPlanner() {
                 min="0"
                 step="0.01"
                 value={taxaPlataformaPercentual}
-                onChange={(event) => setTaxaPlataformaPercentual(event.target.value)}
+                onChange={(event) => {
+                  setHasUserInteracted(true);
+                  setTaxaPlataformaPercentual(event.target.value);
+                }}
                 className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
@@ -654,7 +712,10 @@ export function EventBudgetPlanner() {
                 min="0"
                 step="0.01"
                 value={impostoPercentual}
-                onChange={(event) => setImpostoPercentual(event.target.value)}
+                onChange={(event) => {
+                  setHasUserInteracted(true);
+                  setImpostoPercentual(event.target.value);
+                }}
                 className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
@@ -667,9 +728,10 @@ export function EventBudgetPlanner() {
                 min="0"
                 step="0.01"
                 value={taxaCancelamentoReembolsoPercentual}
-                onChange={(event) =>
-                  setTaxaCancelamentoReembolsoPercentual(event.target.value)
-                }
+                onChange={(event) => {
+                  setHasUserInteracted(true);
+                  setTaxaCancelamentoReembolsoPercentual(event.target.value);
+                }}
                 className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
@@ -724,8 +786,11 @@ export function EventBudgetPlanner() {
                   </tr>
                 ) : (
                   items.map((item) => {
-                    const subtotal =
-                      (Number(item.quantidade) || 0) * (Number(item.valorUnitario) || 0);
+                    const effectiveQuantity =
+                      item.tipoCusto === "VARIAVEL_ATLETA"
+                        ? Number(metaInscritos) || 0
+                        : Number(item.quantidade) || 0;
+                    const subtotal = effectiveQuantity * (Number(item.valorUnitario) || 0);
 
                     return (
                       <tr key={item.costItemId} className="border-b border-border/70">
@@ -735,7 +800,25 @@ export function EventBudgetPlanner() {
                         </td>
                         <td className="px-3 py-3 text-zinc-600">{item.tipoCusto}</td>
                         <td className="px-3 py-3">
-                          <input type="number" min="0" step="0.01" value={item.quantidade} onChange={(event) => updateItem(item.costItemId, "quantidade", event.target.value)} className="w-28 rounded-lg border border-border bg-surface px-2 py-1 outline-none focus:ring-2 focus:ring-accent" />
+                          {item.tipoCusto === "VARIAVEL_ATLETA" ? (
+                            <input
+                              type="number"
+                              value={effectiveQuantity}
+                              readOnly
+                              className="w-28 rounded-lg border border-border bg-zinc-100 px-2 py-1 text-zinc-600"
+                            />
+                          ) : (
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.quantidade}
+                              onChange={(event) =>
+                                updateItem(item.costItemId, "quantidade", event.target.value)
+                              }
+                              className="w-28 rounded-lg border border-border bg-surface px-2 py-1 outline-none focus:ring-2 focus:ring-accent"
+                            />
+                          )}
                         </td>
                         <td className="px-3 py-3">
                           <input type="number" min="0" step="0.01" value={item.valorUnitario} onChange={(event) => updateItem(item.costItemId, "valorUnitario", event.target.value)} className="w-32 rounded-lg border border-border bg-surface px-2 py-1 outline-none focus:ring-2 focus:ring-accent" />
