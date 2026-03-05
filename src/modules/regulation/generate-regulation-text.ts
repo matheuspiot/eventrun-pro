@@ -11,7 +11,31 @@ function brl(value: string) {
   return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function buildAgeRanges(config: RegulationConfigDto) {
+  const ranges: string[] = [];
+  const start = Math.max(1, config.faixaEtariaInicio);
+  const end = Math.max(start, config.faixaEtariaFim);
+  const interval = [2, 5, 10].includes(config.intervaloFaixaEtaria)
+    ? config.intervaloFaixaEtaria
+    : 5;
+
+  let current = start;
+  while (current <= end) {
+    const rangeEnd = Math.min(end, current + interval - 1);
+    if (rangeEnd >= end) {
+      ranges.push(`${current}+`);
+      break;
+    }
+    ranges.push(`${current} a ${rangeEnd}`);
+    current += interval;
+  }
+
+  return ranges;
+}
+
 export function generateRegulationText(config: RegulationConfigDto, event: RegulationEventDto) {
+  const ageRanges = buildAgeRanges(config);
+
   const sections: Array<{ title: string; lines: string[] }> = [
     {
       title: "Da Prova",
@@ -55,6 +79,13 @@ export function generateRegulationText(config: RegulationConfigDto, event: Regul
           : "O EVENTO não possui modalidade Kids nesta edição.",
         "A participação é pessoal e intransferível.",
         "A organização poderá retirar do percurso atletas fora do tempo limite por segurança operacional.",
+      ],
+    },
+    {
+      title: "Categorias por Faixa Etária",
+      lines: [
+        `Configuração de categorias: de ${config.faixaEtariaInicio} até ${config.faixaEtariaFim} anos, em intervalos de ${config.intervaloFaixaEtaria} em ${config.intervaloFaixaEtaria}.`,
+        `Faixas sugeridas: ${ageRanges.join(", ")}.`,
       ],
     },
     {

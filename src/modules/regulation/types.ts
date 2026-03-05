@@ -5,6 +5,9 @@ export type RegulationConfigDto = {
   possuiChip: boolean;
   possuiPremiacaoDinheiro: boolean;
   logoDataUrl: string | null;
+  faixaEtariaInicio: number;
+  faixaEtariaFim: number;
+  intervaloFaixaEtaria: number;
   tempoLimiteMinutos: number;
   plataformaInscricao: string[];
   valorInscricao: string;
@@ -33,6 +36,9 @@ export type RegulationConfigInput = {
   possuiChip: boolean;
   possuiPremiacaoDinheiro: boolean;
   logoDataUrl?: string | null;
+  faixaEtariaInicio: number;
+  faixaEtariaFim: number;
+  intervaloFaixaEtaria: number;
   tempoLimiteMinutos: number;
   plataformaInscricao: string[];
   valorInscricao: number;

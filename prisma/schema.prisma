@@ -138,6 +138,9 @@ model RegulationConfig {
   possuiChip               Boolean  @default(true)
   possuiPremiacaoDinheiro  Boolean  @default(false)
   logoDataUrl              String?
+  faixaEtariaInicio        Int      @default(18)
+  faixaEtariaFim           Int      @default(80)
+  intervaloFaixaEtaria     Int      @default(5)
   tempoLimiteMinutos       Int
   plataformaInscricao      String[]
   valorInscricao           Decimal  @db.Decimal(10, 2)

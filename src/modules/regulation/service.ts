@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+﻿import { prisma } from "@/lib/prisma";
 import { RegulationConfigInput } from "./types";
 
 export async function getEventForRegulation(organizationId: string, eventId: string) {
@@ -16,10 +16,7 @@ export async function getEventForRegulation(organizationId: string, eventId: str
   });
 }
 
-export async function getRegulationConfigByEvent(
-  organizationId: string,
-  eventId: string,
-) {
+export async function getRegulationConfigByEvent(organizationId: string, eventId: string) {
   const event = await getEventForRegulation(organizationId, eventId);
   if (!event) {
     return null;
@@ -47,6 +44,9 @@ export async function upsertRegulationConfig(
       possuiChip: input.possuiChip,
       possuiPremiacaoDinheiro: input.possuiPremiacaoDinheiro,
       logoDataUrl: input.logoDataUrl ?? null,
+      faixaEtariaInicio: input.faixaEtariaInicio,
+      faixaEtariaFim: input.faixaEtariaFim,
+      intervaloFaixaEtaria: input.intervaloFaixaEtaria,
       tempoLimiteMinutos: input.tempoLimiteMinutos,
       plataformaInscricao: input.plataformaInscricao,
       valorInscricao: input.valorInscricao,
@@ -61,6 +61,9 @@ export async function upsertRegulationConfig(
       possuiChip: input.possuiChip,
       possuiPremiacaoDinheiro: input.possuiPremiacaoDinheiro,
       logoDataUrl: input.logoDataUrl ?? null,
+      faixaEtariaInicio: input.faixaEtariaInicio,
+      faixaEtariaFim: input.faixaEtariaFim,
+      intervaloFaixaEtaria: input.intervaloFaixaEtaria,
       tempoLimiteMinutos: input.tempoLimiteMinutos,
       plataformaInscricao: input.plataformaInscricao,
       valorInscricao: input.valorInscricao,

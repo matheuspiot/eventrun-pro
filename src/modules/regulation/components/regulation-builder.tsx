@@ -21,6 +21,9 @@ const defaultConfig = {
   possuiChip: true,
   possuiPremiacaoDinheiro: false,
   logoDataUrl: "",
+  faixaEtariaInicio: "16",
+  faixaEtariaFim: "80",
+  intervaloFaixaEtaria: "5",
   tempoLimiteMinutos: "180",
   plataformaInscricao: ["TicketSports"],
   valorInscricao: "0",
@@ -92,6 +95,9 @@ export function RegulationBuilder() {
         possuiChip: data.config.possuiChip,
         possuiPremiacaoDinheiro: data.config.possuiPremiacaoDinheiro,
         logoDataUrl: data.config.logoDataUrl ?? "",
+        faixaEtariaInicio: String(data.config.faixaEtariaInicio),
+        faixaEtariaFim: String(data.config.faixaEtariaFim),
+        intervaloFaixaEtaria: String(data.config.intervaloFaixaEtaria),
         tempoLimiteMinutos: String(data.config.tempoLimiteMinutos),
         plataformaInscricao: data.config.plataformaInscricao,
         valorInscricao: data.config.valorInscricao,
@@ -159,6 +165,9 @@ export function RegulationBuilder() {
         possuiChip: form.possuiChip,
         possuiPremiacaoDinheiro: form.possuiPremiacaoDinheiro,
         logoDataUrl: form.logoDataUrl || null,
+        faixaEtariaInicio: Number(form.faixaEtariaInicio),
+        faixaEtariaFim: Number(form.faixaEtariaFim),
+        intervaloFaixaEtaria: Number(form.intervaloFaixaEtaria),
         tempoLimiteMinutos: Number(form.tempoLimiteMinutos),
         plataformaInscricao: form.plataformaInscricao,
         valorInscricao: Number(form.valorInscricao),
@@ -194,6 +203,9 @@ export function RegulationBuilder() {
         possuiChip: form.possuiChip,
         possuiPremiacaoDinheiro: form.possuiPremiacaoDinheiro,
         logoDataUrl: form.logoDataUrl || null,
+        faixaEtariaInicio: Number(form.faixaEtariaInicio || 16),
+        faixaEtariaFim: Number(form.faixaEtariaFim || 80),
+        intervaloFaixaEtaria: Number(form.intervaloFaixaEtaria || 5),
         tempoLimiteMinutos: Number(form.tempoLimiteMinutos || 0),
         plataformaInscricao: form.plataformaInscricao,
         valorInscricao: form.valorInscricao || "0",
@@ -352,6 +364,55 @@ export function RegulationBuilder() {
                     }
                     className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                   />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                      Faixa inicial
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={form.faixaEtariaInicio}
+                      onChange={(event) =>
+                        setForm((prev) => ({ ...prev, faixaEtariaInicio: event.target.value }))
+                      }
+                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                      Faixa final
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={form.faixaEtariaFim}
+                      onChange={(event) =>
+                        setForm((prev) => ({ ...prev, faixaEtariaFim: event.target.value }))
+                      }
+                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                      Intervalo
+                    </label>
+                    <select
+                      value={form.intervaloFaixaEtaria}
+                      onChange={(event) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          intervaloFaixaEtaria: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="2">2 em 2</option>
+                      <option value="5">5 em 5</option>
+                      <option value="10">10 em 10</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             )}

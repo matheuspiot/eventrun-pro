@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getAuthFromRequest } from "@/lib/auth";
 import { regulationConfigSchema } from "@/modules/regulation/validation";
 import {
@@ -18,6 +18,9 @@ function serializeConfig(config: Awaited<ReturnType<typeof getRegulationConfigBy
     possuiChip: config.possuiChip,
     possuiPremiacaoDinheiro: config.possuiPremiacaoDinheiro,
     logoDataUrl: config.logoDataUrl,
+    faixaEtariaInicio: config.faixaEtariaInicio,
+    faixaEtariaFim: config.faixaEtariaFim,
+    intervaloFaixaEtaria: config.intervaloFaixaEtaria,
     tempoLimiteMinutos: config.tempoLimiteMinutos,
     plataformaInscricao: config.plataformaInscricao,
     valorInscricao: config.valorInscricao.toString(),
