@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -64,7 +64,7 @@ model CostItem {
   categoria      CostCategory
   tipoCusto      CostType
   unidade        CostUnit
-  custoPadrao    Decimal       @db.Decimal(10, 2)
+  custoPadrao    Float
   descricao      String?
   criadoEm       DateTime      @default(now())
   atualizadoEm   DateTime      @updatedAt
@@ -106,11 +106,11 @@ model EventBudget {
   eventId                   String            @unique
   logoDataUrl               String?
   metaInscritos             Int
-  patrocinioPrevisto        Decimal           @db.Decimal(10, 2)
-  lucroAlvoPercentual       Decimal           @db.Decimal(6, 2)
-  taxaPlataformaPercentual  Decimal           @db.Decimal(6, 2)
-  impostoPercentual         Decimal           @db.Decimal(6, 2)
-  taxaCancelamentoReembolsoPercentual Decimal  @default(0) @db.Decimal(6, 2)
+  patrocinioPrevisto        Float
+  lucroAlvoPercentual       Float
+  taxaPlataformaPercentual  Float
+  impostoPercentual         Float
+  taxaCancelamentoReembolsoPercentual Float    @default(0)
   criadoEm                  DateTime          @default(now())
   atualizadoEm              DateTime          @updatedAt
   event                     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -121,8 +121,8 @@ model EventBudgetItem {
   id            String      @id @default(cuid())
   eventBudgetId String
   costItemId    String
-  quantidade    Decimal     @db.Decimal(10, 2)
-  valorUnitario Decimal     @db.Decimal(10, 2)
+  quantidade    Float
+  valorUnitario Float
   tipoCusto     CostType
   eventBudget   EventBudget @relation(fields: [eventBudgetId], references: [id], onDelete: Cascade)
   costItem      CostItem    @relation(fields: [costItemId], references: [id], onDelete: Cascade)
@@ -142,8 +142,8 @@ model RegulationConfig {
   faixaEtariaFim           Int      @default(80)
   intervaloFaixaEtaria     Int      @default(5)
   tempoLimiteMinutos       Int
-  plataformaInscricao      String[]
-  valorInscricao           Decimal  @db.Decimal(10, 2)
+  plataformaInscricao      String
+  valorInscricao           Float
   limiteVagas              Int
   emailContato             String
   whatsappContato          String

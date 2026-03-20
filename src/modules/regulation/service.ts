@@ -1,5 +1,22 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { RegulationConfigInput } from "./types";
+
+function serializePlatforms(platforms: string[]) {
+  return JSON.stringify(platforms);
+}
+
+function parsePlatforms(raw: string | null | undefined) {
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 export async function getEventForRegulation(organizationId: string, eventId: string) {
   return prisma.event.findFirst({
@@ -22,9 +39,18 @@ export async function getRegulationConfigByEvent(organizationId: string, eventId
     return null;
   }
 
-  return prisma.regulationConfig.findUnique({
+  const config = await prisma.regulationConfig.findUnique({
     where: { eventId },
   });
+
+  if (!config) {
+    return null;
+  }
+
+  return {
+    ...config,
+    plataformaInscricao: parsePlatforms(config.plataformaInscricao),
+  };
 }
 
 export async function upsertRegulationConfig(
@@ -33,7 +59,7 @@ export async function upsertRegulationConfig(
 ) {
   const event = await getEventForRegulation(organizationId, input.eventId);
   if (!event) {
-    return { error: "Evento não encontrado" as const };
+    return { error: "Evento nao encontrado" as const };
   }
 
   const config = await prisma.regulationConfig.upsert({
@@ -48,7 +74,7 @@ export async function upsertRegulationConfig(
       faixaEtariaFim: input.faixaEtariaFim,
       intervaloFaixaEtaria: input.intervaloFaixaEtaria,
       tempoLimiteMinutos: input.tempoLimiteMinutos,
-      plataformaInscricao: input.plataformaInscricao,
+      plataformaInscricao: serializePlatforms(input.plataformaInscricao),
       valorInscricao: input.valorInscricao,
       limiteVagas: input.limiteVagas,
       emailContato: input.emailContato,
@@ -65,7 +91,7 @@ export async function upsertRegulationConfig(
       faixaEtariaFim: input.faixaEtariaFim,
       intervaloFaixaEtaria: input.intervaloFaixaEtaria,
       tempoLimiteMinutos: input.tempoLimiteMinutos,
-      plataformaInscricao: input.plataformaInscricao,
+      plataformaInscricao: serializePlatforms(input.plataformaInscricao),
       valorInscricao: input.valorInscricao,
       limiteVagas: input.limiteVagas,
       emailContato: input.emailContato,
@@ -75,5 +101,10 @@ export async function upsertRegulationConfig(
     },
   });
 
-  return { config };
+  return {
+    config: {
+      ...config,
+      plataformaInscricao: parsePlatforms(config.plataformaInscricao),
+    },
+  };
 }

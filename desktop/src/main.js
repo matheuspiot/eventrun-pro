@@ -1,4 +1,4 @@
-﻿const { app, BrowserWindow, Menu, dialog } = require("electron");
+const { app, BrowserWindow, Menu, dialog } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -15,6 +15,10 @@ let updaterConfigured = false;
 let manualCheckInProgress = false;
 let updateDownloadRequested = false;
 let updatePercent = 0;
+
+function toPrismaSqliteUrl(filePath) {
+  return `file:${filePath.split(path.sep).join("/")}`;
+}
 
 function log(message, extra = "") {
   try {
@@ -43,14 +47,33 @@ function loadUpdaterConfig() {
   }
 }
 
+function ensureUserDatabase(bundleRoot) {
+  const userDataRoot = app.getPath("userData");
+  const targetDbPath = path.join(userDataRoot, "eventrun-pro.db");
+  const templateDbPath = path.join(bundleRoot, "data", "eventrun-template.db");
+
+  fs.mkdirSync(userDataRoot, { recursive: true });
+
+  if (!fs.existsSync(targetDbPath)) {
+    if (!fs.existsSync(templateDbPath)) {
+      throw new Error(`Banco base nao encontrado em ${templateDbPath}`);
+    }
+
+    fs.copyFileSync(templateDbPath, targetDbPath);
+  }
+
+  return targetDbPath;
+}
+
 function startServer() {
   const bundleRoot = isDev
     ? path.join(__dirname, "..", "app-bundle")
     : path.join(process.resourcesPath, "app-bundle");
   const serverScript = path.join(bundleRoot, "server.js");
+  const userDbPath = ensureUserDatabase(bundleRoot);
 
   if (!fs.existsSync(serverScript)) {
-    throw new Error(`server.js não encontrado em ${serverScript}`);
+    throw new Error(`server.js nao encontrado em ${serverScript}`);
   }
 
   const env = {
@@ -58,6 +81,7 @@ function startServer() {
     PORT: String(serverPort),
     HOSTNAME: "127.0.0.1",
     ELECTRON_RUN_AS_NODE: "1",
+    DATABASE_URL: toPrismaSqliteUrl(userDbPath),
   };
 
   serverProcess = spawn(process.execPath, [serverScript], {
@@ -94,7 +118,7 @@ function startServer() {
         await dialog.showMessageBox(mainWindow, {
           type: "error",
           title: "EventRun Pro",
-          message: "O servidor interno caiu e não conseguiu reiniciar.",
+          message: "O servidor interno caiu e nao conseguiu reiniciar.",
           detail: String(error?.message || error),
         });
       }
@@ -103,7 +127,7 @@ function startServer() {
     }
   });
 
-  log("server:start", serverScript);
+  log("server:start", `${serverScript} | db=${userDbPath}`);
 }
 
 function stopServer() {
@@ -125,7 +149,7 @@ async function waitForServer(maxTries = 60) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
-  throw new Error("Servidor Next não respondeu a tempo.");
+  throw new Error("Servidor Next nao respondeu a tempo.");
 }
 
 function setupAutoUpdater() {
@@ -162,14 +186,17 @@ function setupAutoUpdater() {
   autoUpdater.on("error", async (error) => {
     log("updater:error", String(error?.message || error));
     setUpdaterProgress(0);
-    if (mainWindow && !mainWindow.isDestroyed()) {
+
+    const shouldNotifyUser = manualCheckInProgress || updateDownloadRequested;
+    if (shouldNotifyUser && mainWindow && !mainWindow.isDestroyed()) {
       await dialog.showMessageBox(mainWindow, {
         type: "error",
-        title: "Atualização",
-        message: "Falha no processo de atualização.",
+        title: "Atualizacao",
+        message: "Falha no processo de atualizacao.",
         detail: String(error?.message || error),
       });
     }
+
     manualCheckInProgress = false;
     updateDownloadRequested = false;
   });
@@ -183,8 +210,8 @@ function setupAutoUpdater() {
     if (manualCheckInProgress && mainWindow && !mainWindow.isDestroyed()) {
       await dialog.showMessageBox(mainWindow, {
         type: "info",
-        title: "Atualização",
-        message: `Você já está na versão mais recente (${app.getVersion()}).`,
+        title: "Atualizacao",
+        message: `Voce ja esta na versao mais recente (${app.getVersion()}).`,
       });
     }
     manualCheckInProgress = false;
@@ -195,8 +222,8 @@ function setupAutoUpdater() {
 
     const result = await dialog.showMessageBox(mainWindow, {
       type: "question",
-      title: "Atualização disponível",
-      message: `Nova versão encontrada: ${info.version}.`,
+      title: "Atualizacao disponivel",
+      message: `Nova versao encontrada: ${info.version}.`,
       detail: "Deseja baixar e instalar agora?",
       buttons: ["Atualizar agora", "Depois"],
       defaultId: 0,
@@ -208,9 +235,9 @@ function setupAutoUpdater() {
       setUpdaterProgress(1);
       await dialog.showMessageBox(mainWindow, {
         type: "info",
-        title: "Atualização",
-        message: "Download da atualização iniciado.",
-        detail: "Você pode continuar usando o programa enquanto baixa.",
+        title: "Atualizacao",
+        message: "Download da atualizacao iniciado.",
+        detail: "Voce pode continuar usando o programa enquanto baixa.",
       });
       await autoUpdater.downloadUpdate();
       return;
@@ -230,9 +257,9 @@ function setupAutoUpdater() {
     setUpdaterProgress(100);
     await dialog.showMessageBox({
       type: "info",
-      title: "Atualização pronta",
-      message: "Atualização baixada com sucesso.",
-      detail: "O aplicativo será fechado e reiniciado para concluir a instalação.",
+      title: "Atualizacao pronta",
+      message: "Atualizacao baixada com sucesso.",
+      detail: "O aplicativo sera fechado e reiniciado para concluir a instalacao.",
       buttons: ["OK"],
     });
 
@@ -244,7 +271,6 @@ function setupAutoUpdater() {
   setTimeout(() => {
     autoUpdater.checkForUpdates().catch((error) => {
       log("updater:initial-check-error", String(error?.message || error));
-      // ignore check errors
     });
   }, 2500);
 }
@@ -254,7 +280,7 @@ async function checkForUpdatesManually() {
     await dialog.showMessageBox(mainWindow, {
       type: "warning",
       title: "EventRun Pro",
-      message: "Atualizações automáticas não estão configuradas.",
+      message: "Atualizacoes automaticas nao estao configuradas.",
       detail: "Verifique o arquivo updater.config.json do aplicativo.",
     });
     return;
@@ -263,8 +289,8 @@ async function checkForUpdatesManually() {
   if (manualCheckInProgress || updateDownloadRequested) {
     await dialog.showMessageBox(mainWindow, {
       type: "info",
-      title: "Atualização",
-      message: "Já existe uma verificação/download de atualização em andamento.",
+      title: "Atualizacao",
+      message: "Ja existe uma verificacao/download de atualizacao em andamento.",
     });
     return;
   }
@@ -277,7 +303,7 @@ async function checkForUpdatesManually() {
     await dialog.showMessageBox(mainWindow, {
       type: "error",
       title: "EventRun Pro",
-      message: "Falha ao verificar atualizações.",
+      message: "Falha ao verificar atualizacoes.",
       detail: String(error?.message || error),
     });
   }
@@ -289,23 +315,23 @@ function setupAppMenu() {
       label: "Sobre",
       submenu: [
         {
-          label: `Versão ${app.getVersion()}`,
+          label: `Versao ${app.getVersion()}`,
           enabled: false,
         },
         {
-          label: "Informações do programa",
+          label: "Informacoes do programa",
           click: async () => {
             await dialog.showMessageBox(mainWindow, {
               type: "info",
               title: "Sobre o EventRun Pro",
               message: "EventRun Pro",
               detail:
-                "Sistema para gestão de eventos esportivos com foco em corridas.\n\nInclui projetos, custos, orçamento e regulamento.",
+                "Sistema para gestao de eventos esportivos com foco em corridas.\n\nInclui projetos, custos, orcamento e regulamento.",
             });
           },
         },
         {
-          label: "Verificar atualizações",
+          label: "Verificar atualizacoes",
           click: async () => {
             await checkForUpdatesManually();
           },
@@ -343,7 +369,7 @@ async function createWindow() {
     await dialog.showMessageBox(mainWindow, {
       type: "error",
       title: "EventRun Pro",
-      message: "A interface travou e será recarregada.",
+      message: "A interface travou e sera recarregada.",
       detail: `reason=${details.reason} exitCode=${details.exitCode}`,
     });
     if (!mainWindow.isDestroyed()) {

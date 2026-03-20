@@ -24,7 +24,6 @@ export async function listCostItemsByOrganization(
       ? {
           nome: {
             contains: filters.search,
-            mode: "insensitive",
           },
         }
       : {}),

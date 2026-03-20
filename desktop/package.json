@@ -1,6 +1,6 @@
 {
   "name": "eventrun-pro-desktop",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "EventRun Pro desktop shell",
   "main": "src/main.js",
   "author": "Clube Piot",

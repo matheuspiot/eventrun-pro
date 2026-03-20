@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
+    "db:init": "node scripts/init-sqlite-db.cjs prisma/dev.db",
     "desktop:prepare": "npm run build && node scripts/prepare-desktop-bundle.cjs",
     "desktop:dist:win": "npm run desktop:prepare && npm --prefix desktop run dist:win"
   },
@@ -32,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^6.7.0",
+    "sql.js": "^1.14.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
