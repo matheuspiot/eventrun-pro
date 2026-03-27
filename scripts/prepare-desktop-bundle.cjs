@@ -11,6 +11,8 @@ const publicRoot = path.join(projectRoot, "public");
 const templateDataRoot = path.join(outputRoot, "data");
 const templateDbPath = path.join(templateDataRoot, "eventrun-template.db");
 const outputScriptsRoot = path.join(outputRoot, "scripts");
+const sqlJsSourceRoot = path.join(projectRoot, "node_modules", "sql.js");
+const sqlJsOutputRoot = path.join(outputRoot, "node_modules", "sql.js");
 
 async function main() {
   if (!fs.existsSync(standaloneRoot)) {
@@ -46,6 +48,13 @@ async function main() {
     path.join(projectRoot, "scripts", "init-sqlite-db.cjs"),
     path.join(outputScriptsRoot, "init-sqlite-db.cjs"),
   );
+
+  if (!fs.existsSync(sqlJsSourceRoot)) {
+    throw new Error(`Dependencia sql.js nao encontrada em ${sqlJsSourceRoot}`);
+  }
+  fs.rmSync(sqlJsOutputRoot, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(sqlJsOutputRoot), { recursive: true });
+  fs.cpSync(sqlJsSourceRoot, sqlJsOutputRoot, { recursive: true, dereference: true });
 
   const envSource = fs.existsSync(path.join(projectRoot, ".env"))
     ? path.join(projectRoot, ".env")
