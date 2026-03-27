@@ -21,7 +21,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       </div>
       {params.forbidden && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Seu perfil nao tem acesso ao modulo {params.forbidden}.
+          Seu perfil não tem acesso ao módulo {params.forbidden}.
         </div>
       )}
       <DashboardOperationsOverview />

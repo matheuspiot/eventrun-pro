@@ -46,7 +46,7 @@ function serializeConfig(config: Awaited<ReturnType<typeof getRegulationConfigBy
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "regulamento")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "regulamento")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -75,7 +75,7 @@ export async function PUT(request: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados invalidos", details: parsed.error.flatten() },
+      { error: "Dados inválidos", details: parsed.error.flatten() },
       { status: 400 },
     );
   }

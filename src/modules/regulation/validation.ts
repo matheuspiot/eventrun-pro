@@ -12,7 +12,7 @@ export const regulationConfigSchema = z
     exigeAtestadoMedico: z.boolean(),
     logoDataUrl: z
       .string()
-      .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, "Logo invalida")
+      .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, "Logo inválida")
       .max(1_500_000, "Logo muito grande")
       .nullable()
       .optional(),

@@ -29,7 +29,7 @@ const initialTaskForm: TaskForm = {
 const statusLabels = {
   PENDENTE: "Pendente",
   EM_ANDAMENTO: "Em andamento",
-  CONCLUIDA: "Concluida",
+  CONCLUIDA: "Concluída",
 } as const;
 
 function getStatusBadgeClasses(status: OperationTaskDto["status"]) {
@@ -68,7 +68,7 @@ export function OperationsPlanner() {
       setLoading(true);
       const response = await fetch("/api/events", { cache: "no-store" });
       if (!response.ok) {
-        setError("Nao foi possivel carregar os eventos.");
+        setError("Não foi possível carregar os eventos.");
         setLoading(false);
         return;
       }
@@ -98,7 +98,7 @@ export function OperationsPlanner() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(data.error ?? "Nao foi possivel carregar as tarefas.");
+        setError(data.error ?? "Não foi possível carregar as tarefas.");
         setTasksLoading(false);
         return;
       }
@@ -183,7 +183,7 @@ export function OperationsPlanner() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Nao foi possivel salvar a tarefa.");
+      setError(data.error ?? "Não foi possível salvar a tarefa.");
       setSaving(false);
       return;
     }
@@ -210,7 +210,7 @@ export function OperationsPlanner() {
     });
 
     if (!response.ok) {
-      setError("Nao foi possivel atualizar o status da tarefa.");
+      setError("Não foi possível atualizar o status da tarefa.");
       return;
     }
 
@@ -221,7 +221,7 @@ export function OperationsPlanner() {
   async function deleteTask(id: string) {
     const response = await fetch(`/api/operation-tasks/${id}`, { method: "DELETE" });
     if (!response.ok) {
-      setError("Nao foi possivel remover a tarefa.");
+      setError("Não foi possível remover a tarefa.");
       return;
     }
 
@@ -231,7 +231,7 @@ export function OperationsPlanner() {
   if (loading) {
     return (
       <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-        <p className="text-sm text-zinc-600">Carregando operacao...</p>
+        <p className="text-sm text-zinc-600">Carregando operação...</p>
       </section>
     );
   }
@@ -240,11 +240,11 @@ export function OperationsPlanner() {
     <section className="space-y-6">
       <header className="rounded-3xl border border-border bg-surface p-8 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-          Operacao
+          Operação
         </p>
         <h2 className="mt-2 text-3xl font-heading text-zinc-900">Checklist da prova</h2>
         <p className="mt-2 text-zinc-600">
-          Controle tarefas por evento, fase, responsavel, prazo e status.
+          Controle tarefas por evento, fase, responsável, prazo e status.
         </p>
       </header>
 
@@ -293,7 +293,7 @@ export function OperationsPlanner() {
           <input
             value={form.titulo}
             onChange={(event) => setForm((prev) => ({ ...prev, titulo: event.target.value }))}
-            placeholder="Titulo da tarefa"
+            placeholder="Título da tarefa"
             className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
           />
 
@@ -301,7 +301,7 @@ export function OperationsPlanner() {
             rows={3}
             value={form.descricao}
             onChange={(event) => setForm((prev) => ({ ...prev, descricao: event.target.value }))}
-            placeholder="Descricao"
+            placeholder="Descrição"
             className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
           />
 
@@ -309,7 +309,7 @@ export function OperationsPlanner() {
             <input
               value={form.responsavel}
               onChange={(event) => setForm((prev) => ({ ...prev, responsavel: event.target.value }))}
-              placeholder="Responsavel"
+              placeholder="Responsável"
               className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
             />
             <input
@@ -341,7 +341,7 @@ export function OperationsPlanner() {
             rows={4}
             value={form.observacoes}
             onChange={(event) => setForm((prev) => ({ ...prev, observacoes: event.target.value }))}
-            placeholder="Observacoes"
+            placeholder="Observações"
             className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
           />
 
@@ -374,7 +374,7 @@ export function OperationsPlanner() {
               <SummaryCard label="Total" value={String(summary.total)} />
               <SummaryCard label="Pendentes" value={String(summary.pending)} />
               <SummaryCard label="Em andamento" value={String(summary.inProgress)} />
-              <SummaryCard label="Concluidas" value={String(summary.done)} />
+              <SummaryCard label="Concluídas" value={String(summary.done)} />
             </div>
           </section>
 
@@ -407,7 +407,7 @@ export function OperationsPlanner() {
                             <div>
                               <h5 className="text-lg font-semibold text-zinc-900">{task.titulo}</h5>
                               <p className="mt-1 text-sm text-zinc-600">
-                                {task.descricao || "Sem descricao"}
+                                {task.descricao || "Sem descrição"}
                               </p>
                             </div>
                             <span className={`rounded-lg px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(task.status)}`}>
@@ -416,10 +416,10 @@ export function OperationsPlanner() {
                           </div>
 
                           <div className="mt-4 grid gap-3 md:grid-cols-4">
-                            <MiniInfo label="Responsavel" value={task.responsavel || "Nao definido"} />
+                            <MiniInfo label="Responsável" value={task.responsavel || "Não definido"} />
                             <MiniInfo label="Prazo" value={formatDate(task.prazo)} />
                             <MiniInfo label="Ordem" value={String(task.ordem)} />
-                            <MiniInfo label="Observacoes" value={task.observacoes || "Sem observacoes"} />
+                            <MiniInfo label="Observações" value={task.observacoes || "Sem observações"} />
                           </div>
 
                           <div className="mt-4 flex flex-wrap gap-2">

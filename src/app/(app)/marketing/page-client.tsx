@@ -44,7 +44,7 @@ export default function MarketingPageClient() {
       ]);
 
       if (!eventsResponse.ok || !packagesResponse.ok) {
-        setError("Nao foi possivel carregar marketing e eventos.");
+        setError("Não foi possível carregar marketing e eventos.");
         setLoading(false);
         return;
       }
@@ -115,7 +115,7 @@ export default function MarketingPageClient() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Nao foi possivel salvar o pacote.");
+      setError(data.error ?? "Não foi possível salvar o pacote.");
       setSaving(false);
       return;
     }
@@ -151,7 +151,7 @@ export default function MarketingPageClient() {
   async function handleDelete(id: string) {
     const response = await fetch(`/api/marketing-packages/${id}`, { method: "DELETE" });
     if (!response.ok) {
-      setError("Nao foi possivel remover o pacote.");
+      setError("Não foi possível remover o pacote.");
       return;
     }
 
@@ -190,7 +190,7 @@ export default function MarketingPageClient() {
             rows={3}
             value={form.descricao}
             onChange={(event) => setForm((prev) => ({ ...prev, descricao: event.target.value }))}
-            placeholder="Descricao comercial"
+            placeholder="Descrição comercial"
             className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
           />
 
@@ -198,7 +198,7 @@ export default function MarketingPageClient() {
             rows={5}
             value={form.entregaveis}
             onChange={(event) => setForm((prev) => ({ ...prev, entregaveis: event.target.value }))}
-            placeholder="Entregaveis, um por linha"
+            placeholder="Entregáveis, um por linha"
             className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
           />
 
@@ -307,7 +307,7 @@ export default function MarketingPageClient() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-xl font-heading text-zinc-900">Pacote {pkg.nome}</h3>
-                    <p className="mt-2 text-sm text-zinc-600">{pkg.descricao ?? "Sem descricao"}</p>
+                    <p className="mt-2 text-sm text-zinc-600">{pkg.descricao ?? "Sem descrição"}</p>
                   </div>
                   <span
                     className={`rounded-lg px-3 py-1 text-xs font-semibold ${
@@ -333,7 +333,7 @@ export default function MarketingPageClient() {
                 </p>
 
                 <p className="mt-4 text-sm text-zinc-600">
-                  <strong>Cronograma:</strong> {pkg.cronograma ?? "Nao informado"}
+                  <strong>Cronograma:</strong> {pkg.cronograma ?? "Não informado"}
                 </p>
 
                 <div className="mt-4 flex gap-2">
@@ -360,8 +360,8 @@ export default function MarketingPageClient() {
             <h3 className="text-xl font-heading text-zinc-900">Como apresentar ao cliente</h3>
             <ol className="mt-4 space-y-2 text-sm text-zinc-700">
               <li>1. Mostre o objetivo principal do evento e o momento comercial atual.</li>
-              <li>2. Selecione o pacote ideal e ajuste entregaveis para a realidade da prova.</li>
-              <li>3. Feche com cronograma, investimento e proxima reuniao de aprovacao.</li>
+              <li>2. Selecione o pacote ideal e ajuste entregáveis para a realidade da prova.</li>
+              <li>3. Feche com cronograma, investimento e próxima reunião de aprovação.</li>
             </ol>
           </article>
         </div>

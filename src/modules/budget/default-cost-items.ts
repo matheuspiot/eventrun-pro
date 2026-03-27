@@ -88,7 +88,7 @@ export const defaultCostItemsSeed: DefaultCostItemSeed[] = [
     custoPadrao: 1500,
   },
   {
-    nome: "Logistica de entrega de kits",
+    nome: "Logística de entrega de kits",
     categoria: "LOGISTICA",
     tipoCusto: "FIXO",
     unidade: "LOTE",

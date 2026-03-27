@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const parsed = loginSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Dados invalidos" }, { status: 400 });
+      return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
     const { email, password } = parsed.data;
@@ -25,13 +25,13 @@ export async function POST(request: Request) {
     const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
     if (!user) {
-      return NextResponse.json({ error: "Credenciais invalidas" }, { status: 401 });
+      return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordValid) {
-      return NextResponse.json({ error: "Credenciais invalidas" }, { status: 401 });
+      return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
     const token = createAuthToken({

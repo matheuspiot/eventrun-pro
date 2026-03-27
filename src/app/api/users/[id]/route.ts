@@ -13,7 +13,7 @@ export async function PATCH(
 ) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   if (!canAccessModule(auth.role, "configuracoes")) {
@@ -26,21 +26,21 @@ export async function PATCH(
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados invalidos", details: parsed.error.flatten() },
+      { error: "Dados inválidos", details: parsed.error.flatten() },
       { status: 400 },
     );
   }
 
   if (auth.userId === id && parsed.data.role && parsed.data.role !== auth.role) {
     return NextResponse.json(
-      { error: "Nao e permitido alterar o proprio papel por esta tela." },
+      { error: "Não é permitido alterar o próprio papel por esta tela." },
       { status: 400 },
     );
   }
 
   const updated = await updateOrganizationUser(auth.organizationId, id, parsed.data);
   if (updated.count === 0) {
-    return NextResponse.json({ error: "Usuario nao encontrado" }, { status: 404 });
+    return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
   }
 
   return NextResponse.json({ success: true });
@@ -52,7 +52,7 @@ export async function DELETE(
 ) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   if (!canAccessModule(auth.role, "configuracoes")) {
@@ -62,14 +62,14 @@ export async function DELETE(
   const { id } = await params;
   if (auth.userId === id) {
     return NextResponse.json(
-      { error: "Nao e permitido remover o proprio usuario." },
+      { error: "Não é permitido remover o próprio usuário." },
       { status: 400 },
     );
   }
 
   const removed = await deleteOrganizationUser(auth.organizationId, id);
   if (removed.count === 0) {
-    return NextResponse.json({ error: "Usuario nao encontrado" }, { status: 404 });
+    return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
   }
 
   return NextResponse.json({ success: true });

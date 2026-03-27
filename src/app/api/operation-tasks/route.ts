@@ -28,7 +28,7 @@ function serializeTask(task: OperationTaskRecord) {
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "operacao")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
   const tasks = await listOperationTasksByEvent(auth.organizationId, eventId);
   if (!tasks) {
-    return NextResponse.json({ error: "Evento nao encontrado" }, { status: 404 });
+    return NextResponse.json({ error: "Evento não encontrado" }, { status: 404 });
   }
 
   return NextResponse.json({ tasks: tasks.map(serializeTask) });
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "operacao")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
   const parsed = operationTaskSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados invalidos", details: parsed.error.flatten() },
+      { error: "Dados inválidos", details: parsed.error.flatten() },
       { status: 400 },
     );
   }

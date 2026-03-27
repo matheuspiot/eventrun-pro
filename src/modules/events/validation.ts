@@ -38,7 +38,7 @@ export const eventFormSchema = z.object({
   cnpjOrganizador: z
     .string()
     .transform((value) => normalizeDigits(value))
-    .refine(isValidCnpj, "CNPJ invalido"),
+    .refine(isValidCnpj, "CNPJ inválido"),
   modalidades: z.string().trim().max(300).nullable().optional(),
   distancias: z.string().trim().max(300).nullable().optional(),
   capacidadeMaxima: z.coerce.number().int().positive().nullable().optional(),

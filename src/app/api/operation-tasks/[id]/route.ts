@@ -31,7 +31,7 @@ export async function PATCH(
 ) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "operacao")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -42,7 +42,7 @@ export async function PATCH(
   const parsed = operationTaskSchema.partial().safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados invalidos", details: parsed.error.flatten() },
+      { error: "Dados inválidos", details: parsed.error.flatten() },
       { status: 400 },
     );
   }
@@ -61,7 +61,7 @@ export async function DELETE(
 ) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "operacao")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -70,7 +70,7 @@ export async function DELETE(
   const { id } = await params;
   const removed = await deleteOperationTaskForOrganization(auth.organizationId, id);
   if (removed.count === 0) {
-    return NextResponse.json({ error: "Tarefa nao encontrada" }, { status: 404 });
+    return NextResponse.json({ error: "Tarefa não encontrada" }, { status: 404 });
   }
 
   return NextResponse.json({ success: true });

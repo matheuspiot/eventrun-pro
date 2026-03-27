@@ -26,7 +26,7 @@ export default function CadastroPage() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Nao foi possivel criar a conta");
+      setError(data.error ?? "Não foi possível criar a conta");
       setIsLoading(false);
       return;
     }
@@ -39,14 +39,14 @@ export default function CadastroPage() {
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">EventRun Pro</p>
       <h1 className="mt-2 text-4xl font-heading text-zinc-900">Cadastro</h1>
-      <p className="mt-2 text-sm text-zinc-600">Crie sua organizacao e comece a gerenciar corridas.</p>
+      <p className="mt-2 text-sm text-zinc-600">Crie sua organização e comece a gerenciar corridas.</p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <input
           required
           value={organizationName}
           onChange={(event) => setOrganizationName(event.target.value)}
-          placeholder="Nome da organizacao"
+          placeholder="Nome da organização"
           className="w-full rounded-xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
         />
         <input
@@ -86,7 +86,7 @@ export default function CadastroPage() {
       </form>
 
       <p className="mt-6 text-sm text-zinc-600">
-        Ja tem conta?{" "}
+        Já tem conta?{" "}
         <Link href="/login" className="font-semibold text-zinc-900">
           Fazer login
         </Link>

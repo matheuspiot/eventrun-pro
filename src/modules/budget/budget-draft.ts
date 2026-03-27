@@ -26,11 +26,11 @@ export const costItemsUpdatedEvent = "eventrun:cost-items-updated";
 export const costCategoryLabels = {
   ESTRUTURA: "Estrutura",
   STAFF: "Staff",
-  SEGURANCA: "Seguranca",
+  SEGURANCA: "Segurança",
   MATERIAIS: "Materiais",
-  COMUNICACAO: "Comunicacao",
+  COMUNICACAO: "Comunicação",
   TAXAS: "Taxas",
-  LOGISTICA: "Logistica",
+  LOGISTICA: "Logística",
   OUTROS: "Outros",
 } as const;
 

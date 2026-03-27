@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Credenciais invalidas");
+      setError(data.error ?? "Credenciais inválidas");
       setIsLoading(false);
       return;
     }
@@ -37,7 +37,7 @@ export default function LoginPage() {
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">EventRun Pro</p>
       <h1 className="mt-2 text-4xl font-heading text-zinc-900">Login</h1>
-      <p className="mt-2 text-sm text-zinc-600">Acesse sua organizacao para gerenciar os projetos.</p>
+      <p className="mt-2 text-sm text-zinc-600">Acesse sua organização para gerenciar os projetos.</p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <input
@@ -69,7 +69,7 @@ export default function LoginPage() {
       </form>
 
       <p className="mt-6 text-sm text-zinc-600">
-        Ainda nao tem conta?{" "}
+        Ainda não tem conta?{" "}
         <Link href="/cadastro" className="font-semibold text-zinc-900">
           Criar conta
         </Link>

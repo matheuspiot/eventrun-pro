@@ -19,7 +19,7 @@ export const defaultOperationTasks = [
   },
   {
     fase: "Inscricoes",
-    titulo: "Conferir regulamento e periodo de inscricao",
+    titulo: "Conferir regulamento e período de inscrição",
     descricao: "Garantir texto final, datas e canais de contato.",
     ordem: 40,
   },

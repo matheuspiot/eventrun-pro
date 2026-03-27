@@ -79,7 +79,7 @@ export function EventsManager() {
       const response = await fetchWithTimeout("/api/events", { cache: "no-store" });
 
       if (!response.ok) {
-        setError("Nao foi possivel carregar os projetos.");
+        setError("Não foi possível carregar os projetos.");
         setLoading(false);
         return;
       }
@@ -88,7 +88,7 @@ export function EventsManager() {
       setEvents(Array.isArray(data.events) ? data.events : []);
       setLoading(false);
     } catch {
-      setError("Falha de conexao ao carregar projetos.");
+      setError("Falha de conexão ao carregar projetos.");
       setLoading(false);
     }
   }, []);
@@ -122,14 +122,14 @@ export function EventsManager() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(data.error ?? "Nao foi possivel salvar o projeto.");
+        setError(data.error ?? "Não foi possível salvar o projeto.");
         return;
       }
 
       resetForm();
       await loadEvents();
     } catch {
-      setError("Falha de conexao ao salvar projeto.");
+      setError("Falha de conexão ao salvar projeto.");
     } finally {
       setSubmitting(false);
     }
@@ -140,13 +140,13 @@ export function EventsManager() {
       const response = await fetchWithTimeout(`/api/events/${id}`, { method: "DELETE" });
 
       if (!response.ok) {
-        setError("Nao foi possivel remover o projeto.");
+        setError("Não foi possível remover o projeto.");
         return;
       }
 
       await loadEvents();
     } catch {
-      setError("Falha de conexao ao remover projeto.");
+      setError("Falha de conexão ao remover projeto.");
     }
   }
 
@@ -188,7 +188,7 @@ export function EventsManager() {
 
         <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-            Identificacao
+            Identificação
           </p>
           <div className="mt-3 space-y-3">
             <input
@@ -236,7 +236,7 @@ export function EventsManager() {
 
         <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-            Operacao
+            Operação
           </p>
           <div className="mt-3 space-y-3">
             <input
@@ -249,7 +249,7 @@ export function EventsManager() {
             <input
               value={form.distancias}
               onChange={(event) => setForm((prev) => ({ ...prev, distancias: event.target.value }))}
-              placeholder="Distancias (ex.: 5K, 10K, 21K)"
+              placeholder="Distâncias (ex.: 5K, 10K, 21K)"
               className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
             />
 
@@ -261,7 +261,7 @@ export function EventsManager() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, capacidadeMaxima: event.target.value }))
                 }
-                placeholder="Capacidade maxima"
+                placeholder="Capacidade máxima"
                 className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
               <input
@@ -269,7 +269,7 @@ export function EventsManager() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, limiteTecnico: event.target.value }))
                 }
-                placeholder="Limite tecnico"
+                placeholder="Limite técnico"
                 className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
@@ -288,7 +288,7 @@ export function EventsManager() {
 
         <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-            Organizacao
+            Organização
           </p>
           <div className="mt-3 space-y-3">
             <input
@@ -368,7 +368,7 @@ export function EventsManager() {
           <div>
             <h3 className="text-2xl font-heading text-zinc-900">Lista de projetos</h3>
             <p className="mt-1 text-sm text-zinc-600">
-              Cada evento agora guarda dados operacionais para execucao e venda.
+              Cada evento agora guarda dados operacionais para execução e venda.
             </p>
           </div>
         </div>
@@ -417,31 +417,31 @@ export function EventsManager() {
                     <InfoCard label="Status" value={item.status.replace("_", " ")} />
                     <InfoCard
                       label="Modalidades"
-                      value={summarize(item.modalidades, "Nao informado")}
+                      value={summarize(item.modalidades, "Não informado")}
                     />
                     <InfoCard
-                      label="Distancias"
-                      value={summarize(item.distancias, "Nao informado")}
+                      label="Distâncias"
+                      value={summarize(item.distancias, "Não informado")}
                     />
                     <InfoCard
                       label="Capacidade"
-                      value={item.capacidadeMaxima ? `${item.capacidadeMaxima} atletas` : "Nao informado"}
+                      value={item.capacidadeMaxima ? `${item.capacidadeMaxima} atletas` : "Não informado"}
                     />
                     <InfoCard
-                      label="Limite tecnico"
-                      value={summarize(item.limiteTecnico, "Nao informado")}
+                      label="Limite técnico"
+                      value={summarize(item.limiteTecnico, "Não informado")}
                     />
                     <InfoCard
                       label="Patrocinadores"
-                      value={summarize(item.patrocinadores, "Nao informado")}
+                      value={summarize(item.patrocinadores, "Não informado")}
                     />
                     <InfoCard
                       label="Fornecedores"
-                      value={summarize(item.fornecedores, "Nao informado")}
+                      value={summarize(item.fornecedores, "Não informado")}
                     />
                     <InfoCard
                       label="Cronograma"
-                      value={summarize(item.cronogramaResumo, "Nao informado")}
+                      value={summarize(item.cronogramaResumo, "Não informado")}
                     />
                   </div>
                 </article>

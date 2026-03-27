@@ -11,7 +11,7 @@ const settingsSchema = z.object({
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "configuracoes")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   if (!organization || !user) {
-    return NextResponse.json({ error: "Dados de conta nao encontrados" }, { status: 404 });
+    return NextResponse.json({ error: "Dados de conta não encontrados" }, { status: 404 });
   }
 
   return NextResponse.json({
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "configuracoes")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest) {
   const parsed = settingsSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados invalidos", details: parsed.error.flatten() },
+      { error: "Dados inválidos", details: parsed.error.flatten() },
       { status: 400 },
     );
   }

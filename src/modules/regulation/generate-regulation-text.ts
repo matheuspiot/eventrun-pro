@@ -36,11 +36,11 @@ function buildAgeRanges(config: RegulationConfigDto) {
 function getTemplateIntro(templateTipo: RegulationConfigDto["templateTipo"]) {
   switch (templateTipo) {
     case "TRAIL_RUN":
-      return "Este regulamento foi estruturado para prova de trail run, com enfase em seguranca, autonomia e condicoes de percurso natural.";
+      return "Este regulamento foi estruturado para prova de trail run, com ênfase em segurança, autonomia e condições de percurso natural.";
     case "CORRIDA_KIDS":
-      return "Este regulamento foi estruturado para corrida kids, com foco em seguranca, autorizacao do responsavel e experiencia infantil.";
+      return "Este regulamento foi estruturado para corrida kids, com foco em segurança, autorização do responsável e experiência infantil.";
     default:
-      return "Este regulamento foi estruturado para corrida de rua, com foco em seguranca, operacao urbana e fluxo de atletas.";
+      return "Este regulamento foi estruturado para corrida de rua, com foco em segurança, operação urbana e fluxo de atletas.";
   }
 }
 
@@ -49,98 +49,98 @@ export function generateRegulationText(config: RegulationConfigDto, event: Regul
 
   const sections: Array<{ title: string; lines: string[] }> = [
     {
-      title: "Identificacao do Evento",
+      title: "Identificação do Evento",
       lines: [
         getTemplateIntro(config.templateTipo),
-        `A prova ${event.nomeEvento}, doravante denominada EVENTO, sera realizada em ${formatDate(event.dataEvento)}, em ${event.cidade}/${event.estado}, com largada em ${event.localLargada}.`,
-        `A organizacao e responsabilidade tecnica e de ${event.organizador}.`,
+        `A prova ${event.nomeEvento}, doravante denominada EVENTO, será realizada em ${formatDate(event.dataEvento)}, em ${event.cidade}/${event.estado}, com largada em ${event.localLargada}.`,
+        `A organização e responsabilidade técnica é de ${event.organizador}.`,
       ],
     },
     {
       title: "Cronograma do Evento",
       lines: [
-        "Os horarios oficiais de concentracao, largada e encerramento serao divulgados pelos canais oficiais.",
-        `Tempo limite para conclusao do percurso principal: ${config.tempoLimiteMinutos} minutos.`,
-        config.regrasGeraisExtra || "Demais orientacoes operacionais serao divulgadas em comunicados oficiais.",
+        "Os horários oficiais de concentração, largada e encerramento serão divulgados pelos canais oficiais.",
+        `Tempo limite para conclusão do percurso principal: ${config.tempoLimiteMinutos} minutos.`,
+        config.regrasGeraisExtra || "Demais orientações operacionais serão divulgadas em comunicados oficiais.",
       ],
     },
     {
-      title: "Inscricoes",
+      title: "Inscrições",
       lines: [
-        `Periodo de inscricao: ${formatDate(config.dataInicioInscricao)} a ${formatDate(config.dataFimInscricao)}.`,
-        `Valor base da inscricao: ${brl(config.valorInscricao)}.`,
-        `Limite tecnico de vagas: ${config.limiteVagas}.`,
+        `Período de inscrição: ${formatDate(config.dataInicioInscricao)} a ${formatDate(config.dataFimInscricao)}.`,
+        `Valor base da inscrição: ${brl(config.valorInscricao)}.`,
+        `Limite técnico de vagas: ${config.limiteVagas}.`,
         `Plataformas oficiais: ${config.plataformaInscricao.join(", ")}.`,
         config.permiteTransferencia
-          ? "A organizacao permite transferencia de inscricao dentro das regras operacionais divulgadas."
-          : "Nao sera permitida transferencia de inscricao apos a confirmacao do pagamento.",
-        config.politicaCancelamento || "Politicas de cancelamento, reembolso e credito seguem as regras divulgadas pela organizacao e plataforma oficial.",
+          ? "A organização permite transferência de inscrição dentro das regras operacionais divulgadas."
+          : "Não será permitida transferência de inscrição após a confirmação do pagamento.",
+        config.politicaCancelamento || "Políticas de cancelamento, reembolso e crédito seguem as regras divulgadas pela organização e plataforma oficial.",
       ],
     },
     {
-      title: "Participacao e Seguranca",
+      title: "Participação e Segurança",
       lines: [
         "Ao participar, o atleta assume total responsabilidade pelos dados fornecidos e aceita integralmente este regulamento.",
         "O atleta declara estar apto fisicamente para participar do EVENTO.",
         config.exigeAtestadoMedico
-          ? "A organizacao podera exigir atestado medico ou termo especifico, conforme categoria e perfil da prova."
-          : "A apresentacao de atestado medico nao e obrigatoria, salvo exigencia legal ou tecnica superveniente.",
+          ? "A organização poderá exigir atestado médico ou termo específico, conforme categoria e perfil da prova."
+          : "A apresentação de atestado médico não é obrigatória, salvo exigência legal ou técnica superveniente.",
         config.possuiKids
-          ? "O EVENTO possui modalidade kids, mediante autorizacao do responsavel legal."
-          : "O EVENTO nao possui modalidade kids nesta edicao.",
+          ? "O EVENTO possui modalidade kids, mediante autorização do responsável legal."
+          : "O EVENTO não possui modalidade kids nesta edição.",
       ],
     },
     {
       title: "Kit e Retirada",
       lines: [
-        "A retirada do kit seguira datas, horarios e local divulgados pela organizacao.",
+        "A retirada do kit seguirá datas, horários e local divulgados pela organização.",
         config.kitDescricao ||
           (config.possuiChip
-            ? "O kit padrao contem numero de peito e chip de cronometragem."
-            : "O kit padrao contem numero de peito, sem chip de cronometragem."),
+            ? "O kit padrão contém número de peito e chip de cronometragem."
+            : "O kit padrão contém número de peito, sem chip de cronometragem."),
         config.permiteRetiradaTerceiros
-          ? "A retirada por terceiros podera ocorrer mediante autorizacao e documentos exigidos pela organizacao."
-          : "A retirada do kit sera pessoal, salvo excecoes formalmente aprovadas pela organizacao.",
+          ? "A retirada por terceiros poderá ocorrer mediante autorização e documentos exigidos pela organização."
+          : "A retirada do kit será pessoal, salvo exceções formalmente aprovadas pela organização.",
         config.documentosObrigatorios ||
-          "Os documentos obrigatorios para retirada serao divulgados nos canais oficiais do evento.",
+          "Os documentos obrigatórios para retirada serão divulgados nos canais oficiais do evento.",
       ],
     },
     {
-      title: "Cronometragem e Classificacao",
+      title: "Cronometragem e Classificação",
       lines: [
         config.possuiChip
-          ? "A cronometragem oficial sera realizada por chip eletronico."
-          : "A cronometragem oficial nao utilizara chip eletronico.",
-        "O numero de peito e de uso obrigatorio e deve permanecer visivel durante todo o percurso.",
-        "Numero adulterado, danificado ou oculto pode acarretar desclassificacao.",
-        "A classificacao oficial sera divulgada conforme criterio tecnico definido pela organizacao.",
+          ? "A cronometragem oficial será realizada por chip eletrônico."
+          : "A cronometragem oficial não utilizará chip eletrônico.",
+        "O número de peito é de uso obrigatório e deve permanecer visível durante todo o percurso.",
+        "Número adulterado, danificado ou oculto pode acarretar desclassificação.",
+        "A classificação oficial será divulgada conforme critério técnico definido pela organização.",
       ],
     },
     {
-      title: "Categorias por Faixa Etaria",
+      title: "Categorias por Faixa Etária",
       lines: [
-        `Configuracao de categorias: de ${config.faixaEtariaInicio} ate ${config.faixaEtariaFim} anos, em intervalos de ${config.intervaloFaixaEtaria}.`,
+        `Configuração de categorias: de ${config.faixaEtariaInicio} até ${config.faixaEtariaFim} anos, em intervalos de ${config.intervaloFaixaEtaria}.`,
         `Faixas sugeridas: ${ageRanges.join(", ")}.`,
       ],
     },
     {
-      title: "Premiacao",
+      title: "Premiação",
       lines: config.possuiPremiacaoDinheiro
         ? [
             config.premiacaoDescricao ||
-              "Havera premiacao em dinheiro conforme categorias e regras divulgadas no anexo tecnico.",
-            "A liberacao da premiacao depende da homologacao oficial dos resultados.",
+              "Haverá premiação em dinheiro conforme categorias e regras divulgadas no anexo técnico.",
+            "A liberação da premiação depende da homologação oficial dos resultados.",
           ]
         : [
             config.premiacaoDescricao ||
-              "Nao havera premiacao em dinheiro nesta edicao. Podem ser concedidos trofeus e medalhas conforme categorias oficiais.",
+              "Não haverá premiação em dinheiro nesta edição. Podem ser concedidos troféus e medalhas conforme categorias oficiais.",
           ],
     },
     {
-      title: "Consideracoes Gerais",
+      title: "Considerações Gerais",
       lines: [
-        "A organizacao podera alterar este regulamento por necessidade tecnica, de seguranca ou por exigencia legal.",
-        "Casos omissos serao resolvidos pela comissao organizadora.",
+        "A organização poderá alterar este regulamento por necessidade técnica, de segurança ou por exigência legal.",
+        "Casos omissos serão resolvidos pela comissão organizadora.",
       ],
     },
     {
@@ -148,7 +148,7 @@ export function generateRegulationText(config: RegulationConfigDto, event: Regul
       lines: [
         `E-mail: ${config.emailContato}.`,
         `WhatsApp: ${config.whatsappContato}.`,
-        "Duvidas e comunicacoes oficiais devem ser feitas pelos canais acima.",
+        "Dúvidas e comunicações oficiais devem ser feitas pelos canais acima.",
       ],
     },
   ];

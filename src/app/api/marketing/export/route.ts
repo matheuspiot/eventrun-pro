@@ -7,7 +7,7 @@ import { listMarketingPackagesByOrganization } from "@/modules/marketing/service
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "marketing")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   const eventId = request.nextUrl.searchParams.get("eventId");
   if (!eventId) {
-    return NextResponse.json({ error: "eventId e obrigatorio" }, { status: 400 });
+    return NextResponse.json({ error: "eventId é obrigatório" }, { status: 400 });
   }
 
   const event = await prisma.event.findFirst({
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!event) {
-    return NextResponse.json({ error: "Evento nao encontrado" }, { status: 404 });
+    return NextResponse.json({ error: "Evento não encontrado" }, { status: 404 });
   }
 
   const packages = await listMarketingPackagesByOrganization(auth.organizationId);
@@ -48,14 +48,14 @@ export async function GET(request: NextRequest) {
     `Cidade: ${event.cidade}/${event.estado}`,
     `Data: ${new Date(event.dataEvento).toLocaleDateString("pt-BR")}`,
     `Organizador: ${event.organizador}`,
-    `Modalidades: ${event.modalidades || "Nao informado"}`,
-    `Distancias: ${event.distancias || "Nao informado"}`,
-    `Patrocinadores atuais: ${event.patrocinadores || "Nao informado"}`,
+    `Modalidades: ${event.modalidades || "Não informado"}`,
+    `Distâncias: ${event.distancias || "Não informado"}`,
+    `Patrocinadores atuais: ${event.patrocinadores || "Não informado"}`,
     "",
     "3. Pacotes comerciais",
     ...activePackages.flatMap((pkg, index) => [
       `${index + 1}. Pacote ${pkg.nome}`,
-      pkg.descricao || "Sem descricao complementar.",
+      pkg.descricao || "Sem descrição complementar.",
       ...pkg.entregaveis.map((item) => `- ${item}`),
       `Investimento sugerido: ${Number(pkg.investimento).toLocaleString("pt-BR", {
         style: "currency",
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       "",
     ]),
     "4. Fechamento comercial",
-    "A recomendacao e alinhar escopo, aprovacoes, cronograma e metas de conversao antes do kickoff.",
+    "A recomendação é alinhar escopo, aprovações, cronograma e metas de conversão antes do kickoff.",
   ];
 
   const pdf = await createMarketingProposalPdf({

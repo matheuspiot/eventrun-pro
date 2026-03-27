@@ -11,7 +11,7 @@ import {
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   if (!canAccessModule(auth.role, "regulamento")) {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   if (!event || !config) {
     return NextResponse.json(
-      { error: "Evento ou configuracao de regulamento nao encontrado" },
+      { error: "Evento ou configuração de regulamento não encontrado" },
       { status: 404 },
     );
   }

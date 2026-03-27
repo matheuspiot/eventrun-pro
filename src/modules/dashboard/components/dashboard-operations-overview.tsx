@@ -21,7 +21,7 @@ function getDaysUntilLabel(value: Date) {
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
-    return `${Math.abs(diffDays)} dia(s) atras`;
+    return `${Math.abs(diffDays)} dia(s) atrás`;
   }
   if (diffDays === 0) {
     return "Hoje";
@@ -160,7 +160,7 @@ export async function DashboardOperationsOverview() {
             tone: "ok",
             detail: calculations ? brl(calculations.precoRecomendadoParaLucro) : "-",
           }
-        : { label: "Pendente", tone: "warning", detail: "Sem orcamento" },
+        : { label: "Pendente", tone: "warning", detail: "Sem orçamento" },
       regulation: hasRegulation
         ? {
             label: "Pronto",
@@ -189,22 +189,22 @@ export async function DashboardOperationsOverview() {
     {
       label: "Eventos ativos",
       value: String(events.filter((event) => event.status !== "FINALIZADO").length),
-      hint: `${pendingBudgetCount} sem orcamento`,
+      hint: `${pendingBudgetCount} sem orçamento`,
     },
     {
-      label: "Pendencias de regulamento",
+      label: "Pendências de regulamento",
       value: String(pendingRegulationCount),
-      hint: "Eventos sem configuracao final",
+      hint: "Eventos sem configuração final",
     },
     {
-      label: "Operacao pendente",
+      label: "Operação pendente",
       value: String(pendingOperationCount),
       hint: "Eventos com checklist aberto",
     },
     {
       label: "Alertas operacionais",
       value: String(alertEvents.length),
-      hint: "Prazos ou modulos pendentes",
+      hint: "Prazos ou módulos pendentes",
     },
   ];
 
@@ -214,13 +214,13 @@ export async function DashboardOperationsOverview() {
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-              Operacao
+              Operação
             </p>
             <h3 className="mt-2 text-3xl font-heading text-zinc-900">
-              Radar operacional da organizacao
+              Radar operacional da organização
             </h3>
             <p className="mt-2 text-sm text-zinc-600">
-              Visao rapida das pendencias mais importantes antes da prova.
+              Visão rápida das pendências mais importantes antes da prova.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -228,7 +228,7 @@ export async function DashboardOperationsOverview() {
               href="/orcamento"
               className="rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm font-semibold text-zinc-700"
             >
-              Abrir orcamento
+              Abrir orçamento
             </Link>
             <Link
               href="/regulamento"
@@ -258,7 +258,7 @@ export async function DashboardOperationsOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                Proximos eventos
+                Próximos eventos
               </p>
               <h4 className="mt-2 text-2xl font-heading text-zinc-900">Agenda critica</h4>
             </div>
@@ -286,9 +286,9 @@ export async function DashboardOperationsOverview() {
                           {event.cidade}/{event.estado} - {formatDate(event.dataEvento)}
                         </p>
                         <p className="mt-1 text-xs text-zinc-500">
-                          {event.modalidades || "Modalidades nao informadas"} |{" "}
-                          {event.distancias || "Distancias nao informadas"} |{" "}
-                          {event.capacidadeMaxima ? `${event.capacidadeMaxima} atletas` : "Capacidade nao informada"}
+                          {event.modalidades || "Modalidades não informadas"} |{" "}
+                          {event.distancias || "Distâncias não informadas"} |{" "}
+                          {event.capacidadeMaxima ? `${event.capacidadeMaxima} atletas` : "Capacidade não informada"}
                         </p>
                       </div>
                       <span className="rounded-lg bg-accent-soft px-3 py-1 text-xs font-semibold text-amber-700">
@@ -302,7 +302,7 @@ export async function DashboardOperationsOverview() {
                           hasBudget ? "ok" : "warning",
                         )}`}
                       >
-                        {hasBudget ? "Orcamento pronto" : "Orcamento pendente"}
+                        {hasBudget ? "Orçamento pronto" : "Orçamento pendente"}
                       </span>
                       <span
                         className={`rounded-lg px-3 py-1 ${getStatusBadgeClasses(
@@ -319,8 +319,8 @@ export async function DashboardOperationsOverview() {
                         )}`}
                       >
                         {event.operationTasks.some((task) => task.status !== "CONCLUIDA")
-                          ? "Operacao pendente"
-                          : "Operacao em dia"}
+                          ? "Operação pendente"
+                          : "Operação em dia"}
                       </span>
                       <span
                         className={`rounded-lg px-3 py-1 ${getStatusBadgeClasses("default")}`}
@@ -339,7 +339,7 @@ export async function DashboardOperationsOverview() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Alertas
           </p>
-          <h4 className="mt-2 text-2xl font-heading text-zinc-900">Pontos de atencao</h4>
+          <h4 className="mt-2 text-2xl font-heading text-zinc-900">Pontos de atenção</h4>
 
           <div className="mt-5 space-y-3">
             {alertEvents.length === 0 ? (
@@ -350,7 +350,7 @@ export async function DashboardOperationsOverview() {
               alertEvents.slice(0, 5).map((event) => {
                 const issues = [];
                 if (!event.budget) {
-                  issues.push("sem orcamento");
+                  issues.push("sem orçamento");
                 }
                 if (!event.regulation) {
                   issues.push("sem regulamento");
@@ -370,7 +370,7 @@ export async function DashboardOperationsOverview() {
                       {event.cidade}/{event.estado} - {daysUntilEvent}
                     </p>
                     <p className="mt-2 text-sm text-amber-700">
-                      {issues.length > 0 ? issues.join(" - ") : "prazo proximo da prova"}
+                      {issues.length > 0 ? issues.join(" - ") : "prazo próximo da prova"}
                     </p>
                   </article>
                 );
@@ -384,7 +384,7 @@ export async function DashboardOperationsOverview() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-              Modulos
+              Módulos
             </p>
             <h4 className="mt-2 text-2xl font-heading text-zinc-900">Status por evento</h4>
           </div>
@@ -397,9 +397,9 @@ export async function DashboardOperationsOverview() {
                 <th className="px-3 py-2">Evento</th>
                 <th className="px-3 py-2">Data</th>
                 <th className="px-3 py-2">Prazo</th>
-                <th className="px-3 py-2">Orcamento</th>
+                <th className="px-3 py-2">Orçamento</th>
                 <th className="px-3 py-2">Regulamento</th>
-                <th className="px-3 py-2">Operacao</th>
+                <th className="px-3 py-2">Operação</th>
                 <th className="px-3 py-2">Marketing</th>
               </tr>
             </thead>

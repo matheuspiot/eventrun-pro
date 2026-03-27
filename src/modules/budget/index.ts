@@ -1,5 +1,5 @@
 ﻿export const budgetModule = {
-  title: "Orcamento",
+  title: "Orçamento",
   description: "Planejamento financeiro do evento.",
 };
 

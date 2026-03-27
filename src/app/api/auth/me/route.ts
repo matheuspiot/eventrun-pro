@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
 
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   return NextResponse.json({ user: auth });

@@ -8,13 +8,13 @@ import { RegulationConfigDto, RegulationTemplateType } from "../types";
 const steps = [
   "Etapa 1 - Template",
   "Etapa 2 - Prova",
-  "Etapa 3 - Inscricao",
+  "Etapa 3 - Inscrição",
   "Etapa 4 - Kit e documentos",
-  "Etapa 5 - Premiacao e regras",
+  "Etapa 5 - Premiação e regras",
   "Etapa 6 - Contatos",
 ];
 
-const platformOptions = ["TicketSports", "Sympla", "Minhas Inscricoes", "Site Proprio"];
+const platformOptions = ["TicketSports", "Sympla", "Minhas Inscrições", "Site Próprio"];
 
 const regulationTemplates: Record<
   RegulationTemplateType,
@@ -33,9 +33,9 @@ const regulationTemplates: Record<
       permiteRetiradaTerceiros: true,
       exigeAtestadoMedico: false,
       tempoLimiteMinutos: "180",
-      kitDescricao: "O kit padrao contem numero de peito, chip, medalha e brindes conforme patrocinadores.",
+      kitDescricao: "O kit padrão contém número de peito, chip, medalha e brindes conforme patrocinadores.",
       premiacaoDescricao:
-        "A premiacao podera contemplar categorias gerais e faixas etarias, conforme anexo tecnico.",
+        "A premiação poderá contemplar categorias gerais e faixas etárias, conforme anexo técnico.",
     },
   },
   TRAIL_RUN: {
@@ -49,11 +49,11 @@ const regulationTemplates: Record<
       exigeAtestadoMedico: true,
       tempoLimiteMinutos: "300",
       kitDescricao:
-        "O kit padrao contem numero de peito, chip, medalha e orientacoes tecnicas especificas de percurso.",
+        "O kit padrão contém número de peito, chip, medalha e orientações técnicas específicas de percurso.",
       documentosObrigatorios:
-        "Documento com foto e, quando exigido, termo de responsabilidade ou documento medico complementar.",
+        "Documento com foto e, quando exigido, termo de responsabilidade ou documento médico complementar.",
       regrasGeraisExtra:
-        "O atleta deve respeitar sinalizacao, pontos de apoio e orientacoes de seguranca em area natural.",
+        "O atleta deve respeitar sinalização, pontos de apoio e orientações de segurança em área natural.",
     },
   },
   CORRIDA_KIDS: {
@@ -67,11 +67,11 @@ const regulationTemplates: Record<
       exigeAtestadoMedico: false,
       tempoLimiteMinutos: "60",
       kitDescricao:
-        "O kit padrao contem numero de peito, medalha participativa e itens infantis conforme disponibilidade.",
+        "O kit padrão contém número de peito, medalha participativa e itens infantis conforme disponibilidade.",
       documentosObrigatorios:
-        "Documento do responsavel e autorizacao para participacao da crianca.",
+        "Documento do responsável e autorização para participação da criança.",
       regrasGeraisExtra:
-        "A participacao kids depende de acompanhamento e autorizacao do responsavel legal.",
+        "A participação kids depende de acompanhamento e autorização do responsável legal.",
     },
   },
 };
@@ -123,7 +123,7 @@ export function RegulationBuilder() {
       setLoading(true);
       const response = await fetch("/api/events", { cache: "no-store" });
       if (!response.ok) {
-        setError("Nao foi possivel carregar eventos.");
+        setError("Não foi possível carregar eventos.");
         setLoading(false);
         return;
       }
@@ -149,7 +149,7 @@ export function RegulationBuilder() {
       });
 
       if (!response.ok) {
-        setError("Nao foi possivel carregar a configuracao do regulamento.");
+        setError("Não foi possível carregar a configuração do regulamento.");
         return;
       }
 
@@ -218,7 +218,7 @@ export function RegulationBuilder() {
     }
 
     if (!file.type.startsWith("image/")) {
-      setError("Selecione um arquivo de imagem valido para a logo.");
+      setError("Selecione um arquivo de imagem válido para a logo.");
       return;
     }
 
@@ -228,7 +228,7 @@ export function RegulationBuilder() {
       const dataUrl = typeof reader.result === "string" ? reader.result : "";
       setForm((prev) => ({ ...prev, logoDataUrl: dataUrl }));
     };
-    reader.onerror = () => setError("Nao foi possivel ler o arquivo da logo.");
+    reader.onerror = () => setError("Não foi possível ler o arquivo da logo.");
     reader.readAsDataURL(file);
   }
 
@@ -277,7 +277,7 @@ export function RegulationBuilder() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Nao foi possivel salvar.");
+      setError(data.error ?? "Não foi possível salvar.");
       setSaving(false);
       return;
     }
@@ -337,7 +337,7 @@ export function RegulationBuilder() {
   if (loading) {
     return (
       <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-        <p className="text-sm text-zinc-600">Carregando modulo de regulamento...</p>
+        <p className="text-sm text-zinc-600">Carregando módulo de regulamento...</p>
       </section>
     );
   }
@@ -457,7 +457,7 @@ export function RegulationBuilder() {
                       setForm((prev) => ({ ...prev, exigeAtestadoMedico: event.target.checked }))
                     }
                   />
-                  Exige atestado medico
+                  Exige atestado médico
                 </label>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <input
@@ -540,7 +540,7 @@ export function RegulationBuilder() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, valorInscricao: event.target.value }))
                     }
-                    placeholder="Valor da inscricao"
+                    placeholder="Valor da inscrição"
                     className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                   />
                   <input
@@ -548,7 +548,7 @@ export function RegulationBuilder() {
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, politicaCancelamento: event.target.value }))
                     }
-                    placeholder="Politica de cancelamento"
+                    placeholder="Política de cancelamento"
                     className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                   />
                 </div>
@@ -578,7 +578,7 @@ export function RegulationBuilder() {
                       setForm((prev) => ({ ...prev, permiteTransferencia: event.target.checked }))
                     }
                   />
-                  Permite transferencia de inscricao
+                  Permite transferência de inscrição
                 </label>
               </div>
             )}
@@ -591,7 +591,7 @@ export function RegulationBuilder() {
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, kitDescricao: event.target.value }))
                   }
-                  placeholder="Descricao do kit"
+                  placeholder="Descrição do kit"
                   className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                 />
                 <textarea
@@ -600,7 +600,7 @@ export function RegulationBuilder() {
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, documentosObrigatorios: event.target.value }))
                   }
-                  placeholder="Documentos obrigatorios para retirada"
+                  placeholder="Documentos obrigatórios para retirada"
                   className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                 />
                 <label className="flex items-center gap-2 text-sm text-zinc-700">
@@ -632,7 +632,7 @@ export function RegulationBuilder() {
                       }))
                     }
                   />
-                  Possui premiacao em dinheiro
+                  Possui premiação em dinheiro
                 </label>
                 <textarea
                   rows={4}
@@ -640,7 +640,7 @@ export function RegulationBuilder() {
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, premiacaoDescricao: event.target.value }))
                   }
-                  placeholder="Descricao da premiacao"
+                  placeholder="Descrição da premiação"
                   className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                 />
                 <textarea
@@ -692,7 +692,7 @@ export function RegulationBuilder() {
                 onClick={() => setStep((prev) => Math.min(steps.length - 1, prev + 1))}
                 className="rounded-lg border border-border px-3 py-2 text-sm text-zinc-700 disabled:opacity-50"
               >
-                Proximo
+                Próximo
               </button>
             </div>
           </div>

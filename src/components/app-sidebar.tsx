@@ -12,11 +12,11 @@ type AppSidebarProps = {
 
 const navItems: Array<{ label: string; href: string; module: AppModule }> = [
   { label: "Dashboard", href: "/dashboard", module: "dashboard" },
-  { label: "Operacao", href: "/operacao", module: "operacao" },
-  { label: "Orcamento", href: "/orcamento", module: "orcamento" },
+  { label: "Operação", href: "/operacao", module: "operacao" },
+  { label: "Orçamento", href: "/orcamento", module: "orcamento" },
   { label: "Marketing", href: "/marketing", module: "marketing" },
   { label: "Regulamento", href: "/regulamento", module: "regulamento" },
-  { label: "Configuracoes", href: "/configuracoes", module: "configuracoes" },
+  { label: "Configurações", href: "/configuracoes", module: "configuracoes" },
 ];
 
 const roleLabels: Record<UserRole, string> = {

@@ -13,7 +13,7 @@ export async function PATCH(
   const auth = getAuthFromRequest(request);
 
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -22,7 +22,7 @@ export async function PATCH(
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados invalidos", details: parsed.error.flatten() },
+      { error: "Dados inválidos", details: parsed.error.flatten() },
       { status: 400 },
     );
   }
@@ -30,7 +30,7 @@ export async function PATCH(
   const updated = await updateCostItemForOrganization(auth.organizationId, id, parsed.data);
 
   if (updated.count === 0) {
-    return NextResponse.json({ error: "Custo nao encontrado" }, { status: 404 });
+    return NextResponse.json({ error: "Custo não encontrado" }, { status: 404 });
   }
 
   return NextResponse.json({ success: true });
@@ -43,14 +43,14 @@ export async function DELETE(
   const auth = getAuthFromRequest(request);
 
   if (!auth) {
-    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   const { id } = await params;
   const removed = await deleteCostItemForOrganization(auth.organizationId, id);
 
   if (removed.count === 0) {
-    return NextResponse.json({ error: "Custo nao encontrado" }, { status: 404 });
+    return NextResponse.json({ error: "Custo não encontrado" }, { status: 404 });
   }
 
   return NextResponse.json({ success: true });
