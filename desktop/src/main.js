@@ -7,14 +7,23 @@ const { spawn, spawnSync } = require("node:child_process");
 const isDev = !app.isPackaged;
 const serverPort = 3210;
 const serverUrl = `http://127.0.0.1:${serverPort}`;
+const maxServerRestartAttempts = 2;
 let mainWindow = null;
 let serverProcess = null;
 let restartingServer = false;
+let isQuitting = false;
+let serverRestartAttempts = 0;
 let logFilePath = "";
 let updaterConfigured = false;
 let manualCheckInProgress = false;
 let updateDownloadRequested = false;
 let updatePercent = 0;
+
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+
+if (!gotSingleInstanceLock) {
+  app.quit();
+}
 
 function toPrismaSqliteUrl(filePath) {
   return `file:${filePath.split(path.sep).join("/")}`;
@@ -129,14 +138,34 @@ function startServer() {
     log("server:exit", `code=${code ?? "null"} signal=${signal ?? "null"}`);
     serverProcess = null;
 
-    if (restartingServer || !mainWindow || mainWindow.isDestroyed()) {
+    if (isQuitting || restartingServer || !mainWindow || mainWindow.isDestroyed()) {
+      return;
+    }
+
+    if (code === 0) {
+      return;
+    }
+
+    serverRestartAttempts += 1;
+    if (serverRestartAttempts > maxServerRestartAttempts) {
+      if (!mainWindow.isDestroyed()) {
+        await dialog.showMessageBox(mainWindow, {
+          type: "error",
+          title: "EventRun Pro",
+          message: "O servidor interno falhou ao iniciar.",
+          detail: "O aplicativo sera fechado para evitar consumo excessivo de memoria.",
+        });
+      }
+      app.quit();
       return;
     }
 
     restartingServer = true;
     try {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       startServer();
       await waitForServer(20);
+      serverRestartAttempts = 0;
       if (!mainWindow.isDestroyed()) {
         await mainWindow.loadURL(serverUrl);
       }
@@ -373,8 +402,17 @@ function setupAppMenu() {
 }
 
 async function createWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.focus();
+    return;
+  }
+
   startServer();
   await waitForServer();
+  serverRestartAttempts = 0;
 
   mainWindow = new BrowserWindow({
     title: "EventRun Pro",
@@ -405,6 +443,15 @@ async function createWindow() {
   });
 }
 
+app.on("second-instance", () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.focus();
+  }
+});
+
 app.whenReady().then(async () => {
   logFilePath = path.join(app.getPath("userData"), "eventrun-desktop.log");
   log("app:ready", `isPackaged=${app.isPackaged}`);
@@ -433,5 +480,6 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  isQuitting = true;
   stopServer();
 });
