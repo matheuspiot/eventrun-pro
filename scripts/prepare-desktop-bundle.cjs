@@ -10,6 +10,7 @@ const staticRoot = path.join(projectRoot, ".next", "static");
 const publicRoot = path.join(projectRoot, "public");
 const templateDataRoot = path.join(outputRoot, "data");
 const templateDbPath = path.join(templateDataRoot, "eventrun-template.db");
+const outputScriptsRoot = path.join(outputRoot, "scripts");
 
 async function main() {
   if (!fs.existsSync(standaloneRoot)) {
@@ -35,6 +36,16 @@ async function main() {
   fs.mkdirSync(templateDataRoot, { recursive: true });
   fs.rmSync(templateDbPath, { force: true });
   await initSqliteDb(templateDbPath);
+
+  fs.mkdirSync(outputScriptsRoot, { recursive: true });
+  fs.copyFileSync(
+    path.join(projectRoot, "scripts", "ensure-sqlite-schema.cjs"),
+    path.join(outputScriptsRoot, "ensure-sqlite-schema.cjs"),
+  );
+  fs.copyFileSync(
+    path.join(projectRoot, "scripts", "init-sqlite-db.cjs"),
+    path.join(outputScriptsRoot, "init-sqlite-db.cjs"),
+  );
 
   const envSource = fs.existsSync(path.join(projectRoot, ".env"))
     ? path.join(projectRoot, ".env")

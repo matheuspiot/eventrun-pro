@@ -209,6 +209,7 @@ async function initSqliteDb(outputArg) {
 }
 
 module.exports = initSqliteDb;
+module.exports.schemaSql = schemaSql;
 
 if (require.main === module) {
   initSqliteDb(process.argv[2]).catch((error) => {

@@ -2,7 +2,7 @@ const { app, BrowserWindow, Menu, dialog } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const fs = require("node:fs");
 const path = require("node:path");
-const { spawn } = require("node:child_process");
+const { spawn, spawnSync } = require("node:child_process");
 
 const isDev = !app.isPackaged;
 const serverPort = 3210;
@@ -65,12 +65,39 @@ function ensureUserDatabase(bundleRoot) {
   return targetDbPath;
 }
 
+function ensureUserDatabaseSchema(bundleRoot, targetDbPath) {
+  const ensureScriptPath = path.join(bundleRoot, "scripts", "ensure-sqlite-schema.cjs");
+
+  if (!fs.existsSync(ensureScriptPath)) {
+    throw new Error(`Script de ajuste do banco nao encontrado em ${ensureScriptPath}`);
+  }
+
+  const result = spawnSync(process.execPath, [ensureScriptPath, targetDbPath], {
+    cwd: bundleRoot,
+    env: process.env,
+    windowsHide: true,
+    encoding: "utf8",
+  });
+
+  if (result.stdout) {
+    log("db:ensure:stdout", result.stdout.trim());
+  }
+  if (result.stderr) {
+    log("db:ensure:stderr", result.stderr.trim());
+  }
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr || "Falha ao ajustar schema do banco local.");
+  }
+}
+
 function startServer() {
   const bundleRoot = isDev
     ? path.join(__dirname, "..", "app-bundle")
     : path.join(process.resourcesPath, "app-bundle");
   const serverScript = path.join(bundleRoot, "server.js");
   const userDbPath = ensureUserDatabase(bundleRoot);
+  ensureUserDatabaseSchema(bundleRoot, userDbPath);
 
   if (!fs.existsSync(serverScript)) {
     throw new Error(`server.js nao encontrado em ${serverScript}`);
