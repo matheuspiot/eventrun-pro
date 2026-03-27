@@ -83,7 +83,10 @@ function ensureUserDatabaseSchema(bundleRoot, targetDbPath) {
 
   const result = spawnSync(process.execPath, [ensureScriptPath, targetDbPath], {
     cwd: bundleRoot,
-    env: process.env,
+    env: {
+      ...process.env,
+      ELECTRON_RUN_AS_NODE: "1",
+    },
     windowsHide: true,
     encoding: "utf8",
   });
