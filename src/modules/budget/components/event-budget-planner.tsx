@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { CostItemDto } from "../types";
 import { EventDto } from "@/modules/events/types";
 import { calculateBudgetMetrics } from "../event-budget.calculations";
@@ -56,6 +57,7 @@ function formatEventLabel(event: EventDto) {
 
 export function EventBudgetPlanner() {
   const router = useRouter();
+  const { confirm, showToast } = useUiFeedback();
   const [events, setEvents] = useState<EventDto[]>([]);
   const [costItems, setCostItems] = useState<CostItemDto[]>([]);
   const [selectedEventId, setSelectedEventId] = useState("");
@@ -410,9 +412,31 @@ export function EventBudgetPlanner() {
     );
   }
 
-  function removeItem(costItemId: string) {
+  async function removeItem(costItemId: string) {
+    const selectedItem = items.find((item) => item.costItemId === costItemId);
+    if (!selectedItem) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: "Remover custo do orçamento",
+      description: `Deseja remover "${selectedItem.nome}" deste orçamento?`,
+      confirmLabel: "Remover custo",
+      cancelLabel: "Voltar",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     setHasUserInteracted(true);
     setItems((prev) => prev.filter((item) => item.costItemId !== costItemId));
+    showToast({
+      tone: "info",
+      title: "Custo removido",
+      message: "O orçamento foi atualizado.",
+    });
   }
 
   function handleEventSelection(nextEventId: string) {
@@ -528,6 +552,11 @@ export function EventBudgetPlanner() {
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         setError(data.error ?? "Não foi possível salvar o orçamento.");
+        showToast({
+          tone: "error",
+          title: "Falha ao salvar orçamento",
+          message: "Revise os dados do cenário financeiro e tente novamente.",
+        });
         setSaving(false);
         return false;
       }
@@ -565,10 +594,20 @@ export function EventBudgetPlanner() {
       }
 
       setSuccess("Orçamento salvo com sucesso.");
+      showToast({
+        tone: "success",
+        title: "Orçamento salvo",
+        message: "Os dados financeiros do evento foram atualizados com sucesso.",
+      });
       setSaving(false);
       return true;
     } catch {
       setError("Falha de conexão ao salvar o orçamento.");
+      showToast({
+        tone: "error",
+        title: "Falha de conexão",
+        message: "Não foi possível salvar o orçamento agora.",
+      });
       setSaving(false);
       return false;
     }
@@ -630,6 +669,10 @@ export function EventBudgetPlanner() {
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         setError(data.error ?? "Não foi possível exportar o orçamento em PDF.");
+        showToast({
+          tone: "error",
+          title: "Falha ao exportar PDF",
+        });
         return;
       }
 
@@ -642,8 +685,18 @@ export function EventBudgetPlanner() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(objectUrl);
+      showToast({
+        tone: "success",
+        title: "PDF gerado",
+        message: "O orçamento foi exportado com sucesso.",
+      });
     } catch {
       setError("Falha de conexão ao exportar o orçamento.");
+      showToast({
+        tone: "error",
+        title: "Falha de conexão",
+        message: "Não foi possível exportar o orçamento agora.",
+      });
     } finally {
       setExporting(false);
     }
@@ -657,6 +710,17 @@ export function EventBudgetPlanner() {
     );
   }
 
+  if (events.length === 0) {
+    return (
+      <section className="rounded-3xl border border-dashed border-border bg-surface p-8 shadow-sm">
+        <h2 className="text-3xl font-heading text-zinc-900">Orçamento do evento</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-600">
+          Antes de montar um orçamento, crie pelo menos um projeto de corrida no dashboard.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <>
       <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
@@ -665,6 +729,24 @@ export function EventBudgetPlanner() {
           <p className="text-sm text-zinc-600">
             Selecione custos da biblioteca e simule cenários de inscrição.
           </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Etapa 1</p>
+            <p className="mt-2 text-lg font-heading text-zinc-900">Defina o cenário</p>
+            <p className="mt-2 text-sm text-zinc-600">Meta de inscritos, taxas, patrocínio e logo.</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Etapa 2</p>
+            <p className="mt-2 text-lg font-heading text-zinc-900">Monte os custos</p>
+            <p className="mt-2 text-sm text-zinc-600">Filtre a biblioteca e adicione apenas o que faz sentido.</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Etapa 3</p>
+            <p className="mt-2 text-lg font-heading text-zinc-900">Valide o resultado</p>
+            <p className="mt-2 text-sm text-zinc-600">Compare preço mínimo, lucro e cenários de receita.</p>
+          </div>
         </div>
 
         <form onSubmit={handleSave} className="mt-6 space-y-6">
@@ -927,7 +1009,7 @@ export function EventBudgetPlanner() {
                         </td>
                         <td className="px-3 py-3 text-zinc-700">{brl(subtotal)}</td>
                         <td className="px-3 py-3">
-                          <button type="button" onClick={() => removeItem(item.costItemId)} className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600">Remover</button>
+                          <button type="button" onClick={() => void removeItem(item.costItemId)} className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600">Remover</button>
                         </td>
                       </tr>
                     );

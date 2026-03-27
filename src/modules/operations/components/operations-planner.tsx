@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { EventDto } from "@/modules/events/types";
 import { OperationTaskDto } from "../types";
 
@@ -39,7 +40,7 @@ function getStatusBadgeClasses(status: OperationTaskDto["status"]) {
     case "EM_ANDAMENTO":
       return "bg-amber-100 text-amber-700";
     default:
-      return "bg-zinc-100 text-zinc-700";
+      return "bg-slate-100 text-slate-700";
   }
 }
 
@@ -52,6 +53,7 @@ function formatDate(value: string | null) {
 }
 
 export function OperationsPlanner() {
+  const { confirm, showToast } = useUiFeedback();
   const [events, setEvents] = useState<EventDto[]>([]);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [tasks, setTasks] = useState<OperationTaskDto[]>([]);
@@ -59,7 +61,6 @@ export function OperationsPlanner() {
   const [tasksLoading, setTasksLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [form, setForm] = useState<TaskForm>(initialTaskForm);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
@@ -147,7 +148,6 @@ export function OperationsPlanner() {
       observacoes: task.observacoes ?? "",
       ordem: String(task.ordem),
     });
-    setSuccess("");
     setError("");
   }
 
@@ -160,7 +160,6 @@ export function OperationsPlanner() {
 
     setSaving(true);
     setError("");
-    setSuccess("");
 
     const method = editingTaskId ? "PATCH" : "POST";
     const url = editingTaskId ? `/api/operation-tasks/${editingTaskId}` : "/api/operation-tasks";
@@ -184,6 +183,11 @@ export function OperationsPlanner() {
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       setError(data.error ?? "Não foi possível salvar a tarefa.");
+      showToast({
+        tone: "error",
+        title: "Falha ao salvar tarefa",
+        message: "Revise os campos e tente novamente.",
+      });
       setSaving(false);
       return;
     }
@@ -197,9 +201,13 @@ export function OperationsPlanner() {
       return [...prev, nextTask].sort((a, b) => a.ordem - b.ordem);
     });
 
-    setSuccess(editingTaskId ? "Tarefa atualizada." : "Tarefa criada.");
     setSaving(false);
     resetForm();
+    showToast({
+      tone: "success",
+      title: editingTaskId ? "Tarefa atualizada" : "Tarefa criada",
+      message: "O checklist operacional foi atualizado com sucesso.",
+    });
   }
 
   async function updateTaskStatus(task: OperationTaskDto, status: OperationTaskDto["status"]) {
@@ -211,59 +219,101 @@ export function OperationsPlanner() {
 
     if (!response.ok) {
       setError("Não foi possível atualizar o status da tarefa.");
+      showToast({
+        tone: "error",
+        title: "Falha ao atualizar status",
+        message: "A tarefa permaneceu no estado anterior.",
+      });
       return;
     }
 
     const data = (await response.json()) as { task: OperationTaskDto };
     setTasks((prev) => prev.map((item) => (item.id === task.id ? data.task : item)));
+    showToast({
+      tone: "success",
+      title: "Status atualizado",
+      message: `${task.titulo} foi atualizado para ${statusLabels[status].toLowerCase()}.`,
+    });
   }
 
   async function deleteTask(id: string) {
-    const response = await fetch(`/api/operation-tasks/${id}`, { method: "DELETE" });
-    if (!response.ok) {
-      setError("Não foi possível remover a tarefa.");
+    const task = tasks.find((item) => item.id === id);
+    if (!task) {
       return;
     }
 
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+    const confirmed = await confirm({
+      title: "Remover tarefa",
+      description: `Deseja remover "${task.titulo}" do checklist?`,
+      confirmLabel: "Remover tarefa",
+      cancelLabel: "Voltar",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const response = await fetch(`/api/operation-tasks/${id}`, { method: "DELETE" });
+    if (!response.ok) {
+      setError("Não foi possível remover a tarefa.");
+      showToast({
+        tone: "error",
+        title: "Falha ao remover tarefa",
+      });
+      return;
+    }
+
+    setTasks((prev) => prev.filter((taskItem) => taskItem.id !== id));
+    showToast({
+      tone: "success",
+      title: "Tarefa removida",
+      message: "O checklist foi atualizado.",
+    });
   }
 
   if (loading) {
     return (
       <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-        <p className="text-sm text-zinc-600">Carregando operação...</p>
+        <p className="text-sm text-slate-600">Carregando operação...</p>
       </section>
     );
   }
 
   return (
     <section className="space-y-6">
-      <header className="rounded-3xl border border-border bg-surface p-8 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+      <header className="rounded-[32px] border border-white/70 bg-[linear-gradient(135deg,#ffffff_0%,#f7fbff_48%,#eef8f1_100%)] p-8 shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
           Operação
         </p>
-        <h2 className="mt-2 text-3xl font-heading text-zinc-900">Checklist da prova</h2>
-        <p className="mt-2 text-zinc-600">
-          Controle tarefas por evento, fase, responsável, prazo e status.
+        <h2 className="mt-3 text-4xl font-heading text-slate-950">Checklist da prova</h2>
+        <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-600">
+          Controle tarefas por evento, responsável, prazo e fase com menos atrito e mais clareza.
         </p>
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-3xl border border-border bg-surface p-6 shadow-sm">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 rounded-3xl border border-border bg-surface p-6 shadow-sm"
+        >
           <div>
-            <h3 className="text-2xl font-heading text-zinc-900">
+            <h3 className="text-2xl font-heading text-slate-950">
               {editingTaskId ? "Editar tarefa" : "Nova tarefa"}
             </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Preencha só o essencial para manter a operação objetiva e rastreável.
+            </p>
           </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+          <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
               Evento
             </label>
             <select
               value={selectedEventId}
               onChange={(event) => setSelectedEventId(event.target.value)}
-              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-2xl border border-border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
             >
               {events.map((event) => (
                 <option key={event.id} value={event.id}>
@@ -278,7 +328,7 @@ export function OperationsPlanner() {
               value={form.fase}
               onChange={(event) => setForm((prev) => ({ ...prev, fase: event.target.value }))}
               placeholder="Fase"
-              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
             />
             <input
               value={form.ordem}
@@ -286,7 +336,7 @@ export function OperationsPlanner() {
               placeholder="Ordem"
               type="number"
               min="0"
-              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -294,7 +344,7 @@ export function OperationsPlanner() {
             value={form.titulo}
             onChange={(event) => setForm((prev) => ({ ...prev, titulo: event.target.value }))}
             placeholder="Título da tarefa"
-            className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
           />
 
           <textarea
@@ -302,7 +352,7 @@ export function OperationsPlanner() {
             value={form.descricao}
             onChange={(event) => setForm((prev) => ({ ...prev, descricao: event.target.value }))}
             placeholder="Descrição"
-            className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
           />
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -310,13 +360,13 @@ export function OperationsPlanner() {
               value={form.responsavel}
               onChange={(event) => setForm((prev) => ({ ...prev, responsavel: event.target.value }))}
               placeholder="Responsável"
-              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
             />
             <input
               type="date"
               value={form.prazo}
               onChange={(event) => setForm((prev) => ({ ...prev, prazo: event.target.value }))}
-              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
 
@@ -328,7 +378,7 @@ export function OperationsPlanner() {
                 status: event.target.value as OperationTaskDto["status"],
               }))
             }
-            className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
           >
             {Object.entries(statusLabels).map(([value, label]) => (
               <option key={value} value={value}>
@@ -342,29 +392,28 @@ export function OperationsPlanner() {
             value={form.observacoes}
             onChange={(event) => setForm((prev) => ({ ...prev, observacoes: event.target.value }))}
             placeholder="Observações"
-            className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent"
           />
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {success && <p className="text-sm text-emerald-700">{success}</p>}
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-70"
+              className="flex-1 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
               {saving ? "Salvando..." : editingTaskId ? "Salvar tarefa" : "Criar tarefa"}
             </button>
-            {editingTaskId && (
+            {editingTaskId ? (
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-xl border border-border px-4 py-3 text-sm font-medium text-zinc-700"
+                className="rounded-xl border border-border px-4 py-3 text-sm font-medium text-slate-700"
               >
                 Cancelar
               </button>
-            )}
+            ) : null}
           </div>
         </form>
 
@@ -379,97 +428,109 @@ export function OperationsPlanner() {
           </section>
 
           <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-            <h3 className="text-2xl font-heading text-zinc-900">Tarefas por fase</h3>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-2xl font-heading text-slate-950">Tarefas por fase</h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  As ações mais importantes ficam agrupadas para leitura rápida da operação.
+                </p>
+              </div>
+            </div>
 
             {tasksLoading ? (
-              <p className="mt-4 text-sm text-zinc-600">Carregando tarefas...</p>
+              <p className="mt-4 text-sm text-slate-600">Carregando tarefas...</p>
+            ) : Object.keys(groupedTasks).length === 0 ? (
+              <div className="mt-5 rounded-3xl border border-dashed border-border bg-surface-muted/70 p-6 text-sm text-slate-600">
+                Nenhuma tarefa encontrada para este evento. Crie a primeira tarefa no painel ao lado.
+              </div>
             ) : (
               <div className="mt-5 space-y-5">
-                {Object.keys(groupedTasks).length === 0 ? (
-                  <p className="rounded-2xl border border-dashed border-border bg-surface-muted p-4 text-sm text-zinc-600">
-                    Nenhuma tarefa encontrada para este evento.
-                  </p>
-                ) : (
-                  Object.entries(groupedTasks).map(([fase, phaseTasks]) => (
-                    <div key={fase} className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-lg font-heading text-zinc-900">{fase}</h4>
-                        <span className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-                          {phaseTasks.length} tarefa(s)
-                        </span>
-                      </div>
-                      {phaseTasks.map((task) => (
-                        <article
-                          key={task.id}
-                          className="rounded-2xl border border-border bg-surface-muted/60 p-4"
-                        >
-                          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                            <div>
-                              <h5 className="text-lg font-semibold text-zinc-900">{task.titulo}</h5>
-                              <p className="mt-1 text-sm text-zinc-600">
-                                {task.descricao || "Sem descrição"}
-                              </p>
-                            </div>
-                            <span className={`rounded-lg px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(task.status)}`}>
-                              {statusLabels[task.status]}
-                            </span>
-                          </div>
-
-                          <div className="mt-4 grid gap-3 md:grid-cols-4">
-                            <MiniInfo label="Responsável" value={task.responsavel || "Não definido"} />
-                            <MiniInfo label="Prazo" value={formatDate(task.prazo)} />
-                            <MiniInfo label="Ordem" value={String(task.ordem)} />
-                            <MiniInfo label="Observações" value={task.observacoes || "Sem observações"} />
-                          </div>
-
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => startEdit(task)}
-                              className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-zinc-700"
-                            >
-                              Editar
-                            </button>
-                            {task.status !== "EM_ANDAMENTO" && (
-                              <button
-                                type="button"
-                                onClick={() => void updateTaskStatus(task, "EM_ANDAMENTO")}
-                                className="rounded-lg border border-amber-300 px-3 py-1 text-xs font-medium text-amber-700"
-                              >
-                                Marcar em andamento
-                              </button>
-                            )}
-                            {task.status !== "CONCLUIDA" && (
-                              <button
-                                type="button"
-                                onClick={() => void updateTaskStatus(task, "CONCLUIDA")}
-                                className="rounded-lg border border-emerald-300 px-3 py-1 text-xs font-medium text-emerald-700"
-                              >
-                                Concluir
-                              </button>
-                            )}
-                            {task.status !== "PENDENTE" && (
-                              <button
-                                type="button"
-                                onClick={() => void updateTaskStatus(task, "PENDENTE")}
-                                className="rounded-lg border border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-700"
-                              >
-                                Voltar para pendente
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => void deleteTask(task.id)}
-                              className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600"
-                            >
-                              Remover
-                            </button>
-                          </div>
-                        </article>
-                      ))}
+                {Object.entries(groupedTasks).map(([fase, phaseTasks]) => (
+                  <div key={fase} className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-heading text-slate-950">{fase}</h4>
+                      <span className="text-xs uppercase tracking-[0.15em] text-slate-500">
+                        {phaseTasks.length} tarefa(s)
+                      </span>
                     </div>
-                  ))
-                )}
+                    {phaseTasks.map((task) => (
+                      <article
+                        key={task.id}
+                        className="rounded-3xl border border-border bg-surface-muted/60 p-4"
+                      >
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div>
+                            <h5 className="text-lg font-semibold text-slate-950">{task.titulo}</h5>
+                            <p className="mt-1 text-sm text-slate-600">
+                              {task.descricao || "Sem descrição"}
+                            </p>
+                          </div>
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClasses(
+                              task.status,
+                            )}`}
+                          >
+                            {statusLabels[task.status]}
+                          </span>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 md:grid-cols-4">
+                          <MiniInfo label="Responsável" value={task.responsavel || "Não definido"} />
+                          <MiniInfo label="Prazo" value={formatDate(task.prazo)} />
+                          <MiniInfo label="Ordem" value={String(task.ordem)} />
+                          <MiniInfo
+                            label="Observações"
+                            value={task.observacoes || "Sem observações"}
+                          />
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEdit(task)}
+                            className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-slate-700"
+                          >
+                            Editar
+                          </button>
+                          {task.status !== "EM_ANDAMENTO" ? (
+                            <button
+                              type="button"
+                              onClick={() => void updateTaskStatus(task, "EM_ANDAMENTO")}
+                              className="rounded-lg border border-amber-300 px-3 py-1 text-xs font-medium text-amber-700"
+                            >
+                              Marcar em andamento
+                            </button>
+                          ) : null}
+                          {task.status !== "CONCLUIDA" ? (
+                            <button
+                              type="button"
+                              onClick={() => void updateTaskStatus(task, "CONCLUIDA")}
+                              className="rounded-lg border border-emerald-300 px-3 py-1 text-xs font-medium text-emerald-700"
+                            >
+                              Concluir
+                            </button>
+                          ) : null}
+                          {task.status !== "PENDENTE" ? (
+                            <button
+                              type="button"
+                              onClick={() => void updateTaskStatus(task, "PENDENTE")}
+                              className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700"
+                            >
+                              Voltar para pendente
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => void deleteTask(task.id)}
+                            className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600"
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ))}
               </div>
             )}
           </section>
@@ -482,17 +543,17 @@ export function OperationsPlanner() {
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-      <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">{label}</p>
-      <p className="mt-2 text-3xl font-heading text-zinc-900">{value}</p>
+      <p className="text-xs uppercase tracking-[0.15em] text-slate-500">{label}</p>
+      <p className="mt-2 text-3xl font-heading text-slate-950">{value}</p>
     </div>
   );
 }
 
 function MiniInfo({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-white/70 p-3">
-      <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">{label}</p>
-      <p className="mt-2 text-sm text-zinc-800">{value}</p>
+    <div className="rounded-2xl border border-border bg-white/80 p-3">
+      <p className="text-xs uppercase tracking-[0.15em] text-slate-500">{label}</p>
+      <p className="mt-2 text-sm text-slate-800">{value}</p>
     </div>
   );
 }
