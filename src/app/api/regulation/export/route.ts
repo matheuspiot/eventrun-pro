@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth";
+import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
 import { generateRegulationText } from "@/modules/regulation/generate-regulation-text";
 import { createRegulationPdfBuffer } from "@/modules/regulation/pdf";
+import { RegulationTemplateType } from "@/modules/regulation/types";
 import {
   getEventForRegulation,
   getRegulationConfigByEvent,
@@ -10,12 +11,15 @@ import {
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  }
+  if (!canAccessModule(auth.role, "regulamento")) {
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
   const eventId = request.nextUrl.searchParams.get("eventId");
   if (!eventId) {
-    return NextResponse.json({ error: "eventId é obrigatório" }, { status: 400 });
+    return NextResponse.json({ error: "eventId e obrigatorio" }, { status: 400 });
   }
 
   const [event, config] = await Promise.all([
@@ -25,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   if (!event || !config) {
     return NextResponse.json(
-      { error: "Evento ou configuração de regulamento não encontrado" },
+      { error: "Evento ou configuracao de regulamento nao encontrado" },
       { status: 404 },
     );
   }
@@ -33,6 +37,7 @@ export async function GET(request: NextRequest) {
   const text = generateRegulationText(
     {
       ...config,
+      templateTipo: config.templateTipo as RegulationTemplateType,
       valorInscricao: config.valorInscricao.toString(),
       dataInicioInscricao: config.dataInicioInscricao.toISOString(),
       dataFimInscricao: config.dataFimInscricao.toISOString(),

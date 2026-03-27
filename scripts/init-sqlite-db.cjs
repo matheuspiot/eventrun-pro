@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "Organization" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "name" TEXT NOT NULL,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  "updatedAt" DATETIME NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "User" (
@@ -17,9 +17,10 @@ CREATE TABLE IF NOT EXISTS "User" (
   "organizationId" TEXT NOT NULL,
   "name" TEXT NOT NULL,
   "email" TEXT NOT NULL,
+  "role" TEXT NOT NULL DEFAULT 'ADMIN',
   "passwordHash" TEXT NOT NULL,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL,
   CONSTRAINT "User_organizationId_fkey"
     FOREIGN KEY ("organizationId") REFERENCES "Organization" ("id")
     ON DELETE CASCADE ON UPDATE CASCADE
@@ -38,9 +39,16 @@ CREATE TABLE IF NOT EXISTS "Event" (
   "localLargada" TEXT NOT NULL,
   "organizador" TEXT NOT NULL,
   "cnpjOrganizador" TEXT NOT NULL,
+  "modalidades" TEXT,
+  "distancias" TEXT,
+  "capacidadeMaxima" INTEGER,
+  "limiteTecnico" TEXT,
+  "cronogramaResumo" TEXT,
+  "patrocinadores" TEXT,
+  "fornecedores" TEXT,
   "status" TEXT NOT NULL DEFAULT 'PLANEJAMENTO',
   "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "atualizadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "atualizadoEm" DATETIME NOT NULL,
   CONSTRAINT "Event_organizationId_fkey"
     FOREIGN KEY ("organizationId") REFERENCES "Organization" ("id")
     ON DELETE CASCADE ON UPDATE CASCADE
@@ -59,7 +67,7 @@ CREATE TABLE IF NOT EXISTS "CostItem" (
   "custoPadrao" REAL NOT NULL,
   "descricao" TEXT,
   "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "atualizadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "atualizadoEm" DATETIME NOT NULL,
   CONSTRAINT "CostItem_organizationId_fkey"
     FOREIGN KEY ("organizationId") REFERENCES "Organization" ("id")
     ON DELETE CASCADE ON UPDATE CASCADE
@@ -67,6 +75,25 @@ CREATE TABLE IF NOT EXISTS "CostItem" (
 
 CREATE INDEX IF NOT EXISTS "CostItem_organizationId_idx" ON "CostItem"("organizationId");
 CREATE INDEX IF NOT EXISTS "CostItem_categoria_idx" ON "CostItem"("categoria");
+
+CREATE TABLE IF NOT EXISTS "MarketingPackage" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "organizationId" TEXT NOT NULL,
+  "nome" TEXT NOT NULL,
+  "descricao" TEXT,
+  "entregaveis" TEXT NOT NULL,
+  "investimento" REAL NOT NULL,
+  "cronograma" TEXT,
+  "ativo" BOOLEAN NOT NULL DEFAULT true,
+  "ordem" INTEGER NOT NULL DEFAULT 0,
+  "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "atualizadoEm" DATETIME NOT NULL,
+  CONSTRAINT "MarketingPackage_organizationId_fkey"
+    FOREIGN KEY ("organizationId") REFERENCES "Organization" ("id")
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "MarketingPackage_organizationId_idx" ON "MarketingPackage"("organizationId");
 
 CREATE TABLE IF NOT EXISTS "EventBudget" (
   "id" TEXT NOT NULL PRIMARY KEY,
@@ -79,7 +106,7 @@ CREATE TABLE IF NOT EXISTS "EventBudget" (
   "impostoPercentual" REAL NOT NULL,
   "taxaCancelamentoReembolsoPercentual" REAL NOT NULL DEFAULT 0,
   "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "atualizadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "atualizadoEm" DATETIME NOT NULL,
   CONSTRAINT "EventBudget_eventId_fkey"
     FOREIGN KEY ("eventId") REFERENCES "Event" ("id")
     ON DELETE CASCADE ON UPDATE CASCADE
@@ -108,9 +135,13 @@ CREATE INDEX IF NOT EXISTS "EventBudgetItem_costItemId_idx" ON "EventBudgetItem"
 CREATE TABLE IF NOT EXISTS "RegulationConfig" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "eventId" TEXT NOT NULL,
+  "templateTipo" TEXT NOT NULL DEFAULT 'CORRIDA_RUA',
   "possuiKids" BOOLEAN NOT NULL DEFAULT false,
   "possuiChip" BOOLEAN NOT NULL DEFAULT true,
   "possuiPremiacaoDinheiro" BOOLEAN NOT NULL DEFAULT false,
+  "permiteTransferencia" BOOLEAN NOT NULL DEFAULT false,
+  "permiteRetiradaTerceiros" BOOLEAN NOT NULL DEFAULT true,
+  "exigeAtestadoMedico" BOOLEAN NOT NULL DEFAULT false,
   "logoDataUrl" TEXT,
   "faixaEtariaInicio" INTEGER NOT NULL DEFAULT 18,
   "faixaEtariaFim" INTEGER NOT NULL DEFAULT 80,
@@ -119,18 +150,44 @@ CREATE TABLE IF NOT EXISTS "RegulationConfig" (
   "plataformaInscricao" TEXT NOT NULL,
   "valorInscricao" REAL NOT NULL,
   "limiteVagas" INTEGER NOT NULL,
+  "kitDescricao" TEXT,
+  "premiacaoDescricao" TEXT,
+  "regrasGeraisExtra" TEXT,
+  "documentosObrigatorios" TEXT,
+  "politicaCancelamento" TEXT,
   "emailContato" TEXT NOT NULL,
   "whatsappContato" TEXT NOT NULL,
   "dataInicioInscricao" DATETIME NOT NULL,
   "dataFimInscricao" DATETIME NOT NULL,
   "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "atualizadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "atualizadoEm" DATETIME NOT NULL,
   CONSTRAINT "RegulationConfig_eventId_fkey"
     FOREIGN KEY ("eventId") REFERENCES "Event" ("id")
     ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "RegulationConfig_eventId_key" ON "RegulationConfig"("eventId");
+
+CREATE TABLE IF NOT EXISTS "EventOperationTask" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "eventId" TEXT NOT NULL,
+  "fase" TEXT NOT NULL,
+  "titulo" TEXT NOT NULL,
+  "descricao" TEXT,
+  "responsavel" TEXT,
+  "prazo" DATETIME,
+  "status" TEXT NOT NULL DEFAULT 'PENDENTE',
+  "observacoes" TEXT,
+  "ordem" INTEGER NOT NULL DEFAULT 0,
+  "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "atualizadoEm" DATETIME NOT NULL,
+  CONSTRAINT "EventOperationTask_eventId_fkey"
+    FOREIGN KEY ("eventId") REFERENCES "Event" ("id")
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "EventOperationTask_eventId_idx" ON "EventOperationTask"("eventId");
+CREATE INDEX IF NOT EXISTS "EventOperationTask_status_idx" ON "EventOperationTask"("status");
 `;
 
 async function initSqliteDb(outputArg) {

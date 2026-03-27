@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EventRun Pro
 
-## Getting Started
+Sistema para gestao de eventos esportivos com foco em corridas. A aplicacao cobre cadastro de eventos, biblioteca de custos, planejamento de orcamento, regulamento, proposta comercial e empacotamento desktop com auto-update via GitHub Releases.
 
-First, run the development server:
+## Stack
+
+- Next.js
+- React
+- Prisma
+- SQLite
+- Electron
+- electron-builder
+
+## Modulos principais
+
+- `Dashboard`: resumo financeiro e lista de projetos
+- `Orcamento`: simulacao financeira por evento
+- `Biblioteca de custos`: custos padrao reutilizaveis
+- `Regulamento`: configuracao e exportacao de PDF
+- `Marketing`: proposta comercial em PDF
+- `Desktop`: shell Electron com atualizacao automatica
+
+## Ambiente local
+
+Crie o arquivo `.env` com os valores necessarios. O projeto usa pelo menos:
+
+```env
+DATABASE_URL=file:./prisma/dev.db
+JWT_SECRET=troque-este-segredo
+```
+
+## Comandos
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm run lint
+npm run prisma:generate
+npm run db:init
+npm run desktop:prepare
+npm run desktop:dist:win
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Fluxo local
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Instale dependencias com `npm install`.
+2. Gere o client do Prisma com `npm run prisma:generate`.
+3. Inicialize o banco local se necessario com `npm run db:init`.
+4. Rode a aplicacao com `npm run dev`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Desktop e atualizacoes
 
-## Learn More
+O aplicativo desktop publica releases publicas no GitHub e os usuarios instalados recebem novas versoes pelo mecanismo de auto-update.
 
-To learn more about Next.js, take a look at the following resources:
+Antes de qualquer pedido para "subir atualizacao", leia obrigatoriamente:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [RELEASE_PROCESS.md](/d:/Documentos/Clube%20Piot/EventRun%20Pro/RELEASE_PROCESS.md)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Resumo da regra:
 
-## Deploy on Vercel
+1. Consultar a release publica atual.
+2. Descobrir a versao mais recente publicada.
+3. Gerar sempre uma versao nova em `desktop/package.json`.
+4. Buildar os artefatos novos.
+5. Publicar a release com a mesma versao.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Estrutura relevante
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app`: rotas e paginas
+- `src/modules`: logica por dominio
+- `src/lib`: auth, prisma e utilitarios
+- `prisma`: schema e migrations
+- `desktop`: shell Electron e publicacao
+- `scripts`: automacoes de build e banco
+
+## Observacao operacional
+
+Se o objetivo for publicar uma nova atualizacao desktop, o procedimento correto nao deve ser feito de memoria. O arquivo `RELEASE_PROCESS.md` existe justamente para ser lido antes de qualquer release.

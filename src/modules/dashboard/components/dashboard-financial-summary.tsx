@@ -1,7 +1,7 @@
 "use client";
 
-import { EventDto } from "@/modules/events/types";
 import { useEffect, useMemo, useState } from "react";
+import { EventDto } from "@/modules/events/types";
 
 type BudgetSummaryResponse = {
   budget: {
@@ -29,7 +29,7 @@ export function DashboardFinancialSummary() {
     async function loadEvents() {
       const response = await fetch("/api/events", { cache: "no-store" });
       if (!response.ok) {
-        setError("Não foi possível carregar os eventos");
+        setError("Nao foi possivel carregar os eventos.");
         setLoading(false);
         return;
       }
@@ -55,7 +55,7 @@ export function DashboardFinancialSummary() {
         cache: "no-store",
       });
       if (!response.ok) {
-        setError("Não foi possível carregar o resumo financeiro");
+        setError("Nao foi possivel carregar o resumo financeiro.");
         return;
       }
 
@@ -85,9 +85,9 @@ export function DashboardFinancialSummary() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-            Visão financeira
+            Visao financeira
           </p>
-          <h3 className="mt-1 text-2xl font-heading text-zinc-900">Resumo do orçamento</h3>
+          <h3 className="mt-1 text-2xl font-heading text-zinc-900">Resumo do orcamento</h3>
         </div>
         <select
           value={selectedEventId}
@@ -107,7 +107,7 @@ export function DashboardFinancialSummary() {
 
       {!summary ? (
         <p className="mt-4 rounded-xl border border-dashed border-border bg-surface-muted p-4 text-sm text-zinc-600">
-          Este evento ainda não possui orçamento salvo.
+          Este evento ainda nao possui orcamento salvo.
         </p>
       ) : (
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -118,21 +118,21 @@ export function DashboardFinancialSummary() {
             </p>
           </article>
           <article className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Preço mínimo inscrição</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Preco minimo inscricao</p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(summary.calculations.precoMinimoInscricao)}
             </p>
           </article>
           <article className="rounded-2xl border border-border bg-surface-muted/70 p-4">
             <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">
-              Preço recomendado (lucro)
+              Preco recomendado (lucro)
             </p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(summary.calculations.precoRecomendadoParaLucro)}
             </p>
           </article>
           <article className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Lucro líquido por inscrição</p>
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Lucro liquido por inscricao</p>
             <p className="mt-2 text-2xl font-heading text-zinc-900">
               {brl(summary.calculations.lucroLiquidoEstimado)}
             </p>

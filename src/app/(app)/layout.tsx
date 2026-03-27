@@ -1,6 +1,6 @@
-﻿import { redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
-import { getAuthFromCookies } from "@/lib/auth";
+import { getAuthFromCookies } from "@/lib/auth-server";
 import { prisma } from "@/lib/prisma";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -17,9 +17,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-background">
-      <AppSidebar organizationName={organization?.name ?? "Organizacao"} userName={auth.name} />
+      <AppSidebar
+        organizationName={organization?.name ?? "Organizacao"}
+        userName={auth.name}
+        userRole={auth.role}
+      />
       <main className="ml-0 min-h-screen p-6 md:ml-72 md:p-10">{children}</main>
     </div>
   );
 }
-

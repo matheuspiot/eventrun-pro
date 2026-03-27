@@ -15,6 +15,7 @@ model Organization {
   users     User[]
   events    Event[]
   costItems CostItem[]
+  marketingPackages MarketingPackage[]
 }
 
 model User {
@@ -22,6 +23,7 @@ model User {
   organizationId String
   name           String
   email          String       @unique
+  role           UserRole     @default(ADMIN)
   passwordHash   String
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -40,15 +42,55 @@ model Event {
   localLargada    String
   organizador     String
   cnpjOrganizador String
+  modalidades     String?
+  distancias      String?
+  capacidadeMaxima Int?
+  limiteTecnico   String?
+  cronogramaResumo String?
+  patrocinadores  String?
+  fornecedores    String?
   status          EventStatus  @default(PLANEJAMENTO)
   criadoEm        DateTime     @default(now())
   atualizadoEm    DateTime     @updatedAt
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   budget          EventBudget?
   regulation      RegulationConfig?
+  operationTasks  EventOperationTask[]
 
   @@index([organizationId])
   @@index([dataEvento])
+}
+
+enum UserRole {
+  ADMIN
+  FINANCEIRO
+  OPERACIONAL
+  MARKETING
+}
+
+model EventOperationTask {
+  id          String              @id @default(cuid())
+  eventId     String
+  fase        String
+  titulo      String
+  descricao   String?
+  responsavel String?
+  prazo       DateTime?
+  status      OperationTaskStatus @default(PENDENTE)
+  observacoes String?
+  ordem       Int                 @default(0)
+  criadoEm    DateTime            @default(now())
+  atualizadoEm DateTime           @updatedAt
+  event       Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([status])
+}
+
+enum OperationTaskStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDA
 }
 
 enum EventStatus {
@@ -134,9 +176,13 @@ model EventBudgetItem {
 model RegulationConfig {
   id                       String   @id @default(cuid())
   eventId                  String   @unique
+  templateTipo             String   @default("CORRIDA_RUA")
   possuiKids               Boolean  @default(false)
   possuiChip               Boolean  @default(true)
   possuiPremiacaoDinheiro  Boolean  @default(false)
+  permiteTransferencia     Boolean  @default(false)
+  permiteRetiradaTerceiros Boolean  @default(true)
+  exigeAtestadoMedico      Boolean  @default(false)
   logoDataUrl              String?
   faixaEtariaInicio        Int      @default(18)
   faixaEtariaFim           Int      @default(80)
@@ -145,6 +191,11 @@ model RegulationConfig {
   plataformaInscricao      String
   valorInscricao           Float
   limiteVagas              Int
+  kitDescricao             String?
+  premiacaoDescricao       String?
+  regrasGeraisExtra        String?
+  documentosObrigatorios   String?
+  politicaCancelamento     String?
   emailContato             String
   whatsappContato          String
   dataInicioInscricao      DateTime
@@ -152,4 +203,21 @@ model RegulationConfig {
   criadoEm                 DateTime @default(now())
   atualizadoEm             DateTime @updatedAt
   event                    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model MarketingPackage {
+  id             String   @id @default(cuid())
+  organizationId String
+  nome           String
+  descricao      String?
+  entregaveis    String
+  investimento   Float
+  cronograma     String?
+  ativo          Boolean  @default(true)
+  ordem          Int      @default(0)
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }

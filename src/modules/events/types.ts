@@ -10,6 +10,13 @@ export type EventDto = {
   localLargada: string;
   organizador: string;
   cnpjOrganizador: string;
+  modalidades: string | null;
+  distancias: string | null;
+  capacidadeMaxima: number | null;
+  limiteTecnico: string | null;
+  cronogramaResumo: string | null;
+  patrocinadores: string | null;
+  fornecedores: string | null;
   status: EventStatus;
   criadoEm: string;
   atualizadoEm: string;

@@ -1,25 +1,89 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { EventDto } from "@/modules/events/types";
 import { generateRegulationText } from "../generate-regulation-text";
-import { RegulationConfigDto } from "../types";
+import { RegulationConfigDto, RegulationTemplateType } from "../types";
 
 const steps = [
-  "Etapa 1 - Identidade",
-  "Etapa 2 - Modalidades",
-  "Etapa 3 - Inscrição",
-  "Etapa 4 - Kit",
-  "Etapa 5 - Premiação",
+  "Etapa 1 - Template",
+  "Etapa 2 - Prova",
+  "Etapa 3 - Inscricao",
+  "Etapa 4 - Kit e documentos",
+  "Etapa 5 - Premiacao e regras",
   "Etapa 6 - Contatos",
 ];
 
-const platformOptions = ["TicketSports", "Sympla", "Minhas Inscrições", "Site Próprio"];
+const platformOptions = ["TicketSports", "Sympla", "Minhas Inscricoes", "Site Proprio"];
+
+const regulationTemplates: Record<
+  RegulationTemplateType,
+  {
+    label: string;
+    config: Partial<typeof defaultConfig>;
+  }
+> = {
+  CORRIDA_RUA: {
+    label: "Corrida de Rua",
+    config: {
+      possuiKids: false,
+      possuiChip: true,
+      possuiPremiacaoDinheiro: false,
+      permiteTransferencia: false,
+      permiteRetiradaTerceiros: true,
+      exigeAtestadoMedico: false,
+      tempoLimiteMinutos: "180",
+      kitDescricao: "O kit padrao contem numero de peito, chip, medalha e brindes conforme patrocinadores.",
+      premiacaoDescricao:
+        "A premiacao podera contemplar categorias gerais e faixas etarias, conforme anexo tecnico.",
+    },
+  },
+  TRAIL_RUN: {
+    label: "Trail Run",
+    config: {
+      possuiKids: false,
+      possuiChip: true,
+      possuiPremiacaoDinheiro: true,
+      permiteTransferencia: false,
+      permiteRetiradaTerceiros: false,
+      exigeAtestadoMedico: true,
+      tempoLimiteMinutos: "300",
+      kitDescricao:
+        "O kit padrao contem numero de peito, chip, medalha e orientacoes tecnicas especificas de percurso.",
+      documentosObrigatorios:
+        "Documento com foto e, quando exigido, termo de responsabilidade ou documento medico complementar.",
+      regrasGeraisExtra:
+        "O atleta deve respeitar sinalizacao, pontos de apoio e orientacoes de seguranca em area natural.",
+    },
+  },
+  CORRIDA_KIDS: {
+    label: "Corrida Kids",
+    config: {
+      possuiKids: true,
+      possuiChip: false,
+      possuiPremiacaoDinheiro: false,
+      permiteTransferencia: false,
+      permiteRetiradaTerceiros: true,
+      exigeAtestadoMedico: false,
+      tempoLimiteMinutos: "60",
+      kitDescricao:
+        "O kit padrao contem numero de peito, medalha participativa e itens infantis conforme disponibilidade.",
+      documentosObrigatorios:
+        "Documento do responsavel e autorizacao para participacao da crianca.",
+      regrasGeraisExtra:
+        "A participacao kids depende de acompanhamento e autorizacao do responsavel legal.",
+    },
+  },
+};
 
 const defaultConfig = {
+  templateTipo: "CORRIDA_RUA" as RegulationTemplateType,
   possuiKids: false,
   possuiChip: true,
   possuiPremiacaoDinheiro: false,
+  permiteTransferencia: false,
+  permiteRetiradaTerceiros: true,
+  exigeAtestadoMedico: false,
   logoDataUrl: "",
   faixaEtariaInicio: "16",
   faixaEtariaFim: "80",
@@ -28,6 +92,11 @@ const defaultConfig = {
   plataformaInscricao: ["TicketSports"],
   valorInscricao: "0",
   limiteVagas: "1000",
+  kitDescricao: "",
+  premiacaoDescricao: "",
+  regrasGeraisExtra: "",
+  documentosObrigatorios: "",
+  politicaCancelamento: "",
   emailContato: "",
   whatsappContato: "",
   dataInicioInscricao: "",
@@ -54,7 +123,7 @@ export function RegulationBuilder() {
       setLoading(true);
       const response = await fetch("/api/events", { cache: "no-store" });
       if (!response.ok) {
-        setError("Não foi possível carregar eventos");
+        setError("Nao foi possivel carregar eventos.");
         setLoading(false);
         return;
       }
@@ -80,7 +149,7 @@ export function RegulationBuilder() {
       });
 
       if (!response.ok) {
-        setError("Não foi possível carregar a configuração do regulamento");
+        setError("Nao foi possivel carregar a configuracao do regulamento.");
         return;
       }
 
@@ -91,9 +160,13 @@ export function RegulationBuilder() {
       }
 
       setForm({
+        templateTipo: data.config.templateTipo,
         possuiKids: data.config.possuiKids,
         possuiChip: data.config.possuiChip,
         possuiPremiacaoDinheiro: data.config.possuiPremiacaoDinheiro,
+        permiteTransferencia: data.config.permiteTransferencia,
+        permiteRetiradaTerceiros: data.config.permiteRetiradaTerceiros,
+        exigeAtestadoMedico: data.config.exigeAtestadoMedico,
         logoDataUrl: data.config.logoDataUrl ?? "",
         faixaEtariaInicio: String(data.config.faixaEtariaInicio),
         faixaEtariaFim: String(data.config.faixaEtariaFim),
@@ -102,6 +175,11 @@ export function RegulationBuilder() {
         plataformaInscricao: data.config.plataformaInscricao,
         valorInscricao: data.config.valorInscricao,
         limiteVagas: String(data.config.limiteVagas),
+        kitDescricao: data.config.kitDescricao ?? "",
+        premiacaoDescricao: data.config.premiacaoDescricao ?? "",
+        regrasGeraisExtra: data.config.regrasGeraisExtra ?? "",
+        documentosObrigatorios: data.config.documentosObrigatorios ?? "",
+        politicaCancelamento: data.config.politicaCancelamento ?? "",
         emailContato: data.config.emailContato,
         whatsappContato: data.config.whatsappContato,
         dataInicioInscricao: data.config.dataInicioInscricao.slice(0, 10),
@@ -124,6 +202,15 @@ export function RegulationBuilder() {
     });
   }
 
+  function applyTemplate(templateTipo: RegulationTemplateType) {
+    setForm((prev) => ({
+      ...prev,
+      ...regulationTemplates[templateTipo].config,
+      templateTipo,
+    }));
+    setSuccess(`Template aplicado: ${regulationTemplates[templateTipo].label}.`);
+  }
+
   function handleLogoUpload(file: File | null) {
     if (!file) {
       setForm((prev) => ({ ...prev, logoDataUrl: "" }));
@@ -131,7 +218,7 @@ export function RegulationBuilder() {
     }
 
     if (!file.type.startsWith("image/")) {
-      setError("Selecione um arquivo de imagem válido para a logo.");
+      setError("Selecione um arquivo de imagem valido para a logo.");
       return;
     }
 
@@ -141,14 +228,14 @@ export function RegulationBuilder() {
       const dataUrl = typeof reader.result === "string" ? reader.result : "";
       setForm((prev) => ({ ...prev, logoDataUrl: dataUrl }));
     };
-    reader.onerror = () => setError("Não foi possível ler o arquivo da logo.");
+    reader.onerror = () => setError("Nao foi possivel ler o arquivo da logo.");
     reader.readAsDataURL(file);
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedEventId) {
-      setError("Selecione um evento");
+      setError("Selecione um evento.");
       return;
     }
 
@@ -161,9 +248,13 @@ export function RegulationBuilder() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         eventId: selectedEventId,
+        templateTipo: form.templateTipo,
         possuiKids: form.possuiKids,
         possuiChip: form.possuiChip,
         possuiPremiacaoDinheiro: form.possuiPremiacaoDinheiro,
+        permiteTransferencia: form.permiteTransferencia,
+        permiteRetiradaTerceiros: form.permiteRetiradaTerceiros,
+        exigeAtestadoMedico: form.exigeAtestadoMedico,
         logoDataUrl: form.logoDataUrl || null,
         faixaEtariaInicio: Number(form.faixaEtariaInicio),
         faixaEtariaFim: Number(form.faixaEtariaFim),
@@ -172,6 +263,11 @@ export function RegulationBuilder() {
         plataformaInscricao: form.plataformaInscricao,
         valorInscricao: Number(form.valorInscricao),
         limiteVagas: Number(form.limiteVagas),
+        kitDescricao: form.kitDescricao || null,
+        premiacaoDescricao: form.premiacaoDescricao || null,
+        regrasGeraisExtra: form.regrasGeraisExtra || null,
+        documentosObrigatorios: form.documentosObrigatorios || null,
+        politicaCancelamento: form.politicaCancelamento || null,
         emailContato: form.emailContato,
         whatsappContato: form.whatsappContato,
         dataInicioInscricao: form.dataInicioInscricao,
@@ -181,12 +277,12 @@ export function RegulationBuilder() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Não foi possível salvar");
+      setError(data.error ?? "Nao foi possivel salvar.");
       setSaving(false);
       return;
     }
 
-    setSuccess("Regulamento salvo com sucesso");
+    setSuccess("Regulamento salvo com sucesso.");
     setSaving(false);
   }
 
@@ -199,9 +295,13 @@ export function RegulationBuilder() {
       {
         id: "preview",
         eventId: selectedEvent.id,
+        templateTipo: form.templateTipo,
         possuiKids: form.possuiKids,
         possuiChip: form.possuiChip,
         possuiPremiacaoDinheiro: form.possuiPremiacaoDinheiro,
+        permiteTransferencia: form.permiteTransferencia,
+        permiteRetiradaTerceiros: form.permiteRetiradaTerceiros,
+        exigeAtestadoMedico: form.exigeAtestadoMedico,
         logoDataUrl: form.logoDataUrl || null,
         faixaEtariaInicio: Number(form.faixaEtariaInicio || 16),
         faixaEtariaFim: Number(form.faixaEtariaFim || 80),
@@ -210,6 +310,11 @@ export function RegulationBuilder() {
         plataformaInscricao: form.plataformaInscricao,
         valorInscricao: form.valorInscricao || "0",
         limiteVagas: Number(form.limiteVagas || 0),
+        kitDescricao: form.kitDescricao || null,
+        premiacaoDescricao: form.premiacaoDescricao || null,
+        regrasGeraisExtra: form.regrasGeraisExtra || null,
+        documentosObrigatorios: form.documentosObrigatorios || null,
+        politicaCancelamento: form.politicaCancelamento || null,
         emailContato: form.emailContato || "contato@evento.com",
         whatsappContato: form.whatsappContato || "(00) 00000-0000",
         dataInicioInscricao: form.dataInicioInscricao || new Date().toISOString(),
@@ -232,7 +337,7 @@ export function RegulationBuilder() {
   if (loading) {
     return (
       <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-        <p className="text-sm text-zinc-600">Carregando módulo de regulamento...</p>
+        <p className="text-sm text-zinc-600">Carregando modulo de regulamento...</p>
       </section>
     );
   }
@@ -241,7 +346,9 @@ export function RegulationBuilder() {
     <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
       <div>
         <h2 className="text-3xl font-heading text-zinc-900">Regulamento</h2>
-        <p className="text-sm text-zinc-600">Quiz em etapas com geração automática de texto.</p>
+        <p className="text-sm text-zinc-600">
+          Templates por tipo de prova, campos operacionais e preview estruturado.
+        </p>
       </div>
 
       <form onSubmit={handleSave} className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_1fr]">
@@ -272,16 +379,6 @@ export function RegulationBuilder() {
                 onChange={(event) => handleLogoUpload(event.target.files?.[0] ?? null)}
                 className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
               />
-              {form.logoDataUrl && (
-                <div className="mt-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={form.logoDataUrl}
-                    alt="Logo do regulamento"
-                    className="h-16 w-auto rounded-md border border-border bg-white p-1"
-                  />
-                </div>
-              )}
             </div>
           </div>
 
@@ -302,27 +399,31 @@ export function RegulationBuilder() {
             </div>
 
             {step === 0 && (
-              <div className="space-y-2 text-sm text-zinc-700">
-                <p>
-                  Evento: <strong>{selectedEvent?.nomeEvento ?? "-"}</strong>
-                </p>
-                <p>
-                  Data:{" "}
-                  <strong>
-                    {selectedEvent
-                      ? new Date(selectedEvent.dataEvento).toLocaleDateString("pt-BR")
-                      : "-"}
-                  </strong>
-                </p>
-                <p>
-                  Cidade:{" "}
-                  <strong>
-                    {selectedEvent ? `${selectedEvent.cidade}/${selectedEvent.estado}` : "-"}
-                  </strong>
-                </p>
-                <p>
-                  Organizador: <strong>{selectedEvent?.organizador ?? "-"}</strong>
-                </p>
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {(Object.keys(regulationTemplates) as RegulationTemplateType[]).map((template) => (
+                    <button
+                      key={template}
+                      type="button"
+                      onClick={() => applyTemplate(template)}
+                      className={`rounded-2xl border p-4 text-left ${
+                        form.templateTipo === template
+                          ? "border-accent bg-accent-soft"
+                          : "border-border bg-surface-muted/60"
+                      }`}
+                    >
+                      <p className="text-sm font-semibold text-zinc-900">
+                        {regulationTemplates[template].label}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+                {form.logoDataUrl && (
+                  <div className="rounded-xl border border-border bg-white p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.logoDataUrl} alt="Logo do regulamento" className="h-16 w-auto rounded-md" />
+                  </div>
+                )}
               </div>
             )}
 
@@ -348,166 +449,173 @@ export function RegulationBuilder() {
                   />
                   Possui chip de cronometragem
                 </label>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                    Tempo limite (minutos)
-                  </label>
+                <label className="flex items-center gap-2 text-sm text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={form.exigeAtestadoMedico}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, exigeAtestadoMedico: event.target.checked }))
+                    }
+                  />
+                  Exige atestado medico
+                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
                   <input
                     type="number"
                     min="1"
                     value={form.tempoLimiteMinutos}
                     onChange={(event) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        tempoLimiteMinutos: event.target.value,
-                      }))
+                      setForm((prev) => ({ ...prev, tempoLimiteMinutos: event.target.value }))
                     }
+                    placeholder="Tempo limite (minutos)"
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.limiteVagas}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, limiteVagas: event.target.value }))
+                    }
+                    placeholder="Limite de vagas"
                     className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                   />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Faixa inicial
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={form.faixaEtariaInicio}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, faixaEtariaInicio: event.target.value }))
-                      }
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Faixa final
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={form.faixaEtariaFim}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, faixaEtariaFim: event.target.value }))
-                      }
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Intervalo
-                    </label>
-                    <select
-                      value={form.intervaloFaixaEtaria}
-                      onChange={(event) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          intervaloFaixaEtaria: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                    >
-                      <option value="2">2 em 2</option>
-                      <option value="5">5 em 5</option>
-                      <option value="10">10 em 10</option>
-                    </select>
-                  </div>
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.faixaEtariaInicio}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, faixaEtariaInicio: event.target.value }))
+                    }
+                    placeholder="Faixa inicial"
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    value={form.faixaEtariaFim}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, faixaEtariaFim: event.target.value }))
+                    }
+                    placeholder="Faixa final"
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <select
+                    value={form.intervaloFaixaEtaria}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, intervaloFaixaEtaria: event.target.value }))
+                    }
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <option value="2">2 em 2</option>
+                    <option value="5">5 em 5</option>
+                    <option value="10">10 em 10</option>
+                  </select>
                 </div>
               </div>
             )}
 
             {step === 2 && (
               <div className="space-y-3">
-                <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                    Plataformas de inscrição
-                  </label>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {platformOptions.map((platform) => (
-                      <label key={platform} className="flex items-center gap-2 text-sm text-zinc-700">
-                        <input
-                          type="checkbox"
-                          checked={form.plataformaInscricao.includes(platform)}
-                          onChange={() => togglePlatform(platform)}
-                        />
-                        {platform}
-                      </label>
-                    ))}
-                  </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {platformOptions.map((platform) => (
+                    <label key={platform} className="flex items-center gap-2 text-sm text-zinc-700">
+                      <input
+                        type="checkbox"
+                        checked={form.plataformaInscricao.includes(platform)}
+                        onChange={() => togglePlatform(platform)}
+                      />
+                      {platform}
+                    </label>
+                  ))}
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Valor inscrição
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={form.valorInscricao}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, valorInscricao: event.target.value }))
-                      }
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Limite de vagas
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={form.limiteVagas}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, limiteVagas: event.target.value }))
-                      }
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.valorInscricao}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, valorInscricao: event.target.value }))
+                    }
+                    placeholder="Valor da inscricao"
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <input
+                    value={form.politicaCancelamento}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, politicaCancelamento: event.target.value }))
+                    }
+                    placeholder="Politica de cancelamento"
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Início inscrição
-                    </label>
-                    <input
-                      type="date"
-                      value={form.dataInicioInscricao}
-                      onChange={(event) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          dataInicioInscricao: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                      Fim inscrição
-                    </label>
-                    <input
-                      type="date"
-                      value={form.dataFimInscricao}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, dataFimInscricao: event.target.value }))
-                      }
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
+                  <input
+                    type="date"
+                    value={form.dataInicioInscricao}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, dataInicioInscricao: event.target.value }))
+                    }
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <input
+                    type="date"
+                    value={form.dataFimInscricao}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, dataFimInscricao: event.target.value }))
+                    }
+                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  />
                 </div>
+                <label className="flex items-center gap-2 text-sm text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={form.permiteTransferencia}
+                    onChange={(event) =>
+                      setForm((prev) => ({ ...prev, permiteTransferencia: event.target.checked }))
+                    }
+                  />
+                  Permite transferencia de inscricao
+                </label>
               </div>
             )}
 
             {step === 3 && (
-              <div className="space-y-2 text-sm text-zinc-700">
-                <p>Configuração de kit com base nos recursos do evento:</p>
-                <p>
-                  Chip incluso: <strong>{form.possuiChip ? "Sim" : "Não"}</strong>
-                </p>
-                <p>Número de peito e itens promocionais poderão ser ajustados na versão final.</p>
+              <div className="space-y-3">
+                <textarea
+                  rows={4}
+                  value={form.kitDescricao}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, kitDescricao: event.target.value }))
+                  }
+                  placeholder="Descricao do kit"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                />
+                <textarea
+                  rows={4}
+                  value={form.documentosObrigatorios}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, documentosObrigatorios: event.target.value }))
+                  }
+                  placeholder="Documentos obrigatorios para retirada"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                />
+                <label className="flex items-center gap-2 text-sm text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={form.permiteRetiradaTerceiros}
+                    onChange={(event) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        permiteRetiradaTerceiros: event.target.checked,
+                      }))
+                    }
+                  />
+                  Permite retirada do kit por terceiros
+                </label>
               </div>
             )}
 
@@ -524,38 +632,48 @@ export function RegulationBuilder() {
                       }))
                     }
                   />
-                  Possui premiação em dinheiro
+                  Possui premiacao em dinheiro
                 </label>
+                <textarea
+                  rows={4}
+                  value={form.premiacaoDescricao}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, premiacaoDescricao: event.target.value }))
+                  }
+                  placeholder="Descricao da premiacao"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                />
+                <textarea
+                  rows={5}
+                  value={form.regrasGeraisExtra}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, regrasGeraisExtra: event.target.value }))
+                  }
+                  placeholder="Regras gerais extras"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                />
               </div>
             )}
 
             {step === 5 && (
               <div className="space-y-3">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                    E-mail de contato
-                  </label>
-                  <input
-                    type="email"
-                    value={form.emailContato}
-                    onChange={(event) =>
-                      setForm((prev) => ({ ...prev, emailContato: event.target.value }))
-                    }
-                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                    WhatsApp de contato
-                  </label>
-                  <input
-                    value={form.whatsappContato}
-                    onChange={(event) =>
-                      setForm((prev) => ({ ...prev, whatsappContato: event.target.value }))
-                    }
-                    className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                  />
-                </div>
+                <input
+                  type="email"
+                  value={form.emailContato}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, emailContato: event.target.value }))
+                  }
+                  placeholder="E-mail de contato"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                />
+                <input
+                  value={form.whatsappContato}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, whatsappContato: event.target.value }))
+                  }
+                  placeholder="WhatsApp de contato"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                />
               </div>
             )}
 
@@ -574,7 +692,7 @@ export function RegulationBuilder() {
                 onClick={() => setStep((prev) => Math.min(steps.length - 1, prev + 1))}
                 className="rounded-lg border border-border px-3 py-2 text-sm text-zinc-700 disabled:opacity-50"
               >
-                Próximo
+                Proximo
               </button>
             </div>
           </div>
@@ -607,7 +725,7 @@ export function RegulationBuilder() {
               <img src={form.logoDataUrl} alt="Logo" className="mx-auto max-h-24 w-auto" />
             </div>
           )}
-          <pre className="mt-3 max-h-[780px] overflow-auto whitespace-pre-wrap font-sans text-sm leading-6 text-zinc-800">
+          <pre className="mt-3 max-h-[820px] overflow-auto whitespace-pre-wrap font-sans text-sm leading-6 text-zinc-800">
             {previewText}
           </pre>
         </div>

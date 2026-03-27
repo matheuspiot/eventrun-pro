@@ -45,6 +45,7 @@ export async function POST(request: Request) {
           create: {
             name,
             email: normalizedEmail,
+            role: "ADMIN",
             passwordHash,
           },
         },
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       organizationId: result.id,
       email: user.email,
       name: user.name,
+      role: user.role,
     });
 
     const response = NextResponse.json({
@@ -71,6 +73,7 @@ export async function POST(request: Request) {
         name: user.name,
         email: user.email,
         organizationId: result.id,
+        role: user.role,
       },
     });
 

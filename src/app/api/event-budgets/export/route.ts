@@ -1,5 +1,5 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth";
+import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateBudgetMetrics } from "@/modules/budget/event-budget.calculations";
 import { createBudgetPdfBuffer } from "@/modules/budget/pdf";
@@ -35,6 +35,9 @@ export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+  if (!canAccessModule(auth.role, "orcamento")) {
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
   const eventId = request.nextUrl.searchParams.get("eventId");

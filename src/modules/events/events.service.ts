@@ -22,6 +22,13 @@ export async function createEventForOrganization(
       localLargada: input.localLargada,
       organizador: input.organizador,
       cnpjOrganizador: input.cnpjOrganizador,
+      modalidades: input.modalidades || null,
+      distancias: input.distancias || null,
+      capacidadeMaxima: input.capacidadeMaxima ?? null,
+      limiteTecnico: input.limiteTecnico || null,
+      cronogramaResumo: input.cronogramaResumo || null,
+      patrocinadores: input.patrocinadores || null,
+      fornecedores: input.fornecedores || null,
       status: input.status,
     },
   });
@@ -43,6 +50,23 @@ export async function updateEventForOrganization(
       ...(input.organizador ? { organizador: input.organizador } : {}),
       ...(input.cnpjOrganizador
         ? { cnpjOrganizador: input.cnpjOrganizador }
+        : {}),
+      ...(input.modalidades !== undefined ? { modalidades: input.modalidades || null } : {}),
+      ...(input.distancias !== undefined ? { distancias: input.distancias || null } : {}),
+      ...(input.capacidadeMaxima !== undefined
+        ? { capacidadeMaxima: input.capacidadeMaxima ?? null }
+        : {}),
+      ...(input.limiteTecnico !== undefined
+        ? { limiteTecnico: input.limiteTecnico || null }
+        : {}),
+      ...(input.cronogramaResumo !== undefined
+        ? { cronogramaResumo: input.cronogramaResumo || null }
+        : {}),
+      ...(input.patrocinadores !== undefined
+        ? { patrocinadores: input.patrocinadores || null }
+        : {}),
+      ...(input.fornecedores !== undefined
+        ? { fornecedores: input.fornecedores || null }
         : {}),
       ...(input.status ? { status: input.status } : {}),
     },

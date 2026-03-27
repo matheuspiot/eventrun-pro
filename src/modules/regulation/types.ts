@@ -1,9 +1,15 @@
+export type RegulationTemplateType = "CORRIDA_RUA" | "TRAIL_RUN" | "CORRIDA_KIDS";
+
 export type RegulationConfigDto = {
   id: string;
   eventId: string;
+  templateTipo: RegulationTemplateType;
   possuiKids: boolean;
   possuiChip: boolean;
   possuiPremiacaoDinheiro: boolean;
+  permiteTransferencia: boolean;
+  permiteRetiradaTerceiros: boolean;
+  exigeAtestadoMedico: boolean;
   logoDataUrl: string | null;
   faixaEtariaInicio: number;
   faixaEtariaFim: number;
@@ -12,6 +18,11 @@ export type RegulationConfigDto = {
   plataformaInscricao: string[];
   valorInscricao: string;
   limiteVagas: number;
+  kitDescricao: string | null;
+  premiacaoDescricao: string | null;
+  regrasGeraisExtra: string | null;
+  documentosObrigatorios: string | null;
+  politicaCancelamento: string | null;
   emailContato: string;
   whatsappContato: string;
   dataInicioInscricao: string;
@@ -32,9 +43,13 @@ export type RegulationEventDto = {
 
 export type RegulationConfigInput = {
   eventId: string;
+  templateTipo: RegulationTemplateType;
   possuiKids: boolean;
   possuiChip: boolean;
   possuiPremiacaoDinheiro: boolean;
+  permiteTransferencia: boolean;
+  permiteRetiradaTerceiros: boolean;
+  exigeAtestadoMedico: boolean;
   logoDataUrl?: string | null;
   faixaEtariaInicio: number;
   faixaEtariaFim: number;
@@ -43,6 +58,11 @@ export type RegulationConfigInput = {
   plataformaInscricao: string[];
   valorInscricao: number;
   limiteVagas: number;
+  kitDescricao?: string | null;
+  premiacaoDescricao?: string | null;
+  regrasGeraisExtra?: string | null;
+  documentosObrigatorios?: string | null;
+  politicaCancelamento?: string | null;
   emailContato: string;
   whatsappContato: string;
   dataInicioInscricao: string;

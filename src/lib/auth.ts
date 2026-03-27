@@ -1,14 +1,32 @@
-﻿import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
 export const TOKEN_COOKIE = "eventrun_token";
+
+export type UserRole = "ADMIN" | "FINANCEIRO" | "OPERACIONAL" | "MARKETING";
+export type AppModule =
+  | "dashboard"
+  | "orcamento"
+  | "operacao"
+  | "regulamento"
+  | "marketing"
+  | "configuracoes";
 
 export type AuthTokenPayload = {
   userId: string;
   organizationId: string;
   email: string;
   name: string;
+  role: UserRole;
+};
+
+const modulePermissions: Record<AppModule, UserRole[]> = {
+  dashboard: ["ADMIN", "FINANCEIRO", "OPERACIONAL", "MARKETING"],
+  orcamento: ["ADMIN", "FINANCEIRO"],
+  operacao: ["ADMIN", "OPERACIONAL"],
+  regulamento: ["ADMIN", "OPERACIONAL"],
+  marketing: ["ADMIN", "MARKETING"],
+  configuracoes: ["ADMIN"],
 };
 
 function getJwtSecret() {
@@ -66,8 +84,19 @@ export function getAuthFromRequest(request: NextRequest) {
   return verifyAuthToken(token);
 }
 
-export async function getAuthFromCookies() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(TOKEN_COOKIE)?.value;
-  return verifyAuthToken(token);
+export function canAccessModule(role: UserRole, module: AppModule) {
+  return modulePermissions[module].includes(role);
+}
+
+export function getModuleLabel(module: AppModule) {
+  const labels: Record<AppModule, string> = {
+    dashboard: "Dashboard",
+    orcamento: "Orcamento",
+    operacao: "Operacao",
+    regulamento: "Regulamento",
+    marketing: "Marketing",
+    configuracoes: "Configuracoes",
+  };
+
+  return labels[module];
 }

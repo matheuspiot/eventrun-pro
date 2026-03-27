@@ -32,11 +32,11 @@ const initialForm: CostForm = {
 const categoryLabels: Record<CostForm["categoria"], string> = {
   ESTRUTURA: "Estrutura",
   STAFF: "Staff",
-  SEGURANCA: "Segurança",
+  SEGURANCA: "Seguranca",
   MATERIAIS: "Materiais",
-  COMUNICACAO: "Comunicação",
+  COMUNICACAO: "Comunicacao",
   TAXAS: "Taxas",
-  LOGISTICA: "Logística",
+  LOGISTICA: "Logistica",
   OUTROS: "Outros",
 };
 
@@ -50,10 +50,7 @@ export function CostLibrary() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CostForm>(initialForm);
 
-  const title = useMemo(
-    () => (editingId ? "Editar custo" : "Novo custo"),
-    [editingId],
-  );
+  const title = useMemo(() => (editingId ? "Editar custo" : "Novo custo"), [editingId]);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -72,7 +69,7 @@ export function CostLibrary() {
     });
 
     if (!response.ok) {
-      setError("Não foi possível carregar os custos");
+      setError("Nao foi possivel carregar os custos.");
       setLoading(false);
       return;
     }
@@ -127,7 +124,7 @@ export function CostLibrary() {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Não foi possível salvar o custo");
+      setError(data.error ?? "Nao foi possivel salvar o custo.");
       return;
     }
 
@@ -140,7 +137,7 @@ export function CostLibrary() {
     const response = await fetch(`/api/cost-items/${id}`, { method: "DELETE" });
 
     if (!response.ok) {
-      setError("Não foi possível excluir o custo");
+      setError("Nao foi possivel excluir o custo.");
       return;
     }
 
@@ -154,7 +151,7 @@ export function CostLibrary() {
         <div>
           <h2 className="text-3xl font-heading text-zinc-900">Biblioteca de Custos</h2>
           <p className="text-sm text-zinc-600">
-            Liste, pesquise e gerencie custos padrão por categoria.
+            Liste, pesquise e gerencie custos padrao por categoria.
           </p>
         </div>
         <button
@@ -197,8 +194,8 @@ export function CostLibrary() {
               <th className="px-3 py-2">Categoria</th>
               <th className="px-3 py-2">Tipo</th>
               <th className="px-3 py-2">Unidade</th>
-              <th className="px-3 py-2">Custo Padrão</th>
-              <th className="px-3 py-2">Ações</th>
+              <th className="px-3 py-2">Custo Padrao</th>
+              <th className="px-3 py-2">Acoes</th>
             </tr>
           </thead>
           <tbody>
@@ -306,8 +303,8 @@ export function CostLibrary() {
                   className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                 >
                   <option value="FIXO">Fixo</option>
-                  <option value="VARIAVEL_ATLETA">Variável atleta</option>
-                  <option value="VARIAVEL_UNIDADE">Variável unidade</option>
+                  <option value="VARIAVEL_ATLETA">Variavel atleta</option>
+                  <option value="VARIAVEL_UNIDADE">Variavel unidade</option>
                 </select>
               </div>
 
@@ -339,7 +336,7 @@ export function CostLibrary() {
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, custoPadrao: event.target.value }))
                   }
-                  placeholder="Custo padrão"
+                  placeholder="Custo padrao"
                   className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
@@ -350,7 +347,7 @@ export function CostLibrary() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, descricao: event.target.value }))
                 }
-                placeholder="Descrição (opcional)"
+                placeholder="Descricao (opcional)"
                 className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
               />
 
@@ -360,7 +357,7 @@ export function CostLibrary() {
                 type="submit"
                 className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110"
               >
-                {editingId ? "Salvar alterações" : "Cadastrar custo"}
+                {editingId ? "Salvar alteracoes" : "Cadastrar custo"}
               </button>
             </form>
           </div>

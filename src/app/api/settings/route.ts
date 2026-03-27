@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getAuthFromRequest } from "@/lib/auth";
+import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const settingsSchema = z.object({
@@ -11,7 +11,10 @@ const settingsSchema = z.object({
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  }
+  if (!canAccessModule(auth.role, "configuracoes")) {
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
   const [organization, user] = await Promise.all([
@@ -21,12 +24,12 @@ export async function GET(request: NextRequest) {
     }),
     prisma.user.findUnique({
       where: { id: auth.userId },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, role: true },
     }),
   ]);
 
   if (!organization || !user) {
-    return NextResponse.json({ error: "Dados de conta não encontrados" }, { status: 404 });
+    return NextResponse.json({ error: "Dados de conta nao encontrados" }, { status: 404 });
   }
 
   return NextResponse.json({
@@ -41,14 +44,17 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
-    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  }
+  if (!canAccessModule(auth.role, "configuracoes")) {
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
   const body = await request.json();
   const parsed = settingsSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Dados inválidos", details: parsed.error.flatten() },
+      { error: "Dados invalidos", details: parsed.error.flatten() },
       { status: 400 },
     );
   }
@@ -64,7 +70,7 @@ export async function PUT(request: NextRequest) {
     prisma.user.update({
       where: { id: auth.userId },
       data: { name: userName.trim() },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, role: true },
     }),
   ]);
 

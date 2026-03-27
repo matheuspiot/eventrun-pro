@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import { CostItemDto } from "../types";
 import { EventDto } from "@/modules/events/types";
 import { calculateBudgetMetrics } from "../event-budget.calculations";
-
-type BudgetItemForm = {
-  costItemId: string;
-  nome: string;
-  unidade: string;
-  tipoCusto: "FIXO" | "VARIAVEL_ATLETA" | "VARIAVEL_UNIDADE";
-  quantidade: string;
-  valorUnitario: string;
-};
+import {
+  BudgetDraft,
+  BudgetItemForm,
+  costCategoryLabels,
+  costItemsUpdatedEvent,
+  filterCostItems,
+  getBudgetDraftStorageKey,
+  readStoredDraft,
+  selectedEventStorageKey,
+  serializeDraft,
+  toNumberSafe,
+} from "../budget-draft";
 
 type EventBudgetResponse = {
   budget: {
@@ -37,24 +40,10 @@ type Scenario = {
   resultado: number;
 };
 
-type BudgetDraft = {
-  logoDataUrl: string;
-  metaInscritos: string;
-  patrocinioPrevisto: string;
-  lucroAlvoPercentual: string;
-  taxaPlataformaPercentual: string;
-  impostoPercentual: string;
-  taxaCancelamentoReembolsoPercentual: string;
-  items: BudgetItemForm[];
-};
-
 type PendingAction =
   | { type: "navigate"; href: string }
   | { type: "switchEvent"; eventId: string }
   | null;
-
-const selectedEventStorageKey = "eventrun:budget:selected-event-id";
-const costItemsUpdatedEvent = "eventrun:cost-items-updated";
 
 function brl(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -63,26 +52,6 @@ function brl(value: number) {
 function formatEventLabel(event: EventDto) {
   const date = new Date(event.dataEvento).toLocaleDateString("pt-BR");
   return `${event.nomeEvento} - ${event.cidade}/${event.estado} - ${date}`;
-}
-
-function toNumberSafe(value: string) {
-  const normalized = value.replace(",", ".").trim();
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : NaN;
-}
-
-function serializeDraft(draft: BudgetDraft) {
-  return JSON.stringify({
-    ...draft,
-    items: draft.items
-      .slice()
-      .sort((a, b) => a.costItemId.localeCompare(b.costItemId))
-      .map((item) => ({
-        ...item,
-        quantidade: String(item.quantidade),
-        valorUnitario: String(item.valorUnitario),
-      })),
-  });
 }
 
 export function EventBudgetPlanner() {
@@ -100,6 +69,8 @@ export function EventBudgetPlanner() {
     useState("0");
   const [items, setItems] = useState<BudgetItemForm[]>([]);
   const [newCostItemId, setNewCostItemId] = useState("");
+  const [costItemSearch, setCostItemSearch] = useState("");
+  const [costItemCategory, setCostItemCategory] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -138,8 +109,11 @@ export function EventBudgetPlanner() {
   const isDirty =
     hasUserInteracted &&
     loadedBudget &&
-    savedSnapshot.length > 0 &&
     currentSnapshot !== savedSnapshot;
+  const filteredCostItems = useMemo(
+    () => filterCostItems(costItems, costItemCategory, costItemSearch),
+    [costItemCategory, costItemSearch, costItems],
+  );
 
   const loadCostItems = useCallback(async (categoria?: string, search?: string) => {
     const params = new URLSearchParams();
@@ -207,6 +181,17 @@ export function EventBudgetPlanner() {
   }, [loadCostItems]);
 
   useEffect(() => {
+    if (filteredCostItems.length === 0) {
+      setNewCostItemId("");
+      return;
+    }
+
+    if (!filteredCostItems.some((item) => item.id === newCostItemId)) {
+      setNewCostItemId(filteredCostItems[0].id);
+    }
+  }, [filteredCostItems, newCostItemId]);
+
+  useEffect(() => {
     async function loadBudget(eventId: string) {
       if (!eventId) {
         setLoadedBudget(true);
@@ -252,18 +237,27 @@ export function EventBudgetPlanner() {
             items: [],
           };
 
-      setLogoDataUrl(serverDraft.logoDataUrl);
-      setMetaInscritos(serverDraft.metaInscritos);
-      setPatrocinioPrevisto(serverDraft.patrocinioPrevisto);
-      setLucroAlvoPercentual(serverDraft.lucroAlvoPercentual);
-      setTaxaPlataformaPercentual(serverDraft.taxaPlataformaPercentual);
-      setImpostoPercentual(serverDraft.impostoPercentual);
+      const storedDraft = readStoredDraft(eventId);
+      const activeDraft = storedDraft ?? serverDraft;
+      const serverSnapshot = serializeDraft(serverDraft);
+      const activeSnapshot = serializeDraft(activeDraft);
+
+      setLogoDataUrl(activeDraft.logoDataUrl);
+      setMetaInscritos(activeDraft.metaInscritos);
+      setPatrocinioPrevisto(activeDraft.patrocinioPrevisto);
+      setLucroAlvoPercentual(activeDraft.lucroAlvoPercentual);
+      setTaxaPlataformaPercentual(activeDraft.taxaPlataformaPercentual);
+      setImpostoPercentual(activeDraft.impostoPercentual);
       setTaxaCancelamentoReembolsoPercentual(
-        serverDraft.taxaCancelamentoReembolsoPercentual,
+        activeDraft.taxaCancelamentoReembolsoPercentual,
       );
-      setItems(serverDraft.items);
-      setSavedSnapshot(serializeDraft(serverDraft));
-      setHasUserInteracted(false);
+      setItems(activeDraft.items);
+      setSavedSnapshot(serverSnapshot);
+      setHasUserInteracted(activeSnapshot !== serverSnapshot);
+
+      if (storedDraft) {
+        setSuccess("Rascunho local recuperado neste navegador.");
+      }
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem(selectedEventStorageKey, eventId);
@@ -281,7 +275,21 @@ export function EventBudgetPlanner() {
     }
 
     window.localStorage.setItem(selectedEventStorageKey, selectedEventId);
-  }, [selectedEventId, loadedBudget, currentSnapshot]);
+  }, [selectedEventId, loadedBudget]);
+
+  useEffect(() => {
+    if (!selectedEventId || !loadedBudget || typeof window === "undefined") {
+      return;
+    }
+
+    const storageKey = getBudgetDraftStorageKey(selectedEventId);
+    if (currentSnapshot === savedSnapshot) {
+      window.localStorage.removeItem(storageKey);
+      return;
+    }
+
+    window.localStorage.setItem(storageKey, JSON.stringify(currentDraft));
+  }, [currentDraft, currentSnapshot, loadedBudget, savedSnapshot, selectedEventId]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -550,6 +558,9 @@ export function EventBudgetPlanner() {
         setItems(persistedDraft.items);
         setSavedSnapshot(serializeDraft(persistedDraft));
         setHasUserInteracted(false);
+        if (typeof window !== "undefined" && selectedEventId) {
+          window.localStorage.removeItem(getBudgetDraftStorageKey(selectedEventId));
+        }
 
       }
 
@@ -790,30 +801,69 @@ export function EventBudgetPlanner() {
           </div>
 
           <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end">
-              <div className="flex-1">
+            <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
+              <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                  Custos da biblioteca
+                  Buscar custo
+                </label>
+                <input
+                  value={costItemSearch}
+                  onChange={(event) => setCostItemSearch(event.target.value)}
+                  placeholder="Nome ou unidade"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                  Categoria
+                </label>
+                <select
+                  value={costItemCategory}
+                  onChange={(event) => setCostItemCategory(event.target.value)}
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <option value="">Todas</option>
+                  {Object.entries(costCategoryLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="lg:col-span-2">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                  Custos filtrados
                 </label>
                 <select
                   value={newCostItemId}
                   onChange={(event) => setNewCostItemId(event.target.value)}
                   className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                  disabled={filteredCostItems.length === 0}
                 >
-                  {costItems.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.nome}
-                    </option>
-                  ))}
+                  {filteredCostItems.length === 0 ? (
+                    <option value="">Nenhum custo encontrado</option>
+                  ) : (
+                    filteredCostItems.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.nome} - {costCategoryLabels[item.categoria]}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
-              <button
-                type="button"
-                onClick={addCostItem}
-                className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-zinc-700"
-              >
-                Selecionar custo
-              </button>
+              <div className="lg:col-span-2 flex flex-wrap items-end gap-3">
+                <button
+                  type="button"
+                  onClick={addCostItem}
+                  disabled={!newCostItemId}
+                  className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-zinc-700 disabled:opacity-60"
+                >
+                  Selecionar custo
+                </button>
+                <p className="text-xs text-zinc-500">
+                  {filteredCostItems.length} custo(s) disponivel(is) no filtro atual.
+                </p>
+              </div>
             </div>
           </div>
 

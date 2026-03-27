@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthFromRequest } from "@/lib/auth";
+import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createMarketingProposalPdf } from "@/modules/marketing/pdf";
+import { listMarketingPackagesByOrganization } from "@/modules/marketing/service";
 
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
   if (!auth) {
     return NextResponse.json({ error: "Nao autenticado" }, { status: 401 });
+  }
+  if (!canAccessModule(auth.role, "marketing")) {
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
   const eventId = request.nextUrl.searchParams.get("eventId");
@@ -22,6 +26,9 @@ export async function GET(request: NextRequest) {
       estado: true,
       dataEvento: true,
       organizador: true,
+      modalidades: true,
+      distancias: true,
+      patrocinadores: true,
     },
   });
 
@@ -29,30 +36,36 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Evento nao encontrado" }, { status: 404 });
   }
 
+  const packages = await listMarketingPackagesByOrganization(auth.organizationId);
+  const activePackages = packages.filter((pkg) => pkg.ativo);
+
   const bodyLines = [
     "1. Escopo da proposta",
-    "Comunicacao visual completa da prova, planejamento de conteudo e operacao de campanhas.",
+    "Estrutura comercial para posicionar, divulgar e acelerar a captacao de inscritos e patrocinadores.",
     "",
-    "2. Entregaveis",
-    "- Identidade visual digital da corrida",
-    "- Plano de conteudo para 8 semanas",
-    "- Gestao de anuncios para captacao de inscritos",
-    "- Relatorios quinzenais com desempenho",
-    "",
-    "3. Cronograma sugerido",
-    "T-90: abertura da campanha e landing page.",
-    "T-60: aceleracao de midia paga e influenciadores locais.",
-    "T-30: prova social, urgencia de lotes e retargeting.",
-    "T-7: comunicacao final de logistica aos inscritos.",
-    "",
-    "4. Investimento",
-    "Valor de referencia: sob consulta conforme escopo final e volume de entregas.",
-    "",
-    "5. Dados do evento",
+    "2. Dados do evento",
     `Evento: ${event.nomeEvento}`,
     `Cidade: ${event.cidade}/${event.estado}`,
     `Data: ${new Date(event.dataEvento).toLocaleDateString("pt-BR")}`,
     `Organizador: ${event.organizador}`,
+    `Modalidades: ${event.modalidades || "Nao informado"}`,
+    `Distancias: ${event.distancias || "Nao informado"}`,
+    `Patrocinadores atuais: ${event.patrocinadores || "Nao informado"}`,
+    "",
+    "3. Pacotes comerciais",
+    ...activePackages.flatMap((pkg, index) => [
+      `${index + 1}. Pacote ${pkg.nome}`,
+      pkg.descricao || "Sem descricao complementar.",
+      ...pkg.entregaveis.map((item) => `- ${item}`),
+      `Investimento sugerido: ${Number(pkg.investimento).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      })}`,
+      `Cronograma: ${pkg.cronograma || "A definir conforme a campanha."}`,
+      "",
+    ]),
+    "4. Fechamento comercial",
+    "A recomendacao e alinhar escopo, aprovacoes, cronograma e metas de conversao antes do kickoff.",
   ];
 
   const pdf = await createMarketingProposalPdf({
