@@ -18,6 +18,82 @@ function ensureColumn(db, tableName, columnName, definitionSql) {
   }
 }
 
+function slugifyUsername(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 24);
+}
+
+function buildBaseUsername(user) {
+  const username = slugifyUsername(user.username);
+  if (username.length >= 3) return username;
+
+  const emailBase = slugifyUsername(String(user.email || "").split("@")[0]);
+  if (emailBase.length >= 3) return emailBase;
+
+  const nameBase = slugifyUsername(user.name);
+  if (nameBase.length >= 3) return nameBase;
+
+  return `user-${String(user.id).slice(0, 8).toLowerCase()}`;
+}
+
+function ensureUniqueUsernames(db) {
+  const result = db.exec('SELECT "id", "name", "email", "username" FROM "User" ORDER BY "createdAt" ASC, "id" ASC;');
+  const rows = result[0]?.values || [];
+  if (rows.length === 0) {
+    return;
+  }
+
+  const used = new Set();
+  const updates = [];
+
+  for (const row of rows) {
+    const user = {
+      id: String(row[0]),
+      name: row[1] ?? "",
+      email: row[2] ?? "",
+      username: row[3] ?? "",
+    };
+
+    const base = buildBaseUsername(user);
+    let candidate = base;
+    let suffix = 2;
+
+    while (used.has(candidate) || candidate.length < 3) {
+      const raw = `${base}-${suffix}`;
+      candidate = raw.slice(0, 24);
+      suffix += 1;
+    }
+
+    used.add(candidate);
+
+    if (candidate !== user.username) {
+      updates.push({ id: user.id, username: candidate });
+    }
+  }
+
+  if (updates.length === 0) {
+    return;
+  }
+
+  db.run("BEGIN TRANSACTION;");
+  try {
+    for (const update of updates) {
+      const escapedUsername = update.username.replace(/'/g, "''");
+      const escapedId = update.id.replace(/'/g, "''");
+      db.run(`UPDATE "User" SET "username" = '${escapedUsername}' WHERE "id" = '${escapedId}';`);
+    }
+    db.run("COMMIT;");
+  } catch (error) {
+    db.run("ROLLBACK;");
+    throw error;
+  }
+}
+
 async function ensureSqliteSchema(fileArg) {
   if (!fileArg) {
     throw new Error("Informe o caminho do arquivo SQLite a ser ajustado.");
@@ -35,6 +111,8 @@ async function ensureSqliteSchema(fileArg) {
 
   ensureColumn(db, "User", "role", "TEXT NOT NULL DEFAULT 'ADMIN'");
   ensureColumn(db, "User", "username", "TEXT");
+  ensureUniqueUsernames(db);
+  db.run('DROP INDEX IF EXISTS "User_username_key";');
   db.run('CREATE UNIQUE INDEX IF NOT EXISTS "User_username_key" ON "User"("username");');
 
   ensureColumn(db, "Event", "modalidades", "TEXT");
