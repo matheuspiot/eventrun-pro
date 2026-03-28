@@ -3,10 +3,7 @@ import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
 import { generateRegulationText } from "@/modules/regulation/generate-regulation-text";
 import { createRegulationPdfBuffer } from "@/modules/regulation/pdf";
 import { RegulationTemplateType } from "@/modules/regulation/types";
-import {
-  getEventForRegulation,
-  getRegulationConfigByEvent,
-} from "@/modules/regulation/service";
+import { getEventForRegulation, getRegulationConfigByEvent } from "@/modules/regulation/service";
 
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
@@ -19,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   const eventId = request.nextUrl.searchParams.get("eventId");
   if (!eventId) {
-    return NextResponse.json({ error: "eventId e obrigatorio" }, { status: 400 });
+    return NextResponse.json({ error: "eventId é obrigatório" }, { status: 400 });
   }
 
   const [event, config] = await Promise.all([

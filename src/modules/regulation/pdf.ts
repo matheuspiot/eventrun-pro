@@ -122,7 +122,7 @@ export async function createRegulationPdfBuffer(
       thickness: 1,
       color: rgb(0.9, 0.9, 0.92),
     });
-    targetPage.drawText(`Pagina ${number}`, {
+    targetPage.drawText(`Página ${number}`, {
       x: pageWidth - margin - 48,
       y: margin - 26,
       size: 9,

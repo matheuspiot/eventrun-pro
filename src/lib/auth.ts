@@ -89,14 +89,12 @@ export function canAccessModule(role: UserRole, module: AppModule) {
 }
 
 export function getModuleLabel(module: AppModule) {
-  const labels: Record<AppModule, string> = {
+  return {
     dashboard: "Dashboard",
     orcamento: "Orçamento",
     operacao: "Operação",
     regulamento: "Regulamento",
     marketing: "Marketing",
     configuracoes: "Configurações",
-  };
-
-  return labels[module];
+  }[module];
 }

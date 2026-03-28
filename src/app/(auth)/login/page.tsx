@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { UiIcon } from "@/components/ui-icon";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,35 +36,54 @@ export default function LoginPage() {
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">EventRun Pro</p>
-      <h1 className="mt-2 text-4xl font-heading text-zinc-900">Login</h1>
-      <p className="mt-2 text-sm text-zinc-600">Acesse sua organização para gerenciar os projetos.</p>
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-zinc-500">
+        <UiIcon name="spark" className="h-4 w-4" />
+        EventRun Pro
+      </div>
+      <h1 className="mt-4 text-4xl text-zinc-950">Entrar na sua organização</h1>
+      <p className="mt-3 max-w-lg text-sm leading-6 text-zinc-600">
+        Acesse seu ambiente para acompanhar eventos, operação, orçamento e proposta comercial.
+      </p>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <AuthMiniCard title="Checklist" description="Tarefas e prazos" />
+        <AuthMiniCard title="Financeiro" description="Custos e margem" />
+        <AuthMiniCard title="Comercial" description="Pacotes e PDF" />
+      </div>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="E-mail"
-          className="w-full rounded-xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
-        />
-        <input
-          type="password"
-          required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Senha"
-          className="w-full rounded-xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
-        />
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">E-mail</span>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="voce@empresa.com"
+            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
+          />
+        </label>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Senha</span>
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Sua senha"
+            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
+          />
+        </label>
+
+        {error ? <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p> : null}
 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
         >
+          <UiIcon name="spark" className="h-4 w-4" />
           {isLoading ? "Entrando..." : "Entrar"}
         </button>
       </form>
@@ -78,3 +98,11 @@ export default function LoginPage() {
   );
 }
 
+function AuthMiniCard({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface-muted/80 p-4">
+      <p className="text-sm font-semibold text-zinc-900">{title}</p>
+      <p className="mt-1 text-xs text-zinc-500">{description}</p>
+    </div>
+  );
+}

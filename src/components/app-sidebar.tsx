@@ -93,12 +93,12 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
   const allowedItems = navItems.filter((item) => canAccessModule(userRole, item.module));
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[296px] flex-col border-r border-white/10 bg-[radial-gradient(circle_at_top,_rgba(248,113,52,0.16),_transparent_32%),linear-gradient(180deg,#0f172a_0%,#111827_45%,#162235_100%)] px-6 py-6 text-white shadow-[28px_0_80px_rgba(15,23,42,0.28)] xl:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[296px] flex-col border-r border-white/10 bg-[radial-gradient(circle_at_top,_rgba(0,122,255,0.18),_transparent_34%),linear-gradient(180deg,#101828_0%,#162034_54%,#20304d_100%)] px-6 py-6 text-white shadow-[28px_0_80px_rgba(16,24,40,0.24)] xl:flex">
       <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">EventRun Pro</p>
-            <h1 className="mt-3 text-[2rem] font-heading leading-none text-white">Corridas</h1>
+            <h1 className="mt-3 text-[2rem] leading-none text-white">Corridas</h1>
           </div>
           <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300">
             Online
@@ -128,7 +128,7 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
                 href={item.href}
                 className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                   active
-                    ? "bg-white text-slate-950 shadow-[0_18px_34px_rgba(248,113,52,0.18)]"
+                    ? "bg-white text-slate-950 shadow-[0_18px_34px_rgba(0,122,255,0.16)]"
                     : "text-white/72 hover:bg-white/8 hover:text-white"
                 }`}
               >
@@ -141,9 +141,7 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
                 >
                   <ModuleIcon module={item.module} />
                 </span>
-                <div className="min-w-0">
-                  <p className="truncate">{item.label}</p>
-                </div>
+                <p className="truncate">{item.label}</p>
               </Link>
             );
           })}

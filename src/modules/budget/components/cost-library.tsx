@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { BaseModal } from "@/components/base-modal";
+import { UiIcon } from "@/components/ui-icon";
 import { CostItemDto } from "../types";
 
 type CostForm = {
@@ -55,19 +57,10 @@ export function CostLibrary() {
   const loadItems = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (categoria) params.set("categoria", categoria);
 
-    if (search) {
-      params.set("search", search);
-    }
-
-    if (categoria) {
-      params.set("categoria", categoria);
-    }
-
-    const response = await fetch(`/api/cost-items?${params.toString()}`, {
-      cache: "no-store",
-    });
-
+    const response = await fetch(`/api/cost-items?${params.toString()}`, { cache: "no-store" });
     if (!response.ok) {
       setError("Não foi possível carregar os custos.");
       setLoading(false);
@@ -77,12 +70,38 @@ export function CostLibrary() {
     const data = (await response.json()) as { items: CostItemDto[] };
     setItems(data.items);
     setLoading(false);
-  }, [search, categoria]);
+  }, [categoria, search]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadItems();
-  }, [loadItems]);
+    let cancelled = false;
+
+    async function syncItems() {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (categoria) params.set("categoria", categoria);
+
+      const response = await fetch(`/api/cost-items?${params.toString()}`, { cache: "no-store" });
+      if (cancelled) return;
+
+      if (!response.ok) {
+        setError("Não foi possível carregar os custos.");
+        setLoading(false);
+        return;
+      }
+
+      const data = (await response.json()) as { items: CostItemDto[] };
+      if (cancelled) return;
+      setItems(data.items);
+      setLoading(false);
+    }
+
+    void syncItems();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [categoria, search]);
 
   function openCreateModal() {
     setEditingId(null);
@@ -146,30 +165,38 @@ export function CostLibrary() {
   }
 
   return (
-    <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+    <section className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-3xl font-heading text-zinc-900">Biblioteca de Custos</h2>
-          <p className="text-sm text-zinc-600">
-            Liste, pesquise e gerencie custos padrão por categoria.
-          </p>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            <UiIcon name="library" className="h-4 w-4" />
+            Biblioteca de custos
+          </div>
+          <h2 className="mt-2 text-3xl text-zinc-900">Custos padrão por categoria</h2>
+          <p className="text-sm text-zinc-600">Pesquise, revise e mantenha a base financeira da operação.</p>
         </div>
         <button
           type="button"
           onClick={openCreateModal}
-          className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+          className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110"
         >
-          Novo Custo
+          <UiIcon name="plus" className="h-4 w-4" />
+          Novo custo
         </button>
       </div>
 
       <div className="mt-6 grid gap-3 md:grid-cols-[1fr_220px]">
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por nome"
-          className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-        />
+        <label className="relative block">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+            <UiIcon name="search" className="h-4 w-4" />
+          </span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por nome"
+            className="w-full rounded-xl border border-border bg-surface-muted pl-10 pr-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+          />
+        </label>
         <select
           value={categoria}
           onChange={(event) => setCategoria(event.target.value)}
@@ -184,18 +211,18 @@ export function CostLibrary() {
         </select>
       </div>
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
 
-      <div className="mt-6 overflow-x-auto">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-border">
         <table className="min-w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-border text-zinc-500">
-              <th className="px-3 py-2">Nome</th>
-              <th className="px-3 py-2">Categoria</th>
-              <th className="px-3 py-2">Tipo</th>
-              <th className="px-3 py-2">Unidade</th>
-              <th className="px-3 py-2">Custo Padrão</th>
-              <th className="px-3 py-2">Ações</th>
+            <tr className="border-b border-border bg-surface-muted/80 text-zinc-500">
+              <th className="px-3 py-3">Nome</th>
+              <th className="px-3 py-3">Categoria</th>
+              <th className="px-3 py-3">Tipo</th>
+              <th className="px-3 py-3">Unidade</th>
+              <th className="px-3 py-3">Custo padrão</th>
+              <th className="px-3 py-3">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -213,29 +240,27 @@ export function CostLibrary() {
               </tr>
             ) : (
               items.map((item) => (
-                <tr key={item.id} className="border-b border-border/80">
+                <tr key={item.id} className="border-b border-border/70">
                   <td className="px-3 py-3 font-medium text-zinc-900">{item.nome}</td>
                   <td className="px-3 py-3 text-zinc-600">{categoryLabels[item.categoria]}</td>
                   <td className="px-3 py-3 text-zinc-600">{item.tipoCusto.replace("_", " ")}</td>
                   <td className="px-3 py-3 text-zinc-600">{item.unidade}</td>
                   <td className="px-3 py-3 text-zinc-600">
-                    {Number(item.custoPadrao).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
+                    {Number(item.custoPadrao).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => openEditModal(item)}
-                        className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-zinc-700"
+                        className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs font-medium text-zinc-700"
                       >
+                        <UiIcon name="edit" className="h-3.5 w-3.5" />
                         Editar
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => void handleDelete(item.id)}
                         className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600"
                       >
                         Excluir
@@ -249,120 +274,90 @@ export function CostLibrary() {
         </table>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-xl rounded-2xl border border-border bg-surface p-6 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-heading text-zinc-900">{title}</h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="rounded-lg border border-border px-3 py-1 text-sm text-zinc-700"
-              >
-                Fechar
-              </button>
-            </div>
+      <BaseModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={title}
+        description="Cadastre ou ajuste custos padrão sem poluir a área principal do orçamento."
+      >
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            required
+            value={form.nome}
+            onChange={(event) => setForm((prev) => ({ ...prev, nome: event.target.value }))}
+            placeholder="Nome do custo"
+            className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+          />
 
-            <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-              <input
-                required
-                value={form.nome}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, nome: event.target.value }))
-                }
-                placeholder="Nome do custo"
-                className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-              />
+          <div className="grid gap-3 md:grid-cols-2">
+            <select
+              value={form.categoria}
+              onChange={(event) => setForm((prev) => ({ ...prev, categoria: event.target.value as CostForm["categoria"] }))}
+              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            >
+              {Object.entries(categoryLabels).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <select
-                  value={form.categoria}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      categoria: event.target.value as CostForm["categoria"],
-                    }))
-                  }
-                  className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                >
-                  {Object.entries(categoryLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={form.tipoCusto}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      tipoCusto: event.target.value as CostForm["tipoCusto"],
-                    }))
-                  }
-                  className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <option value="FIXO">Fixo</option>
-                  <option value="VARIAVEL_ATLETA">Variável atleta</option>
-                  <option value="VARIAVEL_UNIDADE">Variável unidade</option>
-                </select>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <select
-                  value={form.unidade}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      unidade: event.target.value as CostForm["unidade"],
-                    }))
-                  }
-                  className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <option value="UN">un</option>
-                  <option value="PESSOA">pessoa</option>
-                  <option value="HORA">hora</option>
-                  <option value="KM">km</option>
-                  <option value="LOTE">lote</option>
-                  <option value="ATLETA">atleta</option>
-                </select>
-
-                <input
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={form.custoPadrao}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, custoPadrao: event.target.value }))
-                  }
-                  placeholder="Custo padrão"
-                  className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                />
-              </div>
-
-              <textarea
-                rows={3}
-                value={form.descricao}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, descricao: event.target.value }))
-                }
-                placeholder="Descrição (opcional)"
-                className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-              />
-
-              {error && <p className="text-sm text-red-600">{error}</p>}
-
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110"
-              >
-                {editingId ? "Salvar alterações" : "Cadastrar custo"}
-              </button>
-            </form>
+            <select
+              value={form.tipoCusto}
+              onChange={(event) => setForm((prev) => ({ ...prev, tipoCusto: event.target.value as CostForm["tipoCusto"] }))}
+              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            >
+              <option value="FIXO">Fixo</option>
+              <option value="VARIAVEL_ATLETA">Variável atleta</option>
+              <option value="VARIAVEL_UNIDADE">Variável unidade</option>
+            </select>
           </div>
-        </div>
-      )}
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <select
+              value={form.unidade}
+              onChange={(event) => setForm((prev) => ({ ...prev, unidade: event.target.value as CostForm["unidade"] }))}
+              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            >
+              <option value="UN">un</option>
+              <option value="PESSOA">pessoa</option>
+              <option value="HORA">hora</option>
+              <option value="KM">km</option>
+              <option value="LOTE">lote</option>
+              <option value="ATLETA">atleta</option>
+            </select>
+
+            <input
+              required
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={form.custoPadrao}
+              onChange={(event) => setForm((prev) => ({ ...prev, custoPadrao: event.target.value }))}
+              placeholder="Custo padrão"
+              className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            />
+          </div>
+
+          <textarea
+            rows={3}
+            value={form.descricao}
+            onChange={(event) => setForm((prev) => ({ ...prev, descricao: event.target.value }))}
+            placeholder="Descrição (opcional)"
+            className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+          />
+
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+          <button
+            type="submit"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+          >
+            <UiIcon name={editingId ? "edit" : "plus"} className="h-4 w-4" />
+            {editingId ? "Salvar alterações" : "Cadastrar custo"}
+          </button>
+        </form>
+      </BaseModal>
     </section>
   );
 }

@@ -15,7 +15,7 @@ export default function GlobalErrorPage({
         </p>
         <h1 className="mt-2 text-3xl font-heading text-zinc-900">Erro inesperado</h1>
         <p className="mt-3 text-sm text-zinc-600">
-          Ocorreu uma falha na interface. Voce pode tentar novamente sem fechar o app.
+          Ocorreu uma falha na interface. Você pode tentar novamente sem fechar o app.
         </p>
         <p className="mt-4 rounded-lg bg-surface-muted p-3 font-mono text-xs text-zinc-700">
           {error?.message ?? "Erro sem detalhe"}

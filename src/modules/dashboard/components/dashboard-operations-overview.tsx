@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UiIcon } from "@/components/ui-icon";
 import { getAuthFromCookies } from "@/lib/auth-server";
 import { UserRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -167,8 +168,11 @@ export async function DashboardOperationsOverview() {
       <div className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Radar operacional</p>
-            <h3 className="mt-2 text-3xl font-heading text-zinc-900">Prioridades da organização</h3>
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              <UiIcon name="spark" className="h-4 w-4" />
+              Radar operacional
+            </div>
+            <h3 className="mt-2 text-3xl text-zinc-900">Prioridades da organização</h3>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
               Os cards abaixo mudam o foco de ação conforme o perfil logado e o estado dos eventos.
             </p>
@@ -184,7 +188,10 @@ export async function DashboardOperationsOverview() {
                     : "border-border bg-surface-muted/70 text-zinc-900"
                 }`}
               >
-                <p className={`text-sm font-heading ${action.tone === "solid" ? "text-white" : "text-zinc-900"}`}>{action.title}</p>
+                <div className="flex items-center gap-2">
+                  <UiIcon name={action.tone === "solid" ? "spark" : "chart"} className={`h-4 w-4 ${action.tone === "solid" ? "text-white" : "text-accent"}`} />
+                  <p className={`text-sm ${action.tone === "solid" ? "text-white" : "text-zinc-900"}`}>{action.title}</p>
+                </div>
                 <p className={`mt-2 text-sm ${action.tone === "solid" ? "text-white/85" : "text-zinc-600"}`}>{action.description}</p>
               </Link>
             ))}
@@ -195,7 +202,7 @@ export async function DashboardOperationsOverview() {
           {summaryCards.map((card) => (
             <article key={card.label} className="rounded-2xl border border-border bg-surface-muted/70 p-4">
               <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">{card.label}</p>
-              <p className="mt-2 text-3xl font-heading text-zinc-900">{card.value}</p>
+              <p className="mt-2 text-3xl text-zinc-900">{card.value}</p>
               <p className="mt-2 text-sm text-zinc-600">{card.hint}</p>
             </article>
           ))}
@@ -204,8 +211,11 @@ export async function DashboardOperationsOverview() {
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <section className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Próximos eventos</p>
-          <h4 className="mt-2 text-2xl font-heading text-zinc-900">Agenda crítica</h4>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            <UiIcon name="calendar" className="h-4 w-4" />
+            Próximos eventos
+          </div>
+          <h4 className="mt-2 text-2xl text-zinc-900">Agenda crítica</h4>
           <div className="mt-5 space-y-3">
             {upcomingEvents.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-border bg-surface-muted p-4 text-sm text-zinc-600">Nenhum evento futuro cadastrado.</p>
@@ -214,13 +224,13 @@ export async function DashboardOperationsOverview() {
                 <article key={event.id} className="rounded-3xl border border-border bg-surface-muted/60 p-4">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <h5 className="text-xl font-heading text-zinc-900">{event.nomeEvento}</h5>
+                      <h5 className="text-xl text-zinc-900">{event.nomeEvento}</h5>
                       <p className="text-sm text-zinc-600">{event.cidade}/{event.estado} · {formatDate(event.dataEvento)}</p>
                       <p className="mt-1 text-xs text-zinc-500">
                         {event.modalidades || "Modalidades não informadas"} · {event.distancias || "Distâncias não informadas"} · {event.capacidadeMaxima ? `${event.capacidadeMaxima} atletas` : "Capacidade não informada"}
                       </p>
                     </div>
-                    <span className="rounded-lg bg-accent-soft px-3 py-1 text-xs font-semibold text-amber-700">{getDaysUntilLabel(event.dataEvento)}</span>
+                    <span className="rounded-lg bg-accent-soft px-3 py-1 text-xs font-semibold text-blue-700">{getDaysUntilLabel(event.dataEvento)}</span>
                   </div>
                 </article>
               ))
@@ -229,8 +239,11 @@ export async function DashboardOperationsOverview() {
         </section>
 
         <section className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Alertas</p>
-          <h4 className="mt-2 text-2xl font-heading text-zinc-900">Pontos de atenção</h4>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            <UiIcon name="spark" className="h-4 w-4" />
+            Alertas
+          </div>
+          <h4 className="mt-2 text-2xl text-zinc-900">Pontos de atenção</h4>
           <div className="mt-5 space-y-3">
             {alertEvents.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-border bg-surface-muted p-4 text-sm text-zinc-600">Sem alertas operacionais no momento.</p>
@@ -254,8 +267,11 @@ export async function DashboardOperationsOverview() {
       </div>
 
       <section className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Módulos</p>
-        <h4 className="mt-2 text-2xl font-heading text-zinc-900">Status por evento</h4>
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+          <UiIcon name="chart" className="h-4 w-4" />
+          Módulos
+        </div>
+        <h4 className="mt-2 text-2xl text-zinc-900">Status por evento</h4>
         <div className="mt-5 overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>

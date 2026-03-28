@@ -55,28 +55,35 @@ export async function createMarketingProposalPdf(input: {
   function drawHeader(target: typeof page) {
     target.drawRectangle({
       x: margin,
-      y: pageHeight - margin - 56,
+      y: pageHeight - margin - 64,
       width: contentWidth,
-      height: 56,
-      color: rgb(0.97, 0.98, 1),
-      borderColor: rgb(0.87, 0.89, 0.94),
+      height: 64,
+      color: rgb(0.96, 0.98, 1),
+      borderColor: rgb(0.82, 0.88, 0.98),
       borderWidth: 1,
     });
 
     target.drawText(input.title, {
       x: margin + 16,
-      y: pageHeight - margin - 22,
+      y: pageHeight - margin - 24,
       size: 18,
       font: bold,
-      color: rgb(0.1, 0.12, 0.18),
+      color: rgb(0.06, 0.1, 0.18),
     });
 
     target.drawText(input.subtitle, {
       x: margin + 16,
-      y: pageHeight - margin - 40,
+      y: pageHeight - margin - 43,
       size: 10,
       font,
-      color: rgb(0.37, 0.41, 0.47),
+      color: rgb(0.32, 0.38, 0.46),
+    });
+
+    target.drawLine({
+      start: { x: margin, y: pageHeight - margin - 72 },
+      end: { x: pageWidth - margin, y: pageHeight - margin - 72 },
+      thickness: 1,
+      color: rgb(0.84, 0.88, 0.95),
     });
   }
 
@@ -85,11 +92,16 @@ export async function createMarketingProposalPdf(input: {
       page = doc.addPage([pageWidth, pageHeight]);
       pages.push(page);
       drawHeader(page);
-      cursorY = pageHeight - margin - 78;
+      cursorY = pageHeight - margin - 94;
     }
   }
 
-  function drawWrappedText(text: string, x: number, width: number, opts?: { bold?: boolean; color?: [number, number, number] }) {
+  function drawWrappedText(
+    text: string,
+    x: number,
+    width: number,
+    opts?: { bold?: boolean; color?: [number, number, number] },
+  ) {
     const activeFont = opts?.bold ? bold : font;
     const lines = wrapLines(text, width, (value) => activeFont.widthOfTextAtSize(value, bodyFontSize));
 
@@ -100,37 +112,37 @@ export async function createMarketingProposalPdf(input: {
         y: cursorY,
         size: bodyFontSize,
         font: activeFont,
-        color: rgb(...(opts?.color ?? [0.2, 0.23, 0.27])),
+        color: rgb(...(opts?.color ?? [0.18, 0.22, 0.28])),
       });
       cursorY -= lineHeight;
     }
   }
 
   drawHeader(page);
-  cursorY = pageHeight - margin - 78;
+  cursorY = pageHeight - margin - 94;
 
   for (const section of input.sections) {
-    ensureSpace(48);
+    ensureSpace(56);
 
     page.drawText(section.title, {
       x: margin,
       y: cursorY,
       size: 14,
       font: bold,
-      color: rgb(0.12, 0.14, 0.18),
+      color: rgb(0.1, 0.14, 0.2),
     });
-    cursorY -= 10;
+    cursorY -= 9;
 
     page.drawLine({
       start: { x: margin, y: cursorY },
       end: { x: pageWidth - margin, y: cursorY },
       thickness: 1,
-      color: rgb(0.87, 0.89, 0.94),
+      color: rgb(0.86, 0.9, 0.95),
     });
     cursorY -= 16;
 
     if (section.description) {
-      drawWrappedText(section.description, margin, contentWidth, { color: [0.37, 0.41, 0.47] });
+      drawWrappedText(section.description, margin, contentWidth, { color: [0.35, 0.4, 0.48] });
       cursorY -= 4;
     }
 
@@ -143,21 +155,28 @@ export async function createMarketingProposalPdf(input: {
 
       if (block.type === "bullets") {
         for (const item of block.items) {
-          drawWrappedText(`• ${item}`, margin + 4, contentWidth - 4);
+          ensureSpace(22);
+          page.drawCircle({
+            x: margin + 6,
+            y: cursorY + 5,
+            size: 2.2,
+            color: rgb(0, 0.48, 1),
+          });
+          drawWrappedText(item, margin + 16, contentWidth - 16);
         }
         cursorY -= 6;
         continue;
       }
 
       if (block.type === "highlight") {
-        ensureSpace(58);
+        ensureSpace(64);
         page.drawRectangle({
           x: margin,
-          y: cursorY - 44,
+          y: cursorY - 48,
           width: contentWidth,
-          height: 44,
-          color: rgb(0.98, 0.97, 0.95),
-          borderColor: rgb(0.94, 0.68, 0.42),
+          height: 48,
+          color: rgb(0.96, 0.98, 1),
+          borderColor: rgb(0.62, 0.79, 0.98),
           borderWidth: 1,
         });
         page.drawText(block.label.toUpperCase(), {
@@ -165,16 +184,16 @@ export async function createMarketingProposalPdf(input: {
           y: cursorY - 16,
           size: smallFontSize,
           font: bold,
-          color: rgb(0.64, 0.33, 0.08),
+          color: rgb(0, 0.36, 0.76),
         });
         page.drawText(block.value, {
           x: margin + 14,
-          y: cursorY - 32,
+          y: cursorY - 33,
           size: 12,
           font: bold,
-          color: rgb(0.17, 0.17, 0.2),
+          color: rgb(0.12, 0.14, 0.18),
         });
-        cursorY -= 54;
+        cursorY -= 58;
         continue;
       }
 
@@ -203,7 +222,7 @@ export async function createMarketingProposalPdf(input: {
       start: { x: margin, y: margin - 12 },
       end: { x: pageWidth - margin, y: margin - 12 },
       thickness: 1,
-      color: rgb(0.9, 0.9, 0.92),
+      color: rgb(0.88, 0.9, 0.94),
     });
     target.drawText(`Página ${index + 1}`, {
       x: pageWidth - margin - 52,

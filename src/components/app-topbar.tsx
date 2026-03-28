@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AppModule, canAccessModule, UserRole } from "@/lib/auth";
 import { BaseModal } from "@/components/base-modal";
+import { UiIcon } from "@/components/ui-icon";
 
 type NotificationItem = {
   id: string;
@@ -53,45 +54,44 @@ const pageMeta: Record<string, { eyebrow: string; title: string; description: st
   },
 };
 
-const quickActionItems: Array<{ module: AppModule; href: string; title: string; description: string }> =
-  [
-    {
-      module: "dashboard",
-      href: "/dashboard",
-      title: "Painel executivo",
-      description: "Voltar para a visão geral e acompanhar o que precisa de atenção.",
-    },
-    {
-      module: "orcamento",
-      href: "/orcamento",
-      title: "Novo orçamento",
-      description: "Entrar direto no módulo financeiro para projetar custos e receita.",
-    },
-    {
-      module: "operacao",
-      href: "/operacao",
-      title: "Checklist da prova",
-      description: "Atualizar tarefas abertas, responsáveis e prazos operacionais.",
-    },
-    {
-      module: "marketing",
-      href: "/marketing",
-      title: "Proposta comercial",
-      description: "Ajustar pacotes e exportar a proposta do evento em PDF.",
-    },
-    {
-      module: "regulamento",
-      href: "/regulamento",
-      title: "Editar regulamento",
-      description: "Revisar regras, inscrição, kit e contatos com preview em tempo real.",
-    },
-    {
-      module: "configuracoes",
-      href: "/configuracoes",
-      title: "Gerir usuários",
-      description: "Atualizar equipe, permissões e dados principais da organização.",
-    },
-  ];
+const quickActionItems: Array<{ module: AppModule; href: string; title: string; description: string }> = [
+  {
+    module: "dashboard",
+    href: "/dashboard",
+    title: "Painel executivo",
+    description: "Voltar para a visão geral e acompanhar o que precisa de atenção.",
+  },
+  {
+    module: "orcamento",
+    href: "/orcamento",
+    title: "Novo orçamento",
+    description: "Entrar direto no módulo financeiro para projetar custos e receita.",
+  },
+  {
+    module: "operacao",
+    href: "/operacao",
+    title: "Checklist da prova",
+    description: "Atualizar tarefas abertas, responsáveis e prazos operacionais.",
+  },
+  {
+    module: "marketing",
+    href: "/marketing",
+    title: "Proposta comercial",
+    description: "Ajustar pacotes e exportar a proposta do evento em PDF.",
+  },
+  {
+    module: "regulamento",
+    href: "/regulamento",
+    title: "Editar regulamento",
+    description: "Revisar regras, inscrição, kit e contatos com preview em tempo real.",
+  },
+  {
+    module: "configuracoes",
+    href: "/configuracoes",
+    title: "Gerir usuários",
+    description: "Atualizar equipe, permissões e dados principais da organização.",
+  },
+];
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: "Administrador",
@@ -107,17 +107,6 @@ function BellIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
       <path d="M15 18H9m9-1V11a6 6 0 1 0-12 0v6l-2 2h16l-2-2Z" />
       <path d="M10 21a2 2 0 0 0 4 0" />
-    </svg>
-  );
-}
-
-function QuickActionIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-      <path d="m7.5 7.5 9 9" />
-      <path d="m16.5 7.5-9 9" />
     </svg>
   );
 }
@@ -166,7 +155,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
 
   return (
     <>
-      <header className="sticky top-0 z-30 mb-8 rounded-[30px] border border-white/60 bg-white/80 px-5 py-4 shadow-[0_20px_60px_rgba(15,23,42,0.10)] backdrop-blur xl:px-6">
+      <header className="sticky top-0 z-30 mb-8 rounded-[30px] border border-white/70 bg-white/84 px-5 py-4 shadow-[0_20px_60px_rgba(16,24,40,0.09)] backdrop-blur xl:px-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -175,12 +164,8 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
               <span>{organizationName}</span>
             </div>
             <div>
-              <h1 className="text-3xl font-heading leading-none text-slate-950 xl:text-4xl">
-                {currentPage.title}
-              </h1>
-              <p className="mt-3 max-w-3xl text-sm text-slate-600 xl:text-[15px]">
-                {currentPage.description}
-              </p>
+              <h1 className="text-3xl leading-none text-slate-950 xl:text-4xl">{currentPage.title}</h1>
+              <p className="mt-3 max-w-3xl text-sm text-slate-600 xl:text-[15px]">{currentPage.description}</p>
             </div>
           </div>
 
@@ -194,8 +179,8 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
                 }}
                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-900"
               >
-                <QuickActionIcon />
-                Atalhos
+                <UiIcon name="spark" className="h-4 w-4" />
+                Ações rápidas
               </button>
 
               <div className="relative">
@@ -213,7 +198,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
                 >
                   <BellIcon />
                   {unreadNotifications.length > 0 ? (
-                    <span className="absolute -right-1 -top-1 inline-flex min-w-6 items-center justify-center rounded-full bg-accent px-1.5 py-0.5 text-[11px] font-bold text-white">
+                    <span className="absolute -right-1 -top-1 inline-flex min-w-6 items-center justify-center rounded-full bg-[#FF7750] px-1.5 py-0.5 text-[11px] font-bold text-white">
                       {notificationBadge}
                     </span>
                   ) : null}
@@ -223,9 +208,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
                   <div className="absolute right-0 top-14 z-40 w-[360px] rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
                     <div>
                       <p className="text-sm font-semibold text-slate-950">Central de notificações</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Alertas operacionais e atalhos para o que precisa de atenção.
-                      </p>
+                      <p className="mt-1 text-xs text-slate-500">Alertas operacionais e atalhos para o que precisa de atenção.</p>
                     </div>
 
                     <div className="mt-4 space-y-3">
@@ -258,11 +241,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
                                       : "bg-slate-200 text-slate-600"
                                 }`}
                               >
-                                {item.tone === "warning"
-                                  ? "Atenção"
-                                  : item.tone === "success"
-                                    ? "OK"
-                                    : "Info"}
+                                {item.tone === "warning" ? "Atenção" : item.tone === "success" ? "OK" : "Info"}
                               </span>
                             </div>
                           </Link>
@@ -285,7 +264,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
       <BaseModal
         open={showQuickActions}
         onClose={() => setShowQuickActions(false)}
-        title="Atalhos"
+        title="Ações rápidas"
         description="Entradas rápidas para as tarefas mais comuns do dia a dia da operação."
       >
         <div className="grid gap-3 sm:grid-cols-2">
@@ -296,7 +275,10 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
               onClick={() => setShowQuickActions(false)}
               className="rounded-3xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white"
             >
-              <p className="text-base font-semibold text-slate-950">{item.title}</p>
+              <div className="flex items-center gap-2 text-slate-950">
+                <UiIcon name="spark" className="h-4 w-4 text-accent" />
+                <p className="text-base font-semibold">{item.title}</p>
+              </div>
               <p className="mt-2 text-sm text-slate-600">{item.description}</p>
             </Link>
           ))}

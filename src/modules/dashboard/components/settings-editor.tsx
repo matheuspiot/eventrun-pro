@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { UserRole } from "@/lib/auth";
 import { BaseModal } from "@/components/base-modal";
+import { UiIcon } from "@/components/ui-icon";
 import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { OrganizationUserDto } from "@/modules/users/types";
 
@@ -252,7 +253,7 @@ export function SettingsEditor({
             </div>
             <div className="flex items-center gap-3">
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{users.length} usuário(s)</span>
-              <button type="button" onClick={openCreateUserModal} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white">Novo usuário</button>
+              <button type="button" onClick={openCreateUserModal} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"><UiIcon name="plus" className="h-4 w-4" />Novo usuário</button>
             </div>
           </div>
 
@@ -296,7 +297,7 @@ export function SettingsEditor({
             <p className="mt-2 text-sm text-slate-700">{roleOptions.find((role) => role.value === userForm.role)?.description}</p>
           </div>
           {usersError ? <p className="text-sm text-red-600">{usersError}</p> : null}
-          <button type="submit" disabled={usersSaving} className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{usersSaving ? "Salvando..." : "Criar usuário"}</button>
+          <button type="submit" disabled={usersSaving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"><UiIcon name="plus" className="h-4 w-4" />{usersSaving ? "Salvando..." : "Criar usuário"}</button>
         </form>
       </BaseModal>
     </>

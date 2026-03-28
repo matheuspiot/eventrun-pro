@@ -2,6 +2,7 @@
 
 import { Dispatch, FormEvent, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import { BaseModal } from "@/components/base-modal";
+import { UiIcon } from "@/components/ui-icon";
 import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { EventDto } from "@/modules/events/types";
 
@@ -277,7 +278,7 @@ function EventCreateForm({
         {formStep < 3 ? (
           <button type="button" onClick={handleNextStep} className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-800">Avançar etapa</button>
         ) : (
-          <button type="submit" disabled={submitting} className="flex-1 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70">{submitting ? "Salvando..." : "Criar evento"}</button>
+          <button type="submit" disabled={submitting} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"><UiIcon name="plus" className="h-4 w-4" />{submitting ? "Salvando..." : "Criar evento"}</button>
         )}
         <button type="button" onClick={onReset} className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-700">Limpar</button>
       </div>
@@ -484,8 +485,9 @@ export function EventsManager() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"
             >
+              <UiIcon name="plus" className="h-4 w-4" />
               Novo evento
             </button>
           </div>
@@ -514,7 +516,7 @@ export function EventsManager() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {!isEditing ? (
-                          <button type="button" onClick={() => startInlineEdit(item)} className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-zinc-700">Editar no card</button>
+                          <button type="button" onClick={() => startInlineEdit(item)} className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-zinc-700"><UiIcon name="edit" className="h-4 w-4" />Editar</button>
                         ) : (
                           <>
                             <button type="button" onClick={() => void handleInlineSave(item.id)} disabled={inlineSaving} className="rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">{inlineSaving ? "Salvando..." : "Salvar"}</button>

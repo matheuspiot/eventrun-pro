@@ -43,7 +43,7 @@ export async function createOperationTaskForEvent(
 ) {
   const event = await ensureEventBelongsToOrganization(organizationId, input.eventId);
   if (!event) {
-    return { error: "Evento nao encontrado" as const };
+    return { error: "Evento não encontrado" as const };
   }
 
   const task = await prisma.eventOperationTask.create({
@@ -74,12 +74,12 @@ export async function updateOperationTaskForOrganization(
   });
 
   if (!current) {
-    return { error: "Tarefa nao encontrada" as const };
+    return { error: "Tarefa não encontrada" as const };
   }
 
   const event = await ensureEventBelongsToOrganization(organizationId, current.eventId);
   if (!event) {
-    return { error: "Tarefa nao encontrada" as const };
+    return { error: "Tarefa não encontrada" as const };
   }
 
   const task = await prisma.eventOperationTask.update({

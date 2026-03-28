@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { UiIcon } from "@/components/ui-icon";
 import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { EventDto } from "@/modules/events/types";
 import { generateRegulationText } from "../generate-regulation-text";
@@ -345,7 +346,7 @@ export function RegulationBuilder() {
             <div className="flex flex-wrap gap-2">
               {step < stepDefinitions.length - 1 ? <button type="button" onClick={() => setStep((prev) => Math.min(stepDefinitions.length - 1, prev + 1))} className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-800">Próxima etapa</button> : null}
               <button type="submit" disabled={saving} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70">{saving ? "Salvando..." : "Salvar regulamento"}</button>
-              <a href={selectedEventId ? `/api/regulation/export?eventId=${selectedEventId}` : "#"} className="rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm font-semibold text-zinc-700">Exportar PDF</a>
+              <a href={selectedEventId ? `/api/regulation/export?eventId=${selectedEventId}` : "#"} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm font-semibold text-zinc-700"><UiIcon name="download" className="h-4 w-4" />Exportar PDF</a>
             </div>
           </div>
         </div>

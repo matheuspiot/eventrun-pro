@@ -2,6 +2,7 @@
 
 import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useState } from "react";
 import { BaseModal } from "@/components/base-modal";
+import { UiIcon } from "@/components/ui-icon";
 import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { EventDto } from "@/modules/events/types";
 import { OperationTaskDto } from "../types";
@@ -305,7 +306,7 @@ export function OperationsPlanner() {
               <h2 className="text-4xl font-heading text-slate-950">Checklist da prova</h2>
               <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-600">Crie tarefas em modal e edite direto no card para manter a leitura do checklist mais limpa.</p>
             </div>
-            <button type="button" onClick={openCreateModal} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white">Nova tarefa</button>
+            <button type="button" onClick={openCreateModal} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"><UiIcon name="plus" className="h-4 w-4" />Nova tarefa</button>
           </div>
         </header>
 
@@ -326,9 +327,9 @@ export function OperationsPlanner() {
                 <p className="mt-2 text-sm text-slate-600">Filtre por fase e atualize o checklist sem perder visão do todo.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setSelectedPhase("Todas")} className={`rounded-full px-3 py-2 text-xs font-semibold ${selectedPhase === "Todas" ? "bg-accent text-white" : "border border-border bg-white text-slate-700"}`}>Todas</button>
+                <button type="button" onClick={() => setSelectedPhase("Todas")} className={`rounded-full px-4 py-2.5 text-xs font-semibold shadow-sm transition ${selectedPhase === "Todas" ? "bg-accent text-white shadow-[0_10px_24px_rgba(0,122,255,0.2)]" : "border border-border bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}>Todas</button>
                 {Array.from(new Set(tasks.map((task) => task.fase))).map((phase) => (
-                  <button key={phase} type="button" onClick={() => setSelectedPhase(phase)} className={`rounded-full px-3 py-2 text-xs font-semibold ${selectedPhase === phase ? "bg-accent text-white" : "border border-border bg-white text-slate-700"}`}>{phase}</button>
+                  <button key={phase} type="button" onClick={() => setSelectedPhase(phase)} className={`rounded-full px-4 py-2.5 text-xs font-semibold shadow-sm transition ${selectedPhase === phase ? "bg-accent text-white shadow-[0_10px_24px_rgba(0,122,255,0.2)]" : "border border-border bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`}>{phase}</button>
                 ))}
               </div>
             </div>
@@ -374,7 +375,7 @@ export function OperationsPlanner() {
                                 <MiniInfo label="Observações" value={task.observacoes || "Sem observações"} />
                               </div>
                               <div className="mt-4 flex flex-wrap gap-2">
-                                <button type="button" onClick={() => startInlineEdit(task)} className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-slate-700">Editar no card</button>
+                                <button type="button" onClick={() => startInlineEdit(task)} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs font-medium text-slate-700"><UiIcon name="edit" className="h-3.5 w-3.5" />Editar</button>
                                 {task.status !== "EM_ANDAMENTO" ? <button type="button" onClick={() => void updateTaskStatus(task, "EM_ANDAMENTO")} className="rounded-lg border border-amber-300 px-3 py-1 text-xs font-medium text-amber-700">Marcar em andamento</button> : null}
                                 {task.status !== "CONCLUIDA" ? <button type="button" onClick={() => void updateTaskStatus(task, "CONCLUIDA")} className="rounded-lg border border-emerald-300 px-3 py-1 text-xs font-medium text-emerald-700">Concluir</button> : null}
                                 {task.status !== "PENDENTE" ? <button type="button" onClick={() => void updateTaskStatus(task, "PENDENTE")} className="rounded-lg border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700">Voltar para pendente</button> : null}
@@ -414,7 +415,7 @@ export function OperationsPlanner() {
           </div>
           <TaskEditor form={form} setForm={setForm} />
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          <button type="submit" disabled={saving} className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{saving ? "Salvando..." : "Criar tarefa"}</button>
+          <button type="submit" disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"><UiIcon name="plus" className="h-4 w-4" />{saving ? "Salvando..." : "Criar tarefa"}</button>
         </form>
       </BaseModal>
     </>

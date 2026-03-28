@@ -2,6 +2,7 @@
 
 import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useState } from "react";
 import { BaseModal } from "@/components/base-modal";
+import { UiIcon } from "@/components/ui-icon";
 import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { EventDto } from "@/modules/events/types";
 import { MarketingPackageDto } from "@/modules/marketing/types";
@@ -238,7 +239,7 @@ export default function MarketingPageClient() {
               <h2 className="text-4xl font-heading text-slate-950">Proposta comercial mais clara</h2>
               <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-600">Crie pacotes em modal e ajuste os existentes direto no card, com a tela focada em leitura.</p>
             </div>
-            <button type="button" onClick={openCreateModal} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white">Novo pacote</button>
+            <button type="button" onClick={openCreateModal} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"><UiIcon name="plus" className="h-4 w-4" />Novo pacote</button>
           </div>
         </header>
 
@@ -253,7 +254,7 @@ export default function MarketingPageClient() {
                   ))}
                 </select>
               </div>
-              <a href={selectedEventId ? `/api/marketing/export?eventId=${selectedEventId}` : "#"} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white">Baixar proposta em PDF</a>
+              <a href={selectedEventId ? `/api/marketing/export?eventId=${selectedEventId}` : "#"} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"><UiIcon name="download" className="h-4 w-4" />Baixar proposta em PDF</a>
             </div>
 
             {loading ? (
@@ -309,7 +310,7 @@ export default function MarketingPageClient() {
                           </div>
                         </div>
                         <div className="mt-4 flex gap-2">
-                          <button type="button" onClick={() => startInlineEdit(pkg)} className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-slate-700">Editar no card</button>
+                          <button type="button" onClick={() => startInlineEdit(pkg)} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs font-medium text-slate-700"><UiIcon name="edit" className="h-3.5 w-3.5" />Editar</button>
                           <button type="button" onClick={() => void handleDelete(pkg.id)} className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600">Remover</button>
                         </div>
                       </>
@@ -343,7 +344,7 @@ export default function MarketingPageClient() {
           </div>
           <PackageEditor form={form} setForm={setForm} />
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          <button type="submit" disabled={saving} className="w-full rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{saving ? "Salvando..." : "Criar pacote"}</button>
+          <button type="submit" disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"><UiIcon name="plus" className="h-4 w-4" />{saving ? "Salvando..." : "Criar pacote"}</button>
         </form>
       </BaseModal>
     </>

@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { UiIcon } from "@/components/ui-icon";
 import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { CostItemDto } from "../types";
 import { EventDto } from "@/modules/events/types";
@@ -758,9 +759,12 @@ export function EventBudgetPlanner() {
               Separe o raciocínio em cenário, composição de custos e análise final antes de salvar.
             </p>
           </div>
-          <div className="rounded-2xl border border-border bg-surface-muted/70 px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Próximo foco</p>
-            <p className="mt-1 text-lg font-heading text-zinc-900">{plannerGuide.title}</p>
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-3">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-blue-700">
+              <UiIcon name="spark" className="h-4 w-4" />
+              Próximo foco
+            </div>
+            <p className="mt-2 text-lg text-zinc-900">{plannerGuide.title}</p>
             <p className="mt-1 text-sm text-zinc-600">{plannerGuide.description}</p>
           </div>
         </div>
@@ -777,15 +781,15 @@ export function EventBudgetPlanner() {
               onClick={() => setPlannerStep(step as "cenario" | "custos" | "analise")}
               className={`rounded-2xl border p-4 text-left transition ${
                 plannerStep === step
-                  ? "border-accent bg-accent-soft"
+                  ? "border-accent bg-accent text-white shadow-[0_16px_32px_rgba(0,122,255,0.18)]"
                   : plannerGuide.step === step
-                    ? "border-amber-200 bg-amber-50"
-                    : "border-border bg-surface-muted/70"
+                    ? "border-blue-200 bg-blue-50"
+                    : "border-border bg-surface-muted/70 hover:border-slate-300 hover:bg-white"
               }`}
             >
-              <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">{label}</p>
-              <p className="mt-2 text-lg font-heading text-zinc-900">{title}</p>
-              <p className="mt-2 text-sm text-zinc-600">{description}</p>
+              <p className={`text-xs uppercase tracking-[0.15em] ${plannerStep === step ? "text-white/70" : "text-zinc-500"}`}>{label}</p>
+              <p className={`mt-2 text-lg ${plannerStep === step ? "text-white" : "text-zinc-900"}`}>{title}</p>
+              <p className={`mt-2 text-sm ${plannerStep === step ? "text-white/80" : "text-zinc-600"}`}>{description}</p>
             </button>
           ))}
         </div>
@@ -947,12 +951,17 @@ export function EventBudgetPlanner() {
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
                       Buscar custo
                     </label>
-                    <input
-                      value={costItemSearch}
-                      onChange={(event) => setCostItemSearch(event.target.value)}
-                      placeholder="Nome ou unidade"
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                    />
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                        <UiIcon name="search" className="h-4 w-4" />
+                      </span>
+                      <input
+                        value={costItemSearch}
+                        onChange={(event) => setCostItemSearch(event.target.value)}
+                        placeholder="Nome ou unidade"
+                        className="w-full rounded-xl border border-border bg-surface py-2 pl-10 pr-3 outline-none focus:ring-2 focus:ring-accent"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
@@ -997,9 +1006,10 @@ export function EventBudgetPlanner() {
                       type="button"
                       onClick={addCostItem}
                       disabled={!newCostItemId}
-                      className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-zinc-700 disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-zinc-700 disabled:opacity-60"
                     >
-                      Selecionar custo
+                      <UiIcon name="plus" className="h-4 w-4" />
+                      Adicionar custo
                     </button>
                     <p className="text-xs text-zinc-500">
                       {filteredCostItems.length} custo(s) disponível(is) no filtro atual.
@@ -1075,7 +1085,7 @@ export function EventBudgetPlanner() {
                                 className="w-32 rounded-lg border border-border bg-surface px-2 py-1 outline-none focus:ring-2 focus:ring-accent"
                               />
                             </td>
-                            <td className="px-3 py-3 text-zinc-700">{brl(subtotal)}</td>
+                            <td className={`px-3 py-3 ${subtotal > 0 ? "metric-negative" : "metric-neutral"}`}>{brl(subtotal)}</td>
                             <td className="px-3 py-3">
                               <button
                                 type="button"
@@ -1098,15 +1108,15 @@ export function EventBudgetPlanner() {
           {plannerStep === "analise" ? (
             <>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <ResultCard label="Total de custos fixos" value={calculations.totalCustosFixos} valueClass="text-zinc-900" />
-            <ResultCard label="Custo variável por atleta" value={calculations.custoVariavelPorAtleta} valueClass="text-zinc-900" />
-            <ResultCard label="Custo total estimado" value={calculations.custoTotalEstimado} valueClass="text-zinc-900" />
-            <ResultCard label="Break-even por inscrito" value={calculations.breakEvenInscritos} valueClass="text-zinc-900" />
+            <ResultCard label="Total de custos fixos" value={calculations.totalCustosFixos} valueClass="metric-neutral" />
+            <ResultCard label="Custo variável por atleta" value={calculations.custoVariavelPorAtleta} valueClass="metric-neutral" />
+            <ResultCard label="Custo total estimado" value={calculations.custoTotalEstimado} valueClass="metric-neutral" />
+            <ResultCard label="Break-even por inscrito" value={calculations.breakEvenInscritos} valueClass="metric-neutral" />
             <ResultCard label="Preço mínimo inscrição" value={calculations.precoMinimoInscricao} valueClass="text-amber-600" />
-            <ResultCard label="Preço recomendado (lucro)" value={calculations.precoRecomendadoParaLucro} valueClass="text-emerald-600" />
-            <div className="rounded-2xl border border-border bg-surface-muted/70 p-4"><p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Alíquota total de taxas</p><p className={`mt-2 text-2xl font-heading ${calculations.aliquotaTotalPercentual < 0 ? "text-red-600" : "text-zinc-900"}`}>{calculations.aliquotaTotalPercentual.toFixed(2)}%</p></div>
-            <ResultCard label="Receita líquida por inscrição" value={calculations.receitaLiquidaPorInscricao} valueClass="text-zinc-900" />
-            <ResultCard label="Lucro líquido por inscrição" value={calculations.lucroLiquidoEstimado} valueClass="text-zinc-900" />
+            <ResultCard label="Preço recomendado (lucro)" value={calculations.precoRecomendadoParaLucro} valueClass="metric-positive" />
+            <div className="rounded-2xl border border-border bg-surface-muted/70 p-4"><p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Alíquota total de taxas</p><p className={`mt-2 text-2xl ${calculations.aliquotaTotalPercentual < 0 ? "metric-negative" : "metric-neutral"}`}>{calculations.aliquotaTotalPercentual.toFixed(2)}%</p></div>
+            <ResultCard label="Receita líquida por inscrição" value={calculations.receitaLiquidaPorInscricao} valueClass="metric-neutral" />
+            <ResultCard label="Lucro líquido por inscrição" value={calculations.lucroLiquidoEstimado} valueClass={calculations.lucroLiquidoEstimado < 0 ? "metric-negative" : "metric-positive"} />
               </div>
 
               <div className="rounded-2xl border border-border bg-surface-muted/50 p-4"><h3 className="text-xl font-heading text-zinc-900">Cenário de receita (60%, 80%, 100%)</h3><div className="mt-4 space-y-3">{scenarios.map((scenario) => {const maxRevenue = Math.max(...scenarios.map((item) => item.receita), 1);const width = (scenario.receita / maxRevenue) * 100;const positive = scenario.resultado >= 0;return (<div key={scenario.label}><div className="mb-1 flex items-center justify-between text-xs text-zinc-600"><span>{scenario.label} ({scenario.inscritos} inscritos)</span><span>Receita: {brl(scenario.receita)} | Resultado: {brl(scenario.resultado)}</span></div><div className="h-3 overflow-hidden rounded-full bg-zinc-200"><div className={`h-full rounded-full ${positive ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${Math.max(6, width)}%` }} /></div></div>);})}</div></div>
@@ -1147,7 +1157,7 @@ export function EventBudgetPlanner() {
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
                 <button type="submit" disabled={saving} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70">{saving ? "Salvando..." : "Salvar orçamento"}</button>
-                <button type="button" onClick={handleExportPdf} disabled={exporting} className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-surface-muted disabled:opacity-70">{exporting ? "Exportando..." : "Exportar orçamento em PDF"}</button>
+                <button type="button" onClick={handleExportPdf} disabled={exporting} className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-surface-muted disabled:opacity-70"><UiIcon name="download" className="h-4 w-4" />{exporting ? "Exportando..." : "Exportar orçamento em PDF"}</button>
               </div>
               <p className="text-xs text-zinc-500">Rascunho salvo automaticamente neste navegador para o evento selecionado.</p>
             </div>

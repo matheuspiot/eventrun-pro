@@ -71,6 +71,16 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
   let cursorY = pageHeight - margin - 50;
 
   const drawHeader = (targetPage: typeof page) => {
+    targetPage.drawRectangle({
+      x: margin,
+      y: pageHeight - margin - 38,
+      width: contentWidth,
+      height: 38,
+      color: rgb(0.96, 0.98, 1),
+      borderColor: rgb(0.84, 0.88, 0.95),
+      borderWidth: 1,
+    });
+
     if (logoImage) {
       targetPage.drawImage(logoImage, {
         x: pageWidth - margin - logoWidth,
@@ -81,8 +91,8 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
     }
 
     targetPage.drawText(input.title, {
-      x: margin,
-      y: pageHeight - margin,
+      x: margin + 12,
+      y: pageHeight - margin - 13,
       size: 16,
       font: bold,
       color: rgb(0.09, 0.12, 0.17),
@@ -90,15 +100,15 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
 
     targetPage.drawText(input.subtitle, {
       x: margin,
-      y: pageHeight - margin - 18,
+      y: pageHeight - margin - 54,
       size: 10,
       font: regular,
       color: rgb(0.35, 0.39, 0.45),
     });
 
     targetPage.drawLine({
-      start: { x: margin, y: pageHeight - margin - 26 },
-      end: { x: pageWidth - margin, y: pageHeight - margin - 26 },
+      start: { x: margin, y: pageHeight - margin - 62 },
+      end: { x: pageWidth - margin, y: pageHeight - margin - 62 },
       thickness: 1,
       color: rgb(0.85, 0.87, 0.9),
     });
@@ -125,7 +135,7 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
     page = pdfDoc.addPage([pageWidth, pageHeight]);
     pages.push(page);
     drawHeader(page);
-    cursorY = pageHeight - margin - 50;
+    cursorY = pageHeight - margin - 84;
   };
 
   const ensureSpace = (heightNeeded: number) => {
@@ -135,6 +145,7 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
   };
 
   drawHeader(page);
+  cursorY = pageHeight - margin - 84;
 
   const sectionTitleSize = 12;
   const rowLabelSize = 10;
