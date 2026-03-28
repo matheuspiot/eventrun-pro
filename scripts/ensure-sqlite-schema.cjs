@@ -4,6 +4,10 @@ const initSqlJs = require("sql.js");
 const initSqliteDb = require("./init-sqlite-db.cjs");
 
 const { schemaSql } = initSqliteDb;
+const schemaSqlWithoutUsernameIndex = schemaSql.replace(
+  /CREATE UNIQUE INDEX IF NOT EXISTS "User_username_key" ON "User"\("username"\);\r?\n/,
+  "",
+);
 
 function getExistingColumns(db, tableName) {
   const result = db.exec(`PRAGMA table_info("${tableName}");`);
@@ -107,7 +111,7 @@ async function ensureSqliteSchema(fileArg) {
     ? new SQL.Database(fs.readFileSync(targetPath))
     : new SQL.Database();
 
-  db.run(schemaSql);
+  db.run(schemaSqlWithoutUsernameIndex);
 
   ensureColumn(db, "User", "role", "TEXT NOT NULL DEFAULT 'ADMIN'");
   ensureColumn(db, "User", "username", "TEXT");
