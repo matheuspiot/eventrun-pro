@@ -39,6 +39,9 @@ export async function PATCH(
   }
 
   const updated = await updateOrganizationUser(auth.organizationId, id, parsed.data);
+  if ("error" in updated) {
+    return NextResponse.json({ error: updated.error }, { status: 409 });
+  }
   if (updated.count === 0) {
     return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
   }

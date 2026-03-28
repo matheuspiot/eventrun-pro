@@ -34,6 +34,8 @@ async function ensureSqliteSchema(fileArg) {
   db.run(schemaSql);
 
   ensureColumn(db, "User", "role", "TEXT NOT NULL DEFAULT 'ADMIN'");
+  ensureColumn(db, "User", "username", "TEXT");
+  db.run('CREATE UNIQUE INDEX IF NOT EXISTS "User_username_key" ON "User"("username");');
 
   ensureColumn(db, "Event", "modalidades", "TEXT");
   ensureColumn(db, "Event", "distancias", "TEXT");
@@ -69,6 +71,7 @@ async function ensureSqliteSchema(fileArg) {
   ensureColumn(db, "RegulationConfig", "regrasGeraisExtra", "TEXT");
   ensureColumn(db, "RegulationConfig", "documentosObrigatorios", "TEXT");
   ensureColumn(db, "RegulationConfig", "politicaCancelamento", "TEXT");
+  ensureColumn(db, "EventOperationTask", "lembreteEm", "DATETIME");
 
   fs.writeFileSync(targetPath, Buffer.from(db.export()));
   db.close();

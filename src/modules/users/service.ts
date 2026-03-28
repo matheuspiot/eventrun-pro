@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { normalizeUsername } from "@/lib/username";
 import { CreateOrganizationUserInput, UpdateOrganizationUserInput } from "./validation";
 
 export async function listOrganizationUsers(organizationId: string) {
@@ -9,6 +10,7 @@ export async function listOrganizationUsers(organizationId: string) {
       id: true,
       name: true,
       email: true,
+      username: true,
       role: true,
       createdAt: true,
     },
@@ -26,7 +28,16 @@ export async function createOrganizationUser(
   });
 
   if (existingUser) {
-    return { error: "E-mail ja cadastrado." } as const;
+    return { error: "E-mail já cadastrado." } as const;
+  }
+
+  const existingUsername = await prisma.user.findFirst({
+    where: { username: normalizeUsername(input.username) },
+    select: { id: true },
+  });
+
+  if (existingUsername) {
+    return { error: "Usuário já cadastrado." } as const;
   }
 
   const passwordHash = await bcrypt.hash(input.password, 10);
@@ -36,6 +47,7 @@ export async function createOrganizationUser(
       organizationId,
       name: input.name.trim(),
       email: input.email.trim().toLowerCase(),
+      username: normalizeUsername(input.username),
       role: input.role,
       passwordHash,
     },
@@ -43,6 +55,7 @@ export async function createOrganizationUser(
       id: true,
       name: true,
       email: true,
+      username: true,
       role: true,
       createdAt: true,
     },
@@ -56,15 +69,31 @@ export async function updateOrganizationUser(
   userId: string,
   input: UpdateOrganizationUserInput,
 ) {
+  if (input.username) {
+    const username = normalizeUsername(input.username);
+    const existingUsername = await prisma.user.findFirst({
+      where: {
+        username,
+        NOT: { id: userId },
+      },
+      select: { id: true },
+    });
+
+    if (existingUsername) {
+      return { error: "Usuário já cadastrado." } as const;
+    }
+  }
+
   const updated = await prisma.user.updateMany({
     where: { id: userId, organizationId },
     data: {
       ...(input.name ? { name: input.name.trim() } : {}),
+      ...(input.username ? { username: normalizeUsername(input.username) } : {}),
       ...(input.role ? { role: input.role } : {}),
     },
   });
 
-  return updated;
+  return { count: updated.count } as const;
 }
 
 export async function deleteOrganizationUser(organizationId: string, userId: string) {

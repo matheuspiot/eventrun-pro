@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
-import { generateRegulationText } from "@/modules/regulation/generate-regulation-text";
+import { buildPdfFilename } from "@/lib/download-filename";
 import { createRegulationPdfBuffer } from "@/modules/regulation/pdf";
-import { RegulationTemplateType } from "@/modules/regulation/types";
+import { generateRegulationText } from "@/modules/regulation/generate-regulation-text";
 import { getEventForRegulation, getRegulationConfigByEvent } from "@/modules/regulation/service";
+import { RegulationTemplateType } from "@/modules/regulation/types";
 
 export async function GET(request: NextRequest) {
   const auth = getAuthFromRequest(request);
@@ -53,14 +54,16 @@ export async function GET(request: NextRequest) {
     text,
     config.logoDataUrl ?? undefined,
   );
+
   const normalizedBytes = new Uint8Array(pdfBytes.length);
   normalizedBytes.set(pdfBytes);
   const pdfBlob = new Blob([normalizedBytes], { type: "application/pdf" });
+  const filename = buildPdfFilename("regulamento", event.nomeEvento, event.dataEvento);
 
   return new NextResponse(pdfBlob, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="regulamento-${eventId}.pdf"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
     },
   });

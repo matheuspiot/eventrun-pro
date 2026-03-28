@@ -1,5 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
+import { buildPdfFilename } from "@/lib/download-filename";
 import { prisma } from "@/lib/prisma";
 import { calculateBudgetMetrics } from "@/modules/budget/event-budget.calculations";
 import { createBudgetPdfBuffer } from "@/modules/budget/pdf";
@@ -135,18 +136,12 @@ export async function GET(request: NextRequest) {
   const costRows = budget.items.map((item) => {
     const quantidade = Number(item.quantidade);
     const valorUnitario = Number(item.valorUnitario);
-    const quantidadeEfetiva =
-      item.tipoCusto === "VARIAVEL_ATLETA"
-        ? quantidade * budget.metaInscritos
-        : quantidade;
+    const quantidadeEfetiva = item.tipoCusto === "VARIAVEL_ATLETA" ? quantidade * budget.metaInscritos : quantidade;
     const subtotal = quantidadeEfetiva * valorUnitario;
 
     return {
       nome: item.costItem.nome,
-      quantidade: `${numberPt(quantidadeEfetiva)} ${formatUnitLabel(
-        item.costItem.unidade,
-        quantidadeEfetiva,
-      )}`,
+      quantidade: `${numberPt(quantidadeEfetiva)} ${formatUnitLabel(item.costItem.unidade, quantidadeEfetiva)}`,
       valorUnitario: brl(valorUnitario),
       subtotal: brl(subtotal),
     };
@@ -163,11 +158,12 @@ export async function GET(request: NextRequest) {
   const normalizedBytes = new Uint8Array(pdfBytes.length);
   normalizedBytes.set(pdfBytes);
   const pdfBlob = new Blob([normalizedBytes], { type: "application/pdf" });
+  const filename = buildPdfFilename("orcamento", event.nomeEvento, event.dataEvento);
 
   return new NextResponse(pdfBlob, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="orcamento-${eventId}.pdf"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
     },
   });

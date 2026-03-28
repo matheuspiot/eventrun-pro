@@ -1,4 +1,6 @@
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+import { ReactNode } from "react";
+
+export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#f8fbff_0%,#edf5ff_100%)] p-4">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,122,255,0.10),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(130,215,255,0.18),transparent_30%)]" />

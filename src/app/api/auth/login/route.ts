@@ -4,9 +4,10 @@ import { z } from "zod";
 import { createAuthToken, setAuthCookie } from "@/lib/auth";
 import { toApiErrorMessage } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
+import { normalizeUsername } from "@/lib/username";
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().min(3),
   password: z.string().min(1),
 });
 
@@ -19,10 +20,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
-    const { email, password } = parsed.data;
-    const normalizedEmail = email.trim().toLowerCase();
+    const { identifier, password } = parsed.data;
+    const normalizedIdentifier = identifier.trim().toLowerCase();
 
-    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: normalizedIdentifier },
+          { username: normalizeUsername(normalizedIdentifier) },
+        ],
+      },
+    });
 
     if (!user) {
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
@@ -47,6 +55,7 @@ export async function POST(request: Request) {
         id: user.id,
         name: user.name,
         email: user.email,
+        username: user.username,
         organizationId: user.organizationId,
         role: user.role,
       },

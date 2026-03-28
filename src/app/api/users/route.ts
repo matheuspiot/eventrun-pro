@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
+import { createOrganizationUser, listOrganizationUsers } from "@/modules/users/service";
 import { createOrganizationUserSchema } from "@/modules/users/validation";
-import {
-  createOrganizationUser,
-  listOrganizationUsers,
-} from "@/modules/users/service";
 
 function forbid() {
   return NextResponse.json({ error: "Acesso negado" }, { status: 403 });

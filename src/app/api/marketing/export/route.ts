@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
+import { buildPdfFilename } from "@/lib/download-filename";
 import { prisma } from "@/lib/prisma";
 import { createMarketingProposalPdf } from "@/modules/marketing/pdf";
 import { listMarketingPackagesByOrganization } from "@/modules/marketing/service";
@@ -125,10 +126,12 @@ export async function GET(request: NextRequest) {
     sections,
   });
 
+  const filename = buildPdfFilename("proposta-comercial", event.nomeEvento, event.dataEvento);
+
   return new NextResponse(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="proposta-marketing-${eventId}.pdf"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
     },
   });

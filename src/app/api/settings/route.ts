@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
+import { normalizeUsername, usernamePattern } from "@/lib/username";
 import { prisma } from "@/lib/prisma";
 
 const settingsSchema = z.object({
   organizationName: z.string().min(2),
   userName: z.string().min(2),
+  username: z.string().trim().regex(usernamePattern, "Usuário inválido"),
 });
 
 export async function GET(request: NextRequest) {
@@ -24,7 +26,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.user.findUnique({
       where: { id: auth.userId },
-      select: { id: true, name: true, email: true, role: true },
+      select: { id: true, name: true, email: true, username: true, role: true },
     }),
   ]);
 
@@ -59,7 +61,20 @@ export async function PUT(request: NextRequest) {
     );
   }
 
-  const { organizationName, userName } = parsed.data;
+  const { organizationName, userName, username } = parsed.data;
+  const normalizedUsername = normalizeUsername(username);
+
+  const existingUsername = await prisma.user.findFirst({
+    where: {
+      username: normalizedUsername,
+      NOT: { id: auth.userId },
+    },
+    select: { id: true },
+  });
+
+  if (existingUsername) {
+    return NextResponse.json({ error: "Usuário já cadastrado" }, { status: 409 });
+  }
 
   const [organization, user] = await prisma.$transaction([
     prisma.organization.update({
@@ -69,8 +84,11 @@ export async function PUT(request: NextRequest) {
     }),
     prisma.user.update({
       where: { id: auth.userId },
-      data: { name: userName.trim() },
-      select: { id: true, name: true, email: true, role: true },
+      data: {
+        name: userName.trim(),
+        username: normalizedUsername,
+      },
+      select: { id: true, name: true, email: true, username: true, role: true },
     }),
   ]);
 

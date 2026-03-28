@@ -5,7 +5,7 @@ import { SettingsEditor } from "@/modules/dashboard/components/settings-editor";
 export default async function ConfiguracoesPage() {
   const auth = await requireModuleAccess("configuracoes");
 
-  const [organization, users] = await Promise.all([
+  const [organization, users, authUser] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: auth.organizationId },
       select: { name: true, createdAt: true },
@@ -16,16 +16,22 @@ export default async function ConfiguracoesPage() {
         id: true,
         name: true,
         email: true,
+        username: true,
         role: true,
         createdAt: true,
       },
       orderBy: [{ role: "asc" }, { name: "asc" }],
+    }),
+    prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { username: true },
     }),
   ]);
 
   return (
     <SettingsEditor
       initialUserName={auth.name}
+      initialUsername={authUser?.username ?? ""}
       initialEmail={auth.email}
       initialUserRole={auth.role}
       initialOrganizationName={organization?.name ?? "Organizacao"}

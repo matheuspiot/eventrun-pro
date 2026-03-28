@@ -7,7 +7,7 @@ import { UiIcon } from "@/components/ui-icon";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +20,7 @@ export default function LoginPage() {
     const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
 
     if (!response.ok) {
@@ -42,7 +42,7 @@ export default function LoginPage() {
       </div>
       <h1 className="mt-4 text-4xl text-zinc-950">Entrar na sua organização</h1>
       <p className="mt-3 max-w-lg text-sm leading-6 text-zinc-600">
-        Acesse seu ambiente para acompanhar eventos, operação, orçamento e proposta comercial.
+        Acesse seu ambiente com e-mail ou usuário para acompanhar eventos, operação, orçamento e proposta comercial.
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -53,13 +53,12 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <label className="block">
-          <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">E-mail</span>
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">E-mail ou usuário</span>
           <input
-            type="email"
             required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="voce@empresa.com"
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
+            placeholder="voce@empresa.com ou seuusuario"
             className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
           />
         </label>
@@ -78,11 +77,7 @@ export default function LoginPage() {
 
         {error ? <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p> : null}
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
-        >
+        <button type="submit" disabled={isLoading} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70">
           <UiIcon name="spark" className="h-4 w-4" />
           {isLoading ? "Entrando..." : "Entrar"}
         </button>

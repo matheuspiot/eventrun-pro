@@ -1,14 +1,15 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { UserRole } from "@/lib/auth";
 import { BaseModal } from "@/components/base-modal";
 import { UiIcon } from "@/components/ui-icon";
 import { useUiFeedback } from "@/components/ui-feedback-provider";
+import { UserRole } from "@/lib/auth";
 import { OrganizationUserDto } from "@/modules/users/types";
 
 type Props = {
   initialUserName: string;
+  initialUsername: string;
   initialEmail: string;
   initialUserRole: UserRole;
   initialOrganizationName: string;
@@ -18,6 +19,7 @@ type Props = {
 
 type NewUserForm = {
   name: string;
+  username: string;
   email: string;
   password: string;
   role: UserRole;
@@ -32,6 +34,7 @@ const roleOptions: Array<{ value: UserRole; label: string; description: string }
 
 const initialNewUserForm: NewUserForm = {
   name: "",
+  username: "",
   email: "",
   password: "",
   role: "OPERACIONAL",
@@ -39,6 +42,7 @@ const initialNewUserForm: NewUserForm = {
 
 export function SettingsEditor({
   initialUserName,
+  initialUsername,
   initialEmail,
   initialUserRole,
   initialOrganizationName,
@@ -48,8 +52,10 @@ export function SettingsEditor({
   const { confirm, showToast } = useUiFeedback();
   const [editing, setEditing] = useState(false);
   const [savedUserName, setSavedUserName] = useState(initialUserName);
+  const [savedUsername, setSavedUsername] = useState(initialUsername);
   const [savedOrganizationName, setSavedOrganizationName] = useState(initialOrganizationName);
   const [userName, setUserName] = useState(initialUserName);
+  const [username, setUsername] = useState(initialUsername);
   const [organizationName, setOrganizationName] = useState(initialOrganizationName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -60,7 +66,11 @@ export function SettingsEditor({
   const [usersError, setUsersError] = useState("");
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 
-  const hasChanges = userName.trim() !== savedUserName.trim() || organizationName.trim() !== savedOrganizationName.trim();
+  const hasChanges =
+    userName.trim() !== savedUserName.trim() ||
+    username.trim() !== savedUsername.trim() ||
+    organizationName.trim() !== savedOrganizationName.trim();
+
   const roleSummary = useMemo(
     () => roleOptions.find((item) => item.value === initialUserRole)?.label ?? "Administrador",
     [initialUserRole],
@@ -85,31 +95,43 @@ export function SettingsEditor({
     event.preventDefault();
     setSaving(true);
     setError("");
+
     const nextUserName = userName.trim();
+    const nextUsername = username.trim();
     const nextOrganizationName = organizationName.trim();
+
     const response = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userName: nextUserName, organizationName: nextOrganizationName }),
+      body: JSON.stringify({
+        userName: nextUserName,
+        username: nextUsername,
+        organizationName: nextOrganizationName,
+      }),
     });
+
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       setError(data.error ?? "Não foi possível salvar as configurações.");
-      showToast({ tone: "error", title: "Falha ao salvar configurações", message: "Revise os dados e tente novamente." });
+      showToast({ tone: "error", title: "Falha ao salvar", message: "Revise os dados e tente novamente." });
       setSaving(false);
       return;
     }
+
     setSavedUserName(nextUserName);
+    setSavedUsername(nextUsername);
     setSavedOrganizationName(nextOrganizationName);
     setUserName(nextUserName);
+    setUsername(nextUsername);
     setOrganizationName(nextOrganizationName);
     setEditing(false);
     setSaving(false);
-    showToast({ tone: "success", title: "Configurações atualizadas", message: "Os dados principais da organização foram salvos com sucesso." });
+    showToast({ tone: "success", title: "Configurações atualizadas", message: "Os dados principais foram salvos." });
   }
 
   function handleCancel() {
     setUserName(savedUserName);
+    setUsername(savedUsername);
     setOrganizationName(savedOrganizationName);
     setEditing(false);
     setError("");
@@ -119,11 +141,13 @@ export function SettingsEditor({
     event.preventDefault();
     setUsersSaving(true);
     setUsersError("");
+
     const response = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userForm),
     });
+
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       setUsersError(data.error ?? "Não foi possível criar o usuário.");
@@ -131,57 +155,65 @@ export function SettingsEditor({
       setUsersSaving(false);
       return;
     }
+
     const data = (await response.json()) as { user: OrganizationUserDto };
     setUsers((prev) => [...prev, data.user].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
     setUsersSaving(false);
     closeCreateUserModal();
-    showToast({ tone: "success", title: "Usuário criado", message: `${data.user.name} já pode acessar a organização com o papel selecionado.` });
+    showToast({ tone: "success", title: "Usuário criado", message: `${data.user.name} já pode acessar a organização.` });
   }
 
   async function handleRoleChange(userId: string, role: UserRole) {
     setUsersSaving(true);
     setUsersError("");
+
     const response = await fetch(`/api/users/${userId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role }),
     });
+
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       setUsersError(data.error ?? "Não foi possível atualizar o papel.");
-      showToast({ tone: "error", title: "Falha ao atualizar permissão", message: "O papel do usuário não foi alterado." });
+      showToast({ tone: "error", title: "Falha ao atualizar permissão" });
       setUsersSaving(false);
       return;
     }
+
     setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, role } : user)));
     setUsersSaving(false);
-    showToast({ tone: "success", title: "Permissão atualizada", message: "As novas permissões já estão valendo para esse usuário." });
+    showToast({ tone: "success", title: "Permissão atualizada" });
   }
 
   async function handleDeleteUser(userId: string) {
     const user = users.find((item) => item.id === userId);
     if (!user) return;
+
     const confirmed = await confirm({
       title: "Remover usuário",
-      description: `Deseja remover ${user.name} da organização? Essa ação não pode ser desfeita por esta tela.`,
+      description: `Deseja remover ${user.name} da organização?`,
       confirmLabel: "Remover usuário",
       cancelLabel: "Voltar",
       tone: "danger",
     });
     if (!confirmed) return;
+
     setUsersSaving(true);
     setUsersError("");
+
     const response = await fetch(`/api/users/${userId}`, { method: "DELETE" });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       setUsersError(data.error ?? "Não foi possível remover o usuário.");
-      showToast({ tone: "error", title: "Falha ao remover usuário", message: "Nenhuma alteração foi aplicada." });
+      showToast({ tone: "error", title: "Falha ao remover usuário" });
       setUsersSaving(false);
       return;
     }
+
     setUsers((prev) => prev.filter((item) => item.id !== userId));
     setUsersSaving(false);
-    showToast({ tone: "success", title: "Usuário removido", message: `${user.name} foi removido da equipe com sucesso.` });
+    showToast({ tone: "success", title: "Usuário removido" });
   }
 
   return (
@@ -190,11 +222,17 @@ export function SettingsEditor({
         <header className="rounded-[32px] border border-white/70 bg-[linear-gradient(135deg,#ffffff_0%,#fff7f1_48%,#eef6ff_100%)] p-8 shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Configurações</p>
           <h2 className="mt-3 text-4xl font-heading text-slate-950">Conta, equipe e permissões</h2>
-          <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-600">Centralize dados da organização, ajuste acessos por papel e mantenha a equipe operando com clareza.</p>
+          <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-600">
+            Centralize dados da organização, ajuste acessos por papel e mantenha a equipe operando com clareza.
+          </p>
           <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${editing ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700"}`}>{editing ? "Modo de edição" : "Modo de visualização"}</span>
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${editing ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700"}`}>
+              {editing ? "Modo de edição" : "Modo de visualização"}
+            </span>
             <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Perfil atual: {roleSummary}</span>
-            <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">Organização criada em {new Date(createdAt).toLocaleDateString("pt-BR")}</span>
+            <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
+              Organização criada em {new Date(createdAt).toLocaleDateString("pt-BR")}
+            </span>
           </div>
         </header>
 
@@ -205,31 +243,47 @@ export function SettingsEditor({
                 <h3 className="text-2xl font-heading text-slate-950">Dados principais</h3>
                 <p className="mt-2 text-sm text-slate-600">Edite apenas o que realmente impacta operação e acesso.</p>
               </div>
-              {!editing ? <button type="button" onClick={() => { setEditing(true); setError(""); }} className="rounded-xl border border-border bg-white px-4 py-2 text-sm font-semibold text-slate-700">Editar</button> : null}
+              {!editing ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(true);
+                    setError("");
+                  }}
+                  className="rounded-xl border border-border bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+                >
+                  Editar
+                </button>
+              ) : null}
             </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">Usuário principal</span>
-                <input value={userName} onChange={(event) => setUserName(event.target.value)} disabled={!editing} className={`w-full rounded-2xl border px-4 py-3 outline-none ${editing ? "border-accent/40 bg-white focus:ring-2 focus:ring-accent" : "border-border bg-surface-muted text-slate-700"}`} />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">Nome da organização</span>
-                <input value={organizationName} onChange={(event) => setOrganizationName(event.target.value)} disabled={!editing} className={`w-full rounded-2xl border px-4 py-3 outline-none ${editing ? "border-accent/40 bg-white focus:ring-2 focus:ring-accent" : "border-border bg-surface-muted text-slate-700"}`} />
-              </label>
-              <label className="block md:col-span-2">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">E-mail</span>
-                <input value={initialEmail} disabled className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 text-slate-500" />
-              </label>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <Field label="Usuário principal" value={userName} onChange={setUserName} disabled={!editing} />
+              <Field label="Usuário de acesso" value={username} onChange={setUsername} disabled={!editing} />
+              <Field label="Nome da organização" value={organizationName} onChange={setOrganizationName} disabled={!editing} />
+              <div className="md:col-span-3">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">E-mail</label>
+                <input
+                  value={initialEmail}
+                  disabled
+                  className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 text-slate-500"
+                />
+              </div>
             </div>
 
             {editing ? (
               <div className="mt-5 flex flex-wrap gap-2">
-                <button type="submit" disabled={saving || !hasChanges} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">{saving ? "Salvando..." : "Salvar alterações"}</button>
-                <button type="button" onClick={handleCancel} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-slate-700">Cancelar</button>
+                <button type="submit" disabled={saving || !hasChanges} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                  {saving ? "Salvando..." : "Salvar alterações"}
+                </button>
+                <button type="button" onClick={handleCancel} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold text-slate-700">
+                  Cancelar
+                </button>
               </div>
             ) : (
-              <div className="mt-5 rounded-2xl border border-dashed border-border bg-surface-muted/70 px-4 py-3 text-sm text-slate-600">Entre em modo de edição para alterar os dados da conta e da organização.</div>
+              <div className="mt-5 rounded-2xl border border-dashed border-border bg-surface-muted/70 px-4 py-3 text-sm text-slate-600">
+                Entre em modo de edição para alterar os dados da conta e da organização.
+              </div>
             )}
 
             {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
@@ -240,7 +294,7 @@ export function SettingsEditor({
             <div className="mt-5 space-y-3">
               <InfoCard label="Estrutura da conta" value="Um administrador centraliza permissões e dados principais da organização." />
               <InfoCard label="Papéis da equipe" value="Financeiro, Operacional e Marketing enxergam apenas os módulos autorizados." />
-              <InfoCard label="Boas práticas" value="Crie um usuário por área para evitar compartilhamento de login e perda de rastreabilidade." />
+              <InfoCard label="Acesso rápido" value="Usuários curtos agilizam o login no desktop e reduzem erro de digitação." />
             </div>
           </article>
         </form>
@@ -253,7 +307,10 @@ export function SettingsEditor({
             </div>
             <div className="flex items-center gap-3">
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{users.length} usuário(s)</span>
-              <button type="button" onClick={openCreateUserModal} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white"><UiIcon name="plus" className="h-4 w-4" />Novo usuário</button>
+              <button type="button" onClick={openCreateUserModal} className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white">
+                <UiIcon name="plus" className="h-4 w-4" />
+                Novo usuário
+              </button>
             </div>
           </div>
 
@@ -267,14 +324,32 @@ export function SettingsEditor({
                   <div>
                     <p className="font-semibold text-slate-950">{user.name}</p>
                     <p className="mt-1 text-sm text-slate-600">{user.email}</p>
-                    <p className="mt-2 text-xs text-slate-500">Desde {new Date(user.createdAt).toLocaleDateString("pt-BR")}{isCurrentUser ? " • usuário atual" : ""}</p>
+                    <p className="mt-1 text-xs font-medium text-slate-500">@{user.username || "sem-usuario"}</p>
+                    <p className="mt-2 text-xs text-slate-500">
+                      Desde {new Date(user.createdAt).toLocaleDateString("pt-BR")}
+                      {isCurrentUser ? " • usuário atual" : ""}
+                    </p>
                   </div>
-                  <select value={user.role} disabled={usersSaving || isCurrentUser} onChange={(event) => void handleRoleChange(user.id, event.target.value as UserRole)} className="rounded-2xl border border-border bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-accent disabled:opacity-60">
+                  <select
+                    value={user.role}
+                    disabled={usersSaving || isCurrentUser}
+                    onChange={(event) => void handleRoleChange(user.id, event.target.value as UserRole)}
+                    className="rounded-2xl border border-border bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-accent disabled:opacity-60"
+                  >
                     {roleOptions.map((role) => (
-                      <option key={role.value} value={role.value}>{role.label}</option>
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
                     ))}
                   </select>
-                  <button type="button" disabled={usersSaving || isCurrentUser} onClick={() => void handleDeleteUser(user.id)} className="rounded-2xl border border-red-300 px-4 py-3 text-sm font-semibold text-red-600 disabled:opacity-40">Remover</button>
+                  <button
+                    type="button"
+                    disabled={usersSaving || isCurrentUser}
+                    onClick={() => void handleDeleteUser(user.id)}
+                    className="rounded-2xl border border-red-300 px-4 py-3 text-sm font-semibold text-red-600 disabled:opacity-40"
+                  >
+                    Remover
+                  </button>
                 </div>
               );
             })}
@@ -285,11 +360,14 @@ export function SettingsEditor({
       <BaseModal open={showCreateUserModal} onClose={closeCreateUserModal} title="Novo usuário" description="Crie um novo acesso sem ocupar espaço fixo na tela.">
         <form onSubmit={handleCreateUser} className="space-y-4">
           <input value={userForm.name} onChange={(event) => setUserForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="Nome completo" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent" />
+          <input value={userForm.username} onChange={(event) => setUserForm((prev) => ({ ...prev, username: event.target.value }))} placeholder="Usuário de acesso" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent" />
           <input type="email" value={userForm.email} onChange={(event) => setUserForm((prev) => ({ ...prev, email: event.target.value }))} placeholder="E-mail" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent" />
           <input type="password" value={userForm.password} onChange={(event) => setUserForm((prev) => ({ ...prev, password: event.target.value }))} placeholder="Senha inicial" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent" />
           <select value={userForm.role} onChange={(event) => setUserForm((prev) => ({ ...prev, role: event.target.value as UserRole }))} className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none focus:ring-2 focus:ring-accent">
             {roleOptions.map((role) => (
-              <option key={role.value} value={role.value}>{role.label}</option>
+              <option key={role.value} value={role.value}>
+                {role.label}
+              </option>
             ))}
           </select>
           <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
@@ -297,13 +375,45 @@ export function SettingsEditor({
             <p className="mt-2 text-sm text-slate-700">{roleOptions.find((role) => role.value === userForm.role)?.description}</p>
           </div>
           {usersError ? <p className="text-sm text-red-600">{usersError}</p> : null}
-          <button type="submit" disabled={usersSaving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"><UiIcon name="plus" className="h-4 w-4" />{usersSaving ? "Salvando..." : "Criar usuário"}</button>
+          <button type="submit" disabled={usersSaving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+            <UiIcon name="plus" className="h-4 w-4" />
+            {usersSaving ? "Salvando..." : "Criar usuário"}
+          </button>
         </form>
       </BaseModal>
     </>
   );
 }
 
+function Field({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={disabled}
+        className={`w-full rounded-2xl border px-4 py-3 outline-none ${disabled ? "border-border bg-surface-muted text-slate-700" : "border-accent/40 bg-white focus:ring-2 focus:ring-accent"}`}
+      />
+    </label>
+  );
+}
+
 function InfoCard({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-2xl border border-border bg-surface-muted/70 p-4"><p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">{label}</p><p className="mt-2 text-sm leading-6 text-slate-700">{value}</p></div>;
+  return (
+    <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">{label}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-700">{value}</p>
+    </div>
+  );
 }

@@ -9,6 +9,7 @@ export default function CadastroPage() {
   const router = useRouter();
   const [organizationName, setOrganizationName] = useState("");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,7 +23,7 @@ export default function CadastroPage() {
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ organizationName, name, email, password }),
+      body: JSON.stringify({ organizationName, name, username, email, password }),
     });
 
     if (!response.ok) {
@@ -44,7 +45,7 @@ export default function CadastroPage() {
       </div>
       <h1 className="mt-4 text-4xl text-zinc-950">Criar organização</h1>
       <p className="mt-3 max-w-lg text-sm leading-6 text-zinc-600">
-        Cadastre sua conta, configure a organização e entre no produto já com a estrutura pronta.
+        Cadastre sua conta, defina um usuário curto para login rápido e entre no produto já com a estrutura pronta.
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -56,58 +57,32 @@ export default function CadastroPage() {
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Organização</span>
-          <input
-            required
-            value={organizationName}
-            onChange={(event) => setOrganizationName(event.target.value)}
-            placeholder="Nome da organização"
-            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
-          />
+          <input required value={organizationName} onChange={(event) => setOrganizationName(event.target.value)} placeholder="Nome da organização" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2" />
         </label>
 
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Seu nome</span>
-          <input
-            required
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Nome do responsável"
-            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
-          />
+          <input required value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do responsável" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2" />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Usuário de acesso</span>
+          <input required value={username} onChange={(event) => setUsername(event.target.value)} placeholder="ex.: trajetosport" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2" />
         </label>
 
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">E-mail</span>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="voce@empresa.com"
-            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
-          />
+          <input type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="voce@empresa.com" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2" />
         </label>
 
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Senha</span>
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Mínimo de 6 caracteres"
-            className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2"
-          />
+          <input type="password" required minLength={6} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Mínimo de 6 caracteres" className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 outline-none ring-accent transition focus:ring-2" />
         </label>
 
         {error ? <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p> : null}
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70"
-        >
+        <button type="submit" disabled={isLoading} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70">
           <UiIcon name="plus" className="h-4 w-4" />
           {isLoading ? "Criando..." : "Criar conta"}
         </button>

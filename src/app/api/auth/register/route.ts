@@ -5,10 +5,12 @@ import { createAuthToken, setAuthCookie } from "@/lib/auth";
 import { toApiErrorMessage } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
 import { defaultCostItemsSeed } from "@/modules/budget/default-cost-items";
+import { normalizeUsername, usernamePattern } from "@/lib/username";
 
 const registerSchema = z.object({
   organizationName: z.string().min(2),
   name: z.string().min(2),
+  username: z.string().trim().regex(usernamePattern, "Usuário inválido"),
   email: z.string().email(),
   password: z.string().min(6),
 });
@@ -22,15 +24,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
     }
 
-    const { organizationName, name, email, password } = parsed.data;
+    const { organizationName, name, username, email, password } = parsed.data;
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = normalizeUsername(username);
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: normalizedEmail }, { username: normalizedUsername }],
+      },
     });
 
     if (existingUser) {
-      return NextResponse.json({ error: "E-mail ja cadastrado" }, { status: 409 });
+      return NextResponse.json({ error: "E-mail ou usuário já cadastrado" }, { status: 409 });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -45,6 +50,7 @@ export async function POST(request: Request) {
           create: {
             name,
             email: normalizedEmail,
+            username: normalizedUsername,
             role: "ADMIN",
             passwordHash,
           },
@@ -72,6 +78,7 @@ export async function POST(request: Request) {
         id: user.id,
         name: user.name,
         email: user.email,
+        username: user.username,
         organizationId: result.id,
         role: user.role,
       },

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS "User" (
   "organizationId" TEXT NOT NULL,
   "name" TEXT NOT NULL,
   "email" TEXT NOT NULL,
+  "username" TEXT,
   "role" TEXT NOT NULL DEFAULT 'ADMIN',
   "passwordHash" TEXT NOT NULL,
   "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,6 +28,7 @@ CREATE TABLE IF NOT EXISTS "User" (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_username_key" ON "User"("username");
 CREATE INDEX IF NOT EXISTS "User_organizationId_idx" ON "User"("organizationId");
 
 CREATE TABLE IF NOT EXISTS "Event" (
