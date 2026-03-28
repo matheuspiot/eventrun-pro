@@ -237,9 +237,13 @@ function getUpdateWindowHtml() {
           --danger: #f44336;
         }
         * { box-sizing: border-box; }
+        html, body {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
         body {
           margin: 0;
-          min-height: 100vh;
           font-family: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           background:
             radial-gradient(circle at top left, rgba(0,122,255,0.10), transparent 28%),
@@ -249,16 +253,16 @@ function getUpdateWindowHtml() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 20px;
+          padding: 18px;
         }
         .card {
           width: 100%;
-          max-width: 460px;
+          max-width: 500px;
           border-radius: 30px;
           border: 1px solid rgba(255,255,255,0.7);
           background: var(--surface);
           box-shadow: 0 24px 70px rgba(16,24,40,0.12);
-          padding: 26px;
+          padding: 28px;
         }
         .eyebrow {
           font-size: 11px;
@@ -401,14 +405,15 @@ async function ensureUpdateWindow() {
   }
 
   updateWindow = new BrowserWindow({
-    width: 500,
-    height: 330,
+    width: 560,
+    height: 380,
     resizable: false,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
     show: false,
     modal: true,
+    autoHideMenuBar: true,
     parent: mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined,
     backgroundColor: "#eef5ff",
     title: "Atualização",
@@ -422,6 +427,8 @@ async function ensureUpdateWindow() {
   updateWindow.on("closed", () => {
     updateWindow = null;
   });
+
+  updateWindow.setMenuBarVisibility(false);
 
   await updateWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(getUpdateWindowHtml())}`);
   return updateWindow;
@@ -613,11 +620,12 @@ function setupAutoUpdater() {
       title: "Atualização pronta para instalar",
       description: "O download terminou e o aplicativo vai reiniciar para concluir a instalação.",
       progress: 100,
-      indeterminate: false,
+      indeterminate: true,
       metaLeft: "Download concluído",
-      metaRight: "100%",
-      note: "Aguarde alguns segundos. O EventRun Pro será fechado e aberto novamente já atualizado.",
-    }, 2200);
+      metaRight: "Preparando",
+      note: "Aguarde alguns segundos. O EventRun Pro será fechado para instalar a nova versão e reabrir em seguida.",
+    });
+    await sleep(2600);
 
     manualCheckInProgress = false;
     updateDownloadRequested = false;
