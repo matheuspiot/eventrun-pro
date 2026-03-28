@@ -184,8 +184,23 @@ export default function MarketingPageClient() {
       setInlineSaving(false);
       return;
     }
-    const data = (await response.json()) as { package: MarketingPackageDto };
-    setPackages((prev) => prev.map((item) => (item.id === id ? data.package : item)).sort((a, b) => a.ordem - b.ordem));
+    const data = (await response.json()) as { package?: MarketingPackageDto };
+    const nextPackage =
+      data.package ??
+      ({
+        id,
+        organizationId: packages.find((item) => item.id === id)?.organizationId ?? "",
+        nome: inlineForm.nome,
+        descricao: inlineForm.descricao || null,
+        entregaveis: deliverables,
+        investimento: String(Number(inlineForm.investimento)),
+        cronograma: inlineForm.cronograma || null,
+        ativo: inlineForm.ativo,
+        ordem: Number(inlineForm.ordem) || 0,
+        criadoEm: packages.find((item) => item.id === id)?.criadoEm ?? new Date().toISOString(),
+        atualizadoEm: new Date().toISOString(),
+      } satisfies MarketingPackageDto);
+    setPackages((prev) => prev.map((item) => (item.id === id ? nextPackage : item)).sort((a, b) => a.ordem - b.ordem));
     cancelInlineEdit();
     setInlineSaving(false);
     showToast({ tone: "success", title: "Pacote atualizado", message: "A edição foi feita no próprio card." });

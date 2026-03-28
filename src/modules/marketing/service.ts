@@ -83,6 +83,24 @@ export async function updateMarketingPackageForOrganization(
   });
 }
 
+export async function getMarketingPackageByIdForOrganization(
+  organizationId: string,
+  packageId: string,
+) {
+  const pkg = await prisma.marketingPackage.findFirst({
+    where: { id: packageId, organizationId },
+  });
+
+  if (!pkg) {
+    return null;
+  }
+
+  return {
+    ...pkg,
+    entregaveis: parseDeliverables(pkg.entregaveis),
+  };
+}
+
 export async function deleteMarketingPackageForOrganization(
   organizationId: string,
   packageId: string,

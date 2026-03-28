@@ -2,9 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
 import {
   deleteMarketingPackageForOrganization,
+  getMarketingPackageByIdForOrganization,
   updateMarketingPackageForOrganization,
 } from "@/modules/marketing/service";
 import { marketingPackageSchema } from "@/modules/marketing/validation";
+
+function serializePackage(pkg: NonNullable<Awaited<ReturnType<typeof getMarketingPackageByIdForOrganization>>>) {
+  return {
+    ...pkg,
+    investimento: pkg.investimento.toString(),
+    criadoEm: pkg.criadoEm.toISOString(),
+    atualizadoEm: pkg.atualizadoEm.toISOString(),
+  };
+}
 
 export async function PATCH(
   request: NextRequest,
@@ -33,7 +43,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Pacote não encontrado" }, { status: 404 });
   }
 
-  return NextResponse.json({ success: true });
+  const pkg = await getMarketingPackageByIdForOrganization(auth.organizationId, id);
+  if (!pkg) {
+    return NextResponse.json({ error: "Pacote não encontrado" }, { status: 404 });
+  }
+
+  return NextResponse.json({ package: serializePackage(pkg) });
 }
 
 export async function DELETE(
