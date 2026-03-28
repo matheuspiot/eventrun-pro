@@ -20,6 +20,11 @@ export type BudgetDraft = {
   items: BudgetItemForm[];
 };
 
+export type StoredBudgetDraft = {
+  savedAt: string;
+  draft: BudgetDraft;
+};
+
 export const selectedEventStorageKey = "eventrun:budget:selected-event-id";
 export const budgetDraftStorageKeyPrefix = "eventrun:budget:draft:";
 export const costItemsUpdatedEvent = "eventrun:cost-items-updated";
@@ -58,7 +63,20 @@ export function getBudgetDraftStorageKey(eventId: string) {
   return `${budgetDraftStorageKeyPrefix}${eventId}`;
 }
 
-export function readStoredDraft(eventId: string): BudgetDraft | null {
+function isBudgetDraftShape(parsed: Partial<BudgetDraft>) {
+  return (
+    typeof parsed.logoDataUrl === "string" &&
+    typeof parsed.metaInscritos === "string" &&
+    typeof parsed.patrocinioPrevisto === "string" &&
+    typeof parsed.lucroAlvoPercentual === "string" &&
+    typeof parsed.taxaPlataformaPercentual === "string" &&
+    typeof parsed.impostoPercentual === "string" &&
+    typeof parsed.taxaCancelamentoReembolsoPercentual === "string" &&
+    Array.isArray(parsed.items)
+  );
+}
+
+export function readStoredDraft(eventId: string): StoredBudgetDraft | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -69,33 +87,65 @@ export function readStoredDraft(eventId: string): BudgetDraft | null {
       return null;
     }
 
-    const parsed = JSON.parse(raw) as Partial<BudgetDraft>;
+    const parsed = JSON.parse(raw) as
+      | Partial<StoredBudgetDraft>
+      | Partial<BudgetDraft>;
+
     if (
-      typeof parsed.logoDataUrl !== "string" ||
-      typeof parsed.metaInscritos !== "string" ||
-      typeof parsed.patrocinioPrevisto !== "string" ||
-      typeof parsed.lucroAlvoPercentual !== "string" ||
-      typeof parsed.taxaPlataformaPercentual !== "string" ||
-      typeof parsed.impostoPercentual !== "string" ||
-      typeof parsed.taxaCancelamentoReembolsoPercentual !== "string" ||
-      !Array.isArray(parsed.items)
+      "draft" in parsed &&
+      parsed.draft &&
+      typeof parsed.savedAt === "string" &&
+      isBudgetDraftShape(parsed.draft)
     ) {
+      return {
+        savedAt: parsed.savedAt,
+        draft: parsed.draft as BudgetDraft,
+      };
+    }
+
+    const legacyDraft = parsed as Partial<BudgetDraft>;
+
+    if (!isBudgetDraftShape(legacyDraft)) {
       return null;
     }
 
     return {
-      logoDataUrl: parsed.logoDataUrl,
-      metaInscritos: parsed.metaInscritos,
-      patrocinioPrevisto: parsed.patrocinioPrevisto,
-      lucroAlvoPercentual: parsed.lucroAlvoPercentual,
-      taxaPlataformaPercentual: parsed.taxaPlataformaPercentual,
-      impostoPercentual: parsed.impostoPercentual,
-      taxaCancelamentoReembolsoPercentual: parsed.taxaCancelamentoReembolsoPercentual,
-      items: parsed.items as BudgetItemForm[],
+      savedAt: "",
+      draft: {
+        logoDataUrl: legacyDraft.logoDataUrl!,
+        metaInscritos: legacyDraft.metaInscritos!,
+        patrocinioPrevisto: legacyDraft.patrocinioPrevisto!,
+        lucroAlvoPercentual: legacyDraft.lucroAlvoPercentual!,
+        taxaPlataformaPercentual: legacyDraft.taxaPlataformaPercentual!,
+        impostoPercentual: legacyDraft.impostoPercentual!,
+        taxaCancelamentoReembolsoPercentual: legacyDraft.taxaCancelamentoReembolsoPercentual!,
+        items: legacyDraft.items as BudgetItemForm[],
+      },
     };
   } catch {
     return null;
   }
+}
+
+export function writeStoredDraft(eventId: string, draft: BudgetDraft) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const payload: StoredBudgetDraft = {
+    savedAt: new Date().toISOString(),
+    draft,
+  };
+
+  window.localStorage.setItem(getBudgetDraftStorageKey(eventId), JSON.stringify(payload));
+}
+
+export function clearStoredDraft(eventId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(getBudgetDraftStorageKey(eventId));
 }
 
 export function filterCostItems(

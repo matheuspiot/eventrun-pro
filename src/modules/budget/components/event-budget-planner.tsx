@@ -10,14 +10,15 @@ import { calculateBudgetMetrics } from "../event-budget.calculations";
 import {
   BudgetDraft,
   BudgetItemForm,
+  clearStoredDraft,
   costCategoryLabels,
   costItemsUpdatedEvent,
   filterCostItems,
-  getBudgetDraftStorageKey,
   readStoredDraft,
   selectedEventStorageKey,
   serializeDraft,
   toNumberSafe,
+  writeStoredDraft,
 } from "../budget-draft";
 
 type EventBudgetResponse = {
@@ -31,6 +32,7 @@ type EventBudgetResponse = {
     taxaPlataformaPercentual: string;
     impostoPercentual: string;
     taxaCancelamentoReembolsoPercentual: string;
+    atualizadoEm: string;
     items: BudgetItemForm[];
   } | null;
 };
@@ -264,8 +266,20 @@ export function EventBudgetPlanner() {
             items: [],
           };
 
-      const storedDraft = readStoredDraft(eventId);
-      const activeDraft = storedDraft ?? serverDraft;
+      const storedDraftEntry = readStoredDraft(eventId);
+      const serverUpdatedAt = data.budget?.atualizadoEm
+        ? new Date(data.budget.atualizadoEm).getTime()
+        : 0;
+      const storedDraftUpdatedAt = storedDraftEntry?.savedAt
+        ? new Date(storedDraftEntry.savedAt).getTime()
+        : 0;
+      const shouldUseStoredDraft = Boolean(
+        storedDraftEntry &&
+          (!data.budget ||
+            Number.isNaN(serverUpdatedAt) ||
+            storedDraftUpdatedAt > serverUpdatedAt),
+      );
+      const activeDraft = shouldUseStoredDraft ? storedDraftEntry!.draft : serverDraft;
       const serverSnapshot = serializeDraft(serverDraft);
       const activeSnapshot = serializeDraft(activeDraft);
 
@@ -282,7 +296,11 @@ export function EventBudgetPlanner() {
       setSavedSnapshot(serverSnapshot);
       setHasUserInteracted(activeSnapshot !== serverSnapshot);
 
-      if (storedDraft) {
+      if (storedDraftEntry && !shouldUseStoredDraft) {
+        clearStoredDraft(eventId);
+      }
+
+      if (shouldUseStoredDraft) {
         setSuccess("Rascunho local recuperado neste navegador.");
       }
 
@@ -309,13 +327,12 @@ export function EventBudgetPlanner() {
       return;
     }
 
-    const storageKey = getBudgetDraftStorageKey(selectedEventId);
     if (currentSnapshot === savedSnapshot) {
-      window.localStorage.removeItem(storageKey);
+      clearStoredDraft(selectedEventId);
       return;
     }
 
-    window.localStorage.setItem(storageKey, JSON.stringify(currentDraft));
+    writeStoredDraft(selectedEventId, currentDraft);
   }, [currentDraft, currentSnapshot, loadedBudget, savedSnapshot, selectedEventId]);
 
   useEffect(() => {
@@ -613,7 +630,7 @@ export function EventBudgetPlanner() {
         setSavedSnapshot(serializeDraft(persistedDraft));
         setHasUserInteracted(false);
         if (typeof window !== "undefined" && selectedEventId) {
-          window.localStorage.removeItem(getBudgetDraftStorageKey(selectedEventId));
+          clearStoredDraft(selectedEventId);
         }
 
       }

@@ -71,13 +71,16 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
   let cursorY = pageHeight - margin - 50;
 
   const drawHeader = (targetPage: typeof page) => {
+    const logoReservedWidth = logoImage ? logoWidth + 28 : 0;
+    const headerBoxWidth = contentWidth - logoReservedWidth;
+
     targetPage.drawRectangle({
       x: margin,
       y: pageHeight - margin - 38,
-      width: contentWidth,
+      width: headerBoxWidth,
       height: 38,
-      color: rgb(0.96, 0.98, 1),
-      borderColor: rgb(0.84, 0.88, 0.95),
+      color: rgb(0.97, 0.98, 0.99),
+      borderColor: rgb(0.87, 0.9, 0.94),
       borderWidth: 1,
     });
 
@@ -96,6 +99,7 @@ export async function createBudgetPdfBuffer(input: BudgetPdfInput) {
       size: 16,
       font: bold,
       color: rgb(0.09, 0.12, 0.17),
+      maxWidth: headerBoxWidth - 24,
     });
 
     targetPage.drawText(input.subtitle, {
