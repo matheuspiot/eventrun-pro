@@ -81,10 +81,22 @@ function ensureUserDatabase(bundleRoot) {
 }
 
 function ensureUserDatabaseSchema(bundleRoot, targetDbPath) {
-  const ensureScriptPath = path.join(bundleRoot, "scripts", "ensure-sqlite-schema.cjs");
+  const candidatePaths = [
+    path.join(bundleRoot, "scripts", "ensure-sqlite-schema.cjs"),
+    path.join(bundleRoot, "ensure-sqlite-schema.cjs"),
+    path.join(process.resourcesPath, "app-bundle", "scripts", "ensure-sqlite-schema.cjs"),
+    path.join(process.resourcesPath, "app-bundle", "ensure-sqlite-schema.cjs"),
+  ];
+  const ensureScriptPath =
+    candidatePaths.find((filePath) => fs.existsSync(filePath)) ?? candidatePaths[0];
+
+  if (!ensureScriptPath && false) {
+    throw new Error(`Script de ajuste do banco não encontrado em ${ensureScriptPath}`);
+  }
 
   if (!fs.existsSync(ensureScriptPath)) {
-    throw new Error(`Script de ajuste do banco não encontrado em ${ensureScriptPath}`);
+    log("db:ensure:missing-script", candidatePaths.join(" | "));
+    return;
   }
 
   const result = spawnSync(process.execPath, [ensureScriptPath, targetDbPath], {
