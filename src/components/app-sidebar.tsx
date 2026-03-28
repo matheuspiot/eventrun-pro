@@ -12,11 +12,11 @@ type AppSidebarProps = {
 
 const navItems: Array<{ label: string; href: string; module: AppModule }> = [
   { label: "Dashboard", href: "/dashboard", module: "dashboard" },
-  { label: "Opera\u00e7\u00e3o", href: "/operacao", module: "operacao" },
-  { label: "Or\u00e7amento", href: "/orcamento", module: "orcamento" },
+  { label: "Operação", href: "/operacao", module: "operacao" },
+  { label: "Orçamento", href: "/orcamento", module: "orcamento" },
   { label: "Marketing", href: "/marketing", module: "marketing" },
   { label: "Regulamento", href: "/regulamento", module: "regulamento" },
-  { label: "Configura\u00e7\u00f5es", href: "/configuracoes", module: "configuracoes" },
+  { label: "Configurações", href: "/configuracoes", module: "configuracoes" },
 ];
 
 const roleLabels: Record<UserRole, string> = {
@@ -32,49 +32,57 @@ function ModuleIcon({ module }: { module: AppModule }) {
   switch (module) {
     case "dashboard":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={shared}>
-          <path d="M4 13h7V4H4v9Zm9 7h7V11h-7v9ZM4 20h7v-5H4v5Zm9-11h7V4h-7v5Z" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={shared}>
+          <rect x="4" y="4" width="7" height="7" rx="1.5" />
+          <rect x="13" y="4" width="7" height="11" rx="1.5" />
+          <rect x="4" y="13" width="7" height="7" rx="1.5" />
+          <rect x="13" y="17" width="7" height="3" rx="1.5" />
         </svg>
       );
     case "operacao":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={shared}>
-          <path d="m5 12 4 4L19 6" />
-          <path d="M7 5h11" />
-          <path d="M7 19h11" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={shared}>
+          <path d="M9 3h6" />
+          <path d="M9 21h6" />
+          <path d="M7 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
+          <path d="m9 12 2 2 4-4" />
         </svg>
       );
     case "orcamento":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={shared}>
-          <path d="M3 7h18" />
-          <path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
-          <path d="M16 14h.01" />
-          <path d="M7 14h5" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={shared}>
+          <path d="M4 7h16" />
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="M15 13h3" />
+          <path d="M7 13h4" />
         </svg>
       );
     case "marketing":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={shared}>
-          <path d="M4 18V8l8-4 8 4v10" />
-          <path d="M12 12v8" />
-          <path d="M8 14h8" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={shared}>
+          <path d="M4 12h4l9-4v8l-9-4H4Z" />
+          <path d="M8 12v5a2 2 0 0 0 2 2h1" />
+          <path d="M18 10a3 3 0 0 1 0 4" />
         </svg>
       );
     case "regulamento":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={shared}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={shared}>
           <path d="M7 4h8l4 4v12H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
           <path d="M15 4v4h4" />
-          <path d="M9 13h6" />
-          <path d="M9 17h6" />
+          <path d="M9 12h6" />
+          <path d="M9 16h6" />
         </svg>
       );
     case "configuracoes":
       return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={shared}>
-          <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" />
-          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8 19.4a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.8a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 8a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2.8a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8a1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1.1.4h.1a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.7 1.6Z" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={shared}>
+          <path d="M4 7h9" />
+          <path d="M17 7h3" />
+          <path d="M4 17h3" />
+          <path d="M11 17h9" />
+          <circle cx="15" cy="7" r="2" />
+          <circle cx="9" cy="17" r="2" />
         </svg>
       );
   }
@@ -89,9 +97,7 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
       <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">
-              EventRun Pro
-            </p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">EventRun Pro</p>
             <h1 className="mt-3 text-[2rem] font-heading leading-none text-white">Corridas</h1>
           </div>
           <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300">
@@ -110,7 +116,7 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
 
       <div className="mt-7">
         <p className="mb-3 px-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/35">
-          Navega\u00e7\u00e3o
+          Navegação
         </p>
         <nav className="space-y-2">
           {allowedItems.map((item) => {
@@ -150,7 +156,7 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
             type="submit"
             className="w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
           >
-            Encerrar sess\u00e3o
+            Encerrar sessão
           </button>
         </form>
       </div>

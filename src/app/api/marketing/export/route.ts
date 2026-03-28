@@ -39,45 +39,96 @@ export async function GET(request: NextRequest) {
   const packages = await listMarketingPackagesByOrganization(auth.organizationId);
   const activePackages = packages.filter((pkg) => pkg.ativo);
 
-  const bodyLines = [
-    "1. Escopo da proposta",
-    "Estrutura comercial para posicionar, divulgar e acelerar a captacao de inscritos e patrocinadores.",
-    "",
-    "2. Dados do evento",
-    `Evento: ${event.nomeEvento}`,
-    `Cidade: ${event.cidade}/${event.estado}`,
-    `Data: ${new Date(event.dataEvento).toLocaleDateString("pt-BR")}`,
-    `Organizador: ${event.organizador}`,
-    `Modalidades: ${event.modalidades || "Não informado"}`,
-    `Distâncias: ${event.distancias || "Não informado"}`,
-    `Patrocinadores atuais: ${event.patrocinadores || "Não informado"}`,
-    "",
-    "3. Pacotes comerciais",
-    ...activePackages.flatMap((pkg, index) => [
-      `${index + 1}. Pacote ${pkg.nome}`,
-      pkg.descricao || "Sem descrição complementar.",
-      ...pkg.entregaveis.map((item) => `- ${item}`),
-      `Investimento sugerido: ${Number(pkg.investimento).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      })}`,
-      `Cronograma: ${pkg.cronograma || "A definir conforme a campanha."}`,
-      "",
-    ]),
-    "4. Fechamento comercial",
-    "A recomendação é alinhar escopo, aprovações, cronograma e metas de conversão antes do kickoff.",
+  const sections = [
+    {
+      title: "1. Escopo da proposta",
+      description:
+        "Estrutura comercial para posicionar, divulgar e acelerar a captação de inscritos e patrocinadores.",
+      blocks: [
+        {
+          type: "paragraph" as const,
+          text: "Este material organiza a oferta comercial do evento com leitura clara, destaque dos pacotes e visão objetiva do investimento.",
+        },
+      ],
+    },
+    {
+      title: "2. Dados do evento",
+      blocks: [
+        {
+          type: "facts" as const,
+          items: [
+            { label: "Evento:", value: event.nomeEvento },
+            { label: "Cidade:", value: `${event.cidade}/${event.estado}` },
+            { label: "Data:", value: new Date(event.dataEvento).toLocaleDateString("pt-BR") },
+            { label: "Organizador:", value: event.organizador },
+            { label: "Modalidades:", value: event.modalidades || "Não informado" },
+            { label: "Distâncias:", value: event.distancias || "Não informado" },
+            { label: "Patrocinadores atuais:", value: event.patrocinadores || "Não informado" },
+          ],
+        },
+      ],
+    },
+    ...(
+      activePackages.length > 0
+        ? activePackages.map((pkg, index) => ({
+            title: `3.${index + 1} Pacote ${pkg.nome}`,
+            description: pkg.descricao || "Pacote estruturado para apresentação comercial do evento.",
+            blocks: [
+              {
+                type: "highlight" as const,
+                label: "Investimento sugerido",
+                value: Number(pkg.investimento).toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }),
+              },
+              {
+                type: "paragraph" as const,
+                text: `Cronograma: ${pkg.cronograma || "A definir conforme a campanha."}`,
+              },
+              {
+                type: "bullets" as const,
+                items: pkg.entregaveis.length > 0 ? pkg.entregaveis : ["Sem entregáveis cadastrados."],
+              },
+            ],
+          }))
+        : [
+            {
+              title: "3. Pacotes comerciais",
+              blocks: [
+                {
+                  type: "paragraph" as const,
+                  text: "Nenhum pacote ativo foi cadastrado para esta organização.",
+                },
+              ],
+            },
+          ]
+    ),
+    {
+      title: "4. Fechamento comercial",
+      blocks: [
+        {
+          type: "bullets" as const,
+          items: [
+            "Alinhar escopo final e entregáveis aprovados.",
+            "Validar cronograma de ativações e materiais.",
+            "Definir metas de conversão e próximos responsáveis.",
+          ],
+        },
+      ],
+    },
   ];
 
   const pdf = await createMarketingProposalPdf({
     title: "Proposta Comercial de Marketing",
     subtitle: `${event.nomeEvento} | ${event.cidade}/${event.estado}`,
-    bodyLines,
+    sections,
   });
 
   return new NextResponse(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=\"proposta-marketing-${eventId}.pdf\"`,
+      "Content-Disposition": `attachment; filename="proposta-marketing-${eventId}.pdf"`,
       "Cache-Control": "no-store",
     },
   });

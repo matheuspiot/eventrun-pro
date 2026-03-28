@@ -23,18 +23,18 @@ type AppTopbarProps = {
 const pageMeta: Record<string, { eyebrow: string; title: string; description: string }> = {
   "/dashboard": {
     eyebrow: "Painel central",
-    title: "Vis\u00e3o operacional do neg\u00f3cio",
-    description: "Acompanhe eventos, pend\u00eancias cr\u00edticas e indicadores da opera\u00e7\u00e3o em um s\u00f3 lugar.",
+    title: "Visão operacional do negócio",
+    description: "Acompanhe eventos, pendências críticas e indicadores da operação em um só lugar.",
   },
   "/orcamento": {
     eyebrow: "Financeiro",
-    title: "Or\u00e7amentos e biblioteca de custos",
-    description: "Monte cen\u00e1rios, compare viabilidade e salve a estrutura financeira de cada prova.",
+    title: "Orçamentos e biblioteca de custos",
+    description: "Monte cenários, compare viabilidade e salve a estrutura financeira de cada prova.",
   },
   "/operacao": {
-    eyebrow: "Execu\u00e7\u00e3o",
+    eyebrow: "Execução",
     title: "Checklist operacional da prova",
-    description: "Organize tarefas, respons\u00e1veis e prazos para reduzir falhas na entrega do evento.",
+    description: "Organize tarefas, responsáveis e prazos para reduzir falhas na entrega do evento.",
   },
   "/marketing": {
     eyebrow: "Comercial",
@@ -42,55 +42,56 @@ const pageMeta: Record<string, { eyebrow: string; title: string; description: st
     description: "Estruture ofertas, cronograma e materiais de venda para patrocinadores e organizadores.",
   },
   "/regulamento": {
-    eyebrow: "Documenta\u00e7\u00e3o",
+    eyebrow: "Documentação",
     title: "Regulamento com preview ao vivo",
-    description: "Centralize regras, pol\u00edticas e contatos com consist\u00eancia para publica\u00e7\u00e3o e PDF.",
+    description: "Centralize regras, políticas e contatos com consistência para publicação e PDF.",
   },
   "/configuracoes": {
-    eyebrow: "Administra\u00e7\u00e3o",
-    title: "Configura\u00e7\u00f5es da organiza\u00e7\u00e3o",
-    description: "Gerencie conta, equipe, perfis de acesso e prefer\u00eancias gerais do sistema.",
+    eyebrow: "Administração",
+    title: "Configurações da organização",
+    description: "Gerencie conta, equipe, perfis de acesso e preferências gerais do sistema.",
   },
 };
 
-const quickActionItems: Array<{ module: AppModule; href: string; title: string; description: string }> = [
-  {
-    module: "dashboard",
-    href: "/dashboard",
-    title: "Painel executivo",
-    description: "Voltar para a vis\u00e3o geral e acompanhar o que precisa de aten\u00e7\u00e3o.",
-  },
-  {
-    module: "orcamento",
-    href: "/orcamento",
-    title: "Novo or\u00e7amento",
-    description: "Entrar direto no m\u00f3dulo financeiro para projetar custos e receita.",
-  },
-  {
-    module: "operacao",
-    href: "/operacao",
-    title: "Checklist da prova",
-    description: "Atualizar tarefas abertas, respons\u00e1veis e prazos operacionais.",
-  },
-  {
-    module: "marketing",
-    href: "/marketing",
-    title: "Proposta comercial",
-    description: "Ajustar pacotes e exportar a proposta do evento em PDF.",
-  },
-  {
-    module: "regulamento",
-    href: "/regulamento",
-    title: "Editar regulamento",
-    description: "Revisar regras, inscri\u00e7\u00e3o, kit e contatos com preview em tempo real.",
-  },
-  {
-    module: "configuracoes",
-    href: "/configuracoes",
-    title: "Gerir usu\u00e1rios",
-    description: "Atualizar equipe, permiss\u00f5es e dados principais da organiza\u00e7\u00e3o.",
-  },
-];
+const quickActionItems: Array<{ module: AppModule; href: string; title: string; description: string }> =
+  [
+    {
+      module: "dashboard",
+      href: "/dashboard",
+      title: "Painel executivo",
+      description: "Voltar para a visão geral e acompanhar o que precisa de atenção.",
+    },
+    {
+      module: "orcamento",
+      href: "/orcamento",
+      title: "Novo orçamento",
+      description: "Entrar direto no módulo financeiro para projetar custos e receita.",
+    },
+    {
+      module: "operacao",
+      href: "/operacao",
+      title: "Checklist da prova",
+      description: "Atualizar tarefas abertas, responsáveis e prazos operacionais.",
+    },
+    {
+      module: "marketing",
+      href: "/marketing",
+      title: "Proposta comercial",
+      description: "Ajustar pacotes e exportar a proposta do evento em PDF.",
+    },
+    {
+      module: "regulamento",
+      href: "/regulamento",
+      title: "Editar regulamento",
+      description: "Revisar regras, inscrição, kit e contatos com preview em tempo real.",
+    },
+    {
+      module: "configuracoes",
+      href: "/configuracoes",
+      title: "Gerir usuários",
+      description: "Atualizar equipe, permissões e dados principais da organização.",
+    },
+  ];
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: "Administrador",
@@ -110,12 +111,13 @@ function BellIcon() {
   );
 }
 
-function SparkIcon() {
+function QuickActionIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="m12 3 1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3Z" />
-      <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z" />
-      <path d="M5 14l.8 2.2L8 17l-2.2.8L5 20l-.8-2.2L2 17l2.2-.8L5 14Z" />
+      <path d="M5 12h14" />
+      <path d="M12 5v14" />
+      <path d="m7.5 7.5 9 9" />
+      <path d="m16.5 7.5-9 9" />
     </svg>
   );
 }
@@ -138,7 +140,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
   const currentPage = pageMeta[pathname] ?? {
     eyebrow: "Workspace",
     title: "Central EventRun Pro",
-    description: "Navegue pelos m\u00f3dulos e mantenha a opera\u00e7\u00e3o sob controle.",
+    description: "Navegue pelos módulos e mantenha a operação sob controle.",
   };
 
   const availableQuickActions = useMemo(
@@ -192,8 +194,8 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
                 }}
                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-900"
               >
-                <SparkIcon />
-                A\u00e7\u00f5es r\u00e1pidas
+                <QuickActionIcon />
+                Atalhos
               </button>
 
               <div className="relative">
@@ -219,19 +221,17 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
 
                 {showNotifications ? (
                   <div className="absolute right-0 top-14 z-40 w-[360px] rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-950">Central de notifica\u00e7\u00f5es</p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          Alertas operacionais e atalhos para o que precisa de aten\u00e7\u00e3o.
-                        </p>
-                      </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-950">Central de notificações</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Alertas operacionais e atalhos para o que precisa de atenção.
+                      </p>
                     </div>
 
                     <div className="mt-4 space-y-3">
                       {notifications.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                          Nenhuma notifica\u00e7\u00e3o pendente no momento.
+                          Nenhuma notificação pendente no momento.
                         </div>
                       ) : (
                         notifications.map((item) => (
@@ -259,7 +259,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
                                 }`}
                               >
                                 {item.tone === "warning"
-                                  ? "Aten\u00e7\u00e3o"
+                                  ? "Atenção"
                                   : item.tone === "success"
                                     ? "OK"
                                     : "Info"}
@@ -285,8 +285,8 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
       <BaseModal
         open={showQuickActions}
         onClose={() => setShowQuickActions(false)}
-        title="A\u00e7\u00f5es r\u00e1pidas"
-        description="Atalhos para as tarefas mais comuns do dia a dia da opera\u00e7\u00e3o."
+        title="Atalhos"
+        description="Entradas rápidas para as tarefas mais comuns do dia a dia da operação."
       >
         <div className="grid gap-3 sm:grid-cols-2">
           {availableQuickActions.map((item) => (
