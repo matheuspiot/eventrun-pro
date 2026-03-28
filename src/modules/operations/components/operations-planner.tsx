@@ -33,22 +33,16 @@ const statusLabels = {
   CONCLUIDA: "Concluída",
 } as const;
 
+const quickPhases = ["Planejamento", "Fornecedores", "Arena", "Kit", "Pós-evento"];
+
 function getStatusBadgeClasses(status: OperationTaskDto["status"]) {
-  switch (status) {
-    case "CONCLUIDA":
-      return "bg-emerald-100 text-emerald-700";
-    case "EM_ANDAMENTO":
-      return "bg-amber-100 text-amber-700";
-    default:
-      return "bg-slate-100 text-slate-700";
-  }
+  if (status === "CONCLUIDA") return "bg-emerald-100 text-emerald-700";
+  if (status === "EM_ANDAMENTO") return "bg-amber-100 text-amber-700";
+  return "bg-slate-100 text-slate-700";
 }
 
 function formatDate(value: string | null) {
-  if (!value) {
-    return "Sem prazo";
-  }
-
+  if (!value) return "Sem prazo";
   return new Date(value).toLocaleDateString("pt-BR");
 }
 
@@ -63,6 +57,7 @@ export function OperationsPlanner() {
   const [error, setError] = useState("");
   const [form, setForm] = useState<TaskForm>(initialTaskForm);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [selectedPhase, setSelectedPhase] = useState("Todas");
 
   useEffect(() => {
     async function loadEvents() {
@@ -112,22 +107,31 @@ export function OperationsPlanner() {
     void loadTasks();
   }, [selectedEventId]);
 
+  const selectedEvent = useMemo(
+    () => events.find((event) => event.id === selectedEventId),
+    [events, selectedEventId],
+  );
+
+  const filteredTasks = useMemo(
+    () => (selectedPhase === "Todas" ? tasks : tasks.filter((task) => task.fase === selectedPhase)),
+    [selectedPhase, tasks],
+  );
+
   const groupedTasks = useMemo(() => {
-    return tasks.reduce<Record<string, OperationTaskDto[]>>((acc, task) => {
+    return filteredTasks.reduce<Record<string, OperationTaskDto[]>>((acc, task) => {
       if (!acc[task.fase]) {
         acc[task.fase] = [];
       }
       acc[task.fase].push(task);
       return acc;
     }, {});
-  }, [tasks]);
+  }, [filteredTasks]);
 
   const summary = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((task) => task.status === "CONCLUIDA").length;
     const inProgress = tasks.filter((task) => task.status === "EM_ANDAMENTO").length;
     const pending = tasks.filter((task) => task.status === "PENDENTE").length;
-
     return { total, done, inProgress, pending };
   }, [tasks]);
 
@@ -192,8 +196,8 @@ export function OperationsPlanner() {
       return;
     }
 
-    const data = await response.json();
-    const nextTask = data.task as OperationTaskDto;
+    const data = (await response.json()) as { task: OperationTaskDto };
+    const nextTask = data.task;
     setTasks((prev) => {
       if (editingTaskId) {
         return prev.map((task) => (task.id === nextTask.id ? nextTask : task));
@@ -238,9 +242,7 @@ export function OperationsPlanner() {
 
   async function deleteTask(id: string) {
     const task = tasks.find((item) => item.id === id);
-    if (!task) {
-      return;
-    }
+    if (!task) return;
 
     const confirmed = await confirm({
       title: "Remover tarefa",
@@ -250,17 +252,12 @@ export function OperationsPlanner() {
       tone: "danger",
     });
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     const response = await fetch(`/api/operation-tasks/${id}`, { method: "DELETE" });
     if (!response.ok) {
       setError("Não foi possível remover a tarefa.");
-      showToast({
-        tone: "error",
-        title: "Falha ao remover tarefa",
-      });
+      showToast({ tone: "error", title: "Falha ao remover tarefa" });
       return;
     }
 
@@ -288,14 +285,15 @@ export function OperationsPlanner() {
         </p>
         <h2 className="mt-3 text-4xl font-heading text-slate-950">Checklist da prova</h2>
         <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-600">
-          Controle tarefas por evento, responsável, prazo e fase com menos atrito e mais clareza.
+          Controle tarefas por evento, responsável, prazo e fase com leitura mais rápida do que já
+          foi feito e do que ainda pede ação.
         </p>
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-3xl border border-border bg-surface p-6 shadow-sm"
+          className="space-y-4 rounded-[32px] border border-border bg-surface p-6 shadow-sm"
         >
           <div>
             <h3 className="text-2xl font-heading text-slate-950">
@@ -321,6 +319,31 @@ export function OperationsPlanner() {
                 </option>
               ))}
             </select>
+            <p className="mt-3 text-sm text-slate-600">
+              Evento ativo: <strong>{selectedEvent?.nomeEvento ?? "-"}</strong>
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Fase rápida
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {quickPhases.map((phase) => (
+                <button
+                  key={phase}
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, fase: phase }))}
+                  className={`rounded-full px-3 py-2 text-xs font-semibold ${
+                    form.fase === phase
+                      ? "bg-accent text-white"
+                      : "border border-border bg-white text-slate-700"
+                  }`}
+                >
+                  {phase}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -418,7 +441,7 @@ export function OperationsPlanner() {
         </form>
 
         <div className="space-y-6">
-          <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+          <section className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
             <div className="grid gap-3 md:grid-cols-4">
               <SummaryCard label="Total" value={String(summary.total)} />
               <SummaryCard label="Pendentes" value={String(summary.pending)} />
@@ -427,13 +450,40 @@ export function OperationsPlanner() {
             </div>
           </section>
 
-          <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+          <section className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-2xl font-heading text-slate-950">Tarefas por fase</h3>
+                <h3 className="text-2xl font-heading text-slate-950">Leitura da operação</h3>
                 <p className="mt-2 text-sm text-slate-600">
-                  As ações mais importantes ficam agrupadas para leitura rápida da operação.
+                  Filtre por fase e atualize o checklist sem perder visão do todo.
                 </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhase("Todas")}
+                  className={`rounded-full px-3 py-2 text-xs font-semibold ${
+                    selectedPhase === "Todas"
+                      ? "bg-accent text-white"
+                      : "border border-border bg-white text-slate-700"
+                  }`}
+                >
+                  Todas
+                </button>
+                {Array.from(new Set(tasks.map((task) => task.fase))).map((phase) => (
+                  <button
+                    key={phase}
+                    type="button"
+                    onClick={() => setSelectedPhase(phase)}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold ${
+                      selectedPhase === phase
+                        ? "bg-accent text-white"
+                        : "border border-border bg-white text-slate-700"
+                    }`}
+                  >
+                    {phase}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -478,10 +528,7 @@ export function OperationsPlanner() {
                           <MiniInfo label="Responsável" value={task.responsavel || "Não definido"} />
                           <MiniInfo label="Prazo" value={formatDate(task.prazo)} />
                           <MiniInfo label="Ordem" value={String(task.ordem)} />
-                          <MiniInfo
-                            label="Observações"
-                            value={task.observacoes || "Sem observações"}
-                          />
+                          <MiniInfo label="Observações" value={task.observacoes || "Sem observações"} />
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">

@@ -66,6 +66,8 @@ export default function MarketingPageClient() {
     [events, selectedEventId],
   );
 
+  const activePackages = useMemo(() => packages.filter((item) => item.ativo).length, [packages]);
+
   function resetForm() {
     setForm(initialForm);
     setEditingId(null);
@@ -156,9 +158,7 @@ export default function MarketingPageClient() {
 
   async function handleDelete(id: string) {
     const pkg = packages.find((item) => item.id === id);
-    if (!pkg) {
-      return;
-    }
+    if (!pkg) return;
 
     const confirmed = await confirm({
       title: "Remover pacote comercial",
@@ -168,9 +168,7 @@ export default function MarketingPageClient() {
       tone: "danger",
     });
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     const response = await fetch(`/api/marketing-packages/${id}`, { method: "DELETE" });
     if (!response.ok) {
@@ -183,10 +181,7 @@ export default function MarketingPageClient() {
     }
 
     setPackages((prev) => prev.filter((item) => item.id !== id));
-    showToast({
-      tone: "success",
-      title: "Pacote removido",
-    });
+    showToast({ tone: "success", title: "Pacote removido" });
   }
 
   return (
@@ -195,18 +190,17 @@ export default function MarketingPageClient() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
           Marketing
         </p>
-        <h2 className="mt-3 text-4xl font-heading text-slate-950">
-          Proposta comercial mais clara
-        </h2>
+        <h2 className="mt-3 text-4xl font-heading text-slate-950">Proposta comercial mais clara</h2>
         <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-600">
-          Ajuste pacotes, entregáveis e cronograma com uma estrutura mais fácil de vender e manter.
+          Ajuste pacotes, entregáveis e cronograma com uma estrutura mais fácil de vender e
+          manter.
         </p>
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-3xl border border-border bg-surface p-6 shadow-sm"
+          className="space-y-4 rounded-[32px] border border-border bg-surface p-6 shadow-sm"
         >
           <div>
             <h3 className="text-2xl font-heading text-slate-950">
@@ -215,6 +209,22 @@ export default function MarketingPageClient() {
             <p className="mt-2 text-sm text-slate-600">
               Estruture a oferta com nome, proposta de valor, entregáveis e cronograma.
             </p>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Estrutura sugerida
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {["Apresentação", "Entregáveis", "Mídia", "Pós-evento"].map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-border bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
 
           <input
@@ -300,8 +310,8 @@ export default function MarketingPageClient() {
         </form>
 
         <div className="space-y-6">
-          <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-            <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
+            <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
               <div>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
                   Evento para proposta
@@ -329,9 +339,11 @@ export default function MarketingPageClient() {
             {loading ? (
               <p className="mt-4 text-sm text-slate-600">Carregando eventos...</p>
             ) : (
-              <p className="mt-4 text-sm text-slate-700">
-                Evento selecionado: <strong>{selectedEvent?.nomeEvento ?? "-"}</strong>
-              </p>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <QuickCard label="Evento ativo" value={selectedEvent?.nomeEvento ?? "-"} />
+                <QuickCard label="Pacotes ativos" value={String(activePackages)} />
+                <QuickCard label="Total de pacotes" value={String(packages.length)} />
+              </div>
             )}
           </div>
 
@@ -413,5 +425,14 @@ export default function MarketingPageClient() {
         </div>
       </div>
     </section>
+  );
+}
+
+function QuickCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
+      <p className="text-xs uppercase tracking-[0.15em] text-slate-500">{label}</p>
+      <p className="mt-2 text-lg font-heading text-slate-950">{value}</p>
+    </div>
   );
 }

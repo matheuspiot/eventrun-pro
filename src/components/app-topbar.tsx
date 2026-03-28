@@ -16,7 +16,6 @@ type NotificationItem = {
 
 type AppTopbarProps = {
   organizationName: string;
-  userName: string;
   userRole: UserRole;
   notifications: NotificationItem[];
 };
@@ -24,18 +23,18 @@ type AppTopbarProps = {
 const pageMeta: Record<string, { eyebrow: string; title: string; description: string }> = {
   "/dashboard": {
     eyebrow: "Painel central",
-    title: "Visão operacional do negócio",
-    description: "Acompanhe eventos, pendências críticas e indicadores da operação em um só lugar.",
+    title: "Vis\u00e3o operacional do neg\u00f3cio",
+    description: "Acompanhe eventos, pend\u00eancias cr\u00edticas e indicadores da opera\u00e7\u00e3o em um s\u00f3 lugar.",
   },
   "/orcamento": {
     eyebrow: "Financeiro",
-    title: "Orçamentos e biblioteca de custos",
-    description: "Monte cenários, compare viabilidade e salve a estrutura financeira de cada prova.",
+    title: "Or\u00e7amentos e biblioteca de custos",
+    description: "Monte cen\u00e1rios, compare viabilidade e salve a estrutura financeira de cada prova.",
   },
   "/operacao": {
-    eyebrow: "Execução",
+    eyebrow: "Execu\u00e7\u00e3o",
     title: "Checklist operacional da prova",
-    description: "Organize tarefas, responsáveis e prazos para reduzir falhas na entrega do evento.",
+    description: "Organize tarefas, respons\u00e1veis e prazos para reduzir falhas na entrega do evento.",
   },
   "/marketing": {
     eyebrow: "Comercial",
@@ -43,14 +42,14 @@ const pageMeta: Record<string, { eyebrow: string; title: string; description: st
     description: "Estruture ofertas, cronograma e materiais de venda para patrocinadores e organizadores.",
   },
   "/regulamento": {
-    eyebrow: "Documentação",
+    eyebrow: "Documenta\u00e7\u00e3o",
     title: "Regulamento com preview ao vivo",
-    description: "Centralize regras, políticas e contatos com consistência para publicação e PDF.",
+    description: "Centralize regras, pol\u00edticas e contatos com consist\u00eancia para publica\u00e7\u00e3o e PDF.",
   },
   "/configuracoes": {
-    eyebrow: "Administração",
-    title: "Configurações da organização",
-    description: "Gerencie conta, equipe, perfis de acesso e preferências gerais do sistema.",
+    eyebrow: "Administra\u00e7\u00e3o",
+    title: "Configura\u00e7\u00f5es da organiza\u00e7\u00e3o",
+    description: "Gerencie conta, equipe, perfis de acesso e prefer\u00eancias gerais do sistema.",
   },
 };
 
@@ -59,19 +58,19 @@ const quickActionItems: Array<{ module: AppModule; href: string; title: string; 
     module: "dashboard",
     href: "/dashboard",
     title: "Painel executivo",
-    description: "Voltar para a visão geral e acompanhar o que precisa de atenção.",
+    description: "Voltar para a vis\u00e3o geral e acompanhar o que precisa de aten\u00e7\u00e3o.",
   },
   {
     module: "orcamento",
     href: "/orcamento",
-    title: "Novo orçamento",
-    description: "Entrar direto no módulo financeiro para projetar custos e receita.",
+    title: "Novo or\u00e7amento",
+    description: "Entrar direto no m\u00f3dulo financeiro para projetar custos e receita.",
   },
   {
     module: "operacao",
     href: "/operacao",
     title: "Checklist da prova",
-    description: "Atualizar tarefas abertas, responsáveis e prazos operacionais.",
+    description: "Atualizar tarefas abertas, respons\u00e1veis e prazos operacionais.",
   },
   {
     module: "marketing",
@@ -83,13 +82,13 @@ const quickActionItems: Array<{ module: AppModule; href: string; title: string; 
     module: "regulamento",
     href: "/regulamento",
     title: "Editar regulamento",
-    description: "Revisar regras, inscrição, kit e contatos com preview em tempo real.",
+    description: "Revisar regras, inscri\u00e7\u00e3o, kit e contatos com preview em tempo real.",
   },
   {
     module: "configuracoes",
     href: "/configuracoes",
-    title: "Gerir usuários",
-    description: "Atualizar equipe, permissões e dados principais da organização.",
+    title: "Gerir usu\u00e1rios",
+    description: "Atualizar equipe, permiss\u00f5es e dados principais da organiza\u00e7\u00e3o.",
   },
 ];
 
@@ -99,6 +98,8 @@ const roleLabels: Record<UserRole, string> = {
   OPERACIONAL: "Operacional",
   MARKETING: "Marketing",
 };
+
+const seenNotificationsStorageKey = "eventrun_seen_notifications";
 
 function BellIcon() {
   return (
@@ -119,20 +120,25 @@ function SparkIcon() {
   );
 }
 
-export function AppTopbar({
-  organizationName,
-  userName,
-  userRole,
-  notifications,
-}: AppTopbarProps) {
+export function AppTopbar({ organizationName, userRole, notifications }: AppTopbarProps) {
   const pathname = usePathname();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem(seenNotificationsStorageKey);
+      const parsed = raw ? (JSON.parse(raw) as string[]) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  });
 
   const currentPage = pageMeta[pathname] ?? {
     eyebrow: "Workspace",
     title: "Central EventRun Pro",
-    description: "Navegue pelos módulos e mantenha a operação sob controle.",
+    description: "Navegue pelos m\u00f3dulos e mantenha a opera\u00e7\u00e3o sob controle.",
   };
 
   const availableQuickActions = useMemo(
@@ -140,7 +146,21 @@ export function AppTopbar({
     [userRole],
   );
 
-  const notificationBadge = notifications.length > 9 ? "9+" : String(notifications.length);
+  function persistSeen(ids: string[]) {
+    setSeenNotificationIds(ids);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(seenNotificationsStorageKey, JSON.stringify(ids));
+    }
+  }
+
+  function markNotificationsAsSeen(ids: string[]) {
+    if (ids.length === 0) return;
+    const nextIds = Array.from(new Set([...seenNotificationIds, ...ids]));
+    persistSeen(nextIds);
+  }
+
+  const unreadNotifications = notifications.filter((item) => !seenNotificationIds.includes(item.id));
+  const notificationBadge = unreadNotifications.length > 9 ? "9+" : String(unreadNotifications.length);
 
   return (
     <>
@@ -162,7 +182,7 @@ export function AppTopbar({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 xl:min-w-[360px] xl:items-end">
+          <div className="flex flex-col gap-3 xl:min-w-[280px] xl:items-end">
             <div className="flex w-full flex-wrap items-center gap-3 xl:justify-end">
               <button
                 type="button"
@@ -173,20 +193,24 @@ export function AppTopbar({
                 className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-900"
               >
                 <SparkIcon />
-                Ações rápidas
+                A\u00e7\u00f5es r\u00e1pidas
               </button>
 
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => {
-                    setShowNotifications((current) => !current);
+                    const nextOpen = !showNotifications;
+                    setShowNotifications(nextOpen);
                     setShowQuickActions(false);
+                    if (nextOpen) {
+                      markNotificationsAsSeen(notifications.map((item) => item.id));
+                    }
                   }}
                   className="relative inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-950"
                 >
                   <BellIcon />
-                  {notifications.length > 0 ? (
+                  {unreadNotifications.length > 0 ? (
                     <span className="absolute -right-1 -top-1 inline-flex min-w-6 items-center justify-center rounded-full bg-accent px-1.5 py-0.5 text-[11px] font-bold text-white">
                       {notificationBadge}
                     </span>
@@ -197,9 +221,9 @@ export function AppTopbar({
                   <div className="absolute right-0 top-14 z-40 w-[360px] rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-slate-950">Central de notificações</p>
+                        <p className="text-sm font-semibold text-slate-950">Central de notifica\u00e7\u00f5es</p>
                         <p className="mt-1 text-xs text-slate-500">
-                          Alertas operacionais e atalhos para o que precisa de atenção.
+                          Alertas operacionais e atalhos para o que precisa de aten\u00e7\u00e3o.
                         </p>
                       </div>
                     </div>
@@ -207,14 +231,17 @@ export function AppTopbar({
                     <div className="mt-4 space-y-3">
                       {notifications.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                          Nenhuma notificação pendente no momento.
+                          Nenhuma notifica\u00e7\u00e3o pendente no momento.
                         </div>
                       ) : (
                         notifications.map((item) => (
                           <Link
                             key={item.id}
                             href={item.href}
-                            onClick={() => setShowNotifications(false)}
+                            onClick={() => {
+                              markNotificationsAsSeen([item.id]);
+                              setShowNotifications(false);
+                            }}
                             className="block rounded-2xl border border-slate-200 bg-slate-50/80 p-4 transition hover:border-slate-300 hover:bg-white"
                           >
                             <div className="flex items-start justify-between gap-3">
@@ -232,7 +259,7 @@ export function AppTopbar({
                                 }`}
                               >
                                 {item.tone === "warning"
-                                  ? "Atenção"
+                                  ? "Aten\u00e7\u00e3o"
                                   : item.tone === "success"
                                     ? "OK"
                                     : "Info"}
@@ -247,16 +274,9 @@ export function AppTopbar({
               </div>
             </div>
 
-            <div className="flex w-full flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 xl:justify-end">
-              <div className="text-sm text-slate-500 xl:mr-auto">
-                <span className="font-semibold text-slate-700">{userName}</span>
-                <span className="mx-2 text-slate-300">/</span>
-                <span>{roleLabels[userRole]}</span>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Sessão ativa
-              </div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              {roleLabels[userRole]}
             </div>
           </div>
         </div>
@@ -265,8 +285,8 @@ export function AppTopbar({
       <BaseModal
         open={showQuickActions}
         onClose={() => setShowQuickActions(false)}
-        title="Ações rápidas"
-        description="Atalhos para as tarefas mais comuns do dia a dia da operação."
+        title="A\u00e7\u00f5es r\u00e1pidas"
+        description="Atalhos para as tarefas mais comuns do dia a dia da opera\u00e7\u00e3o."
       >
         <div className="grid gap-3 sm:grid-cols-2">
           {availableQuickActions.map((item) => (

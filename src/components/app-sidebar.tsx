@@ -12,11 +12,11 @@ type AppSidebarProps = {
 
 const navItems: Array<{ label: string; href: string; module: AppModule }> = [
   { label: "Dashboard", href: "/dashboard", module: "dashboard" },
-  { label: "Operação", href: "/operacao", module: "operacao" },
-  { label: "Orçamento", href: "/orcamento", module: "orcamento" },
+  { label: "Opera\u00e7\u00e3o", href: "/operacao", module: "operacao" },
+  { label: "Or\u00e7amento", href: "/orcamento", module: "orcamento" },
   { label: "Marketing", href: "/marketing", module: "marketing" },
   { label: "Regulamento", href: "/regulamento", module: "regulamento" },
-  { label: "Configurações", href: "/configuracoes", module: "configuracoes" },
+  { label: "Configura\u00e7\u00f5es", href: "/configuracoes", module: "configuracoes" },
 ];
 
 const roleLabels: Record<UserRole, string> = {
@@ -85,7 +85,7 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
   const allowedItems = navItems.filter((item) => canAccessModule(userRole, item.module));
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[296px] flex-col border-r border-white/10 bg-[radial-gradient(circle_at_top,_rgba(248,113,52,0.16),_transparent_32%),linear-gradient(180deg,#0f172a_0%,#111827_45%,#162235_100%)] px-6 py-7 text-white shadow-[28px_0_80px_rgba(15,23,42,0.28)] xl:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[296px] flex-col border-r border-white/10 bg-[radial-gradient(circle_at_top,_rgba(248,113,52,0.16),_transparent_32%),linear-gradient(180deg,#0f172a_0%,#111827_45%,#162235_100%)] px-6 py-6 text-white shadow-[28px_0_80px_rgba(15,23,42,0.28)] xl:flex">
       <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -99,18 +99,18 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
           </span>
         </div>
 
-        <div className="mt-6 rounded-2xl bg-black/15 p-4">
+        <div className="mt-5 rounded-2xl bg-black/15 p-4">
           <p className="text-sm font-semibold text-white">{organizationName}</p>
-          <p className="mt-1 text-sm text-white/65">{userName}</p>
+          <p className="mt-2 text-xs uppercase tracking-[0.18em] text-white/45">{userName}</p>
           <span className="mt-3 inline-flex rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs font-semibold text-white/75">
             {roleLabels[userRole]}
           </span>
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-7">
         <p className="mb-3 px-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/35">
-          Navegação
+          Navega\u00e7\u00e3o
         </p>
         <nav className="space-y-2">
           {allowedItems.map((item) => {
@@ -120,7 +120,7 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition ${
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
                   active
                     ? "bg-white text-slate-950 shadow-[0_18px_34px_rgba(248,113,52,0.18)]"
                     : "text-white/72 hover:bg-white/8 hover:text-white"
@@ -144,20 +144,13 @@ export function AppSidebar({ organizationName, userName, userRole }: AppSidebarP
         </nav>
       </div>
 
-      <div className="mt-auto space-y-4">
-        <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
-          <p className="text-sm font-semibold text-white">Operação mais clara</p>
-          <p className="mt-2 text-sm leading-6 text-white/60">
-            Use o sino para ver alertas e as ações rápidas para entrar direto no fluxo certo.
-          </p>
-        </div>
-
+      <div className="mt-auto pt-4">
         <form action="/api/auth/logout" method="post">
           <button
             type="submit"
             className="w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
           >
-            Encerrar sessão
+            Encerrar sess\u00e3o
           </button>
         </form>
       </div>

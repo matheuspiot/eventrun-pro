@@ -1,7 +1,7 @@
+import { requireModuleAccess } from "@/lib/access";
 import { DashboardFinancialSummary } from "@/modules/dashboard/components/dashboard-financial-summary";
 import { DashboardOperationsOverview } from "@/modules/dashboard/components/dashboard-operations-overview";
 import { EventsManager } from "@/modules/events/components/events-manager";
-import { requireModuleAccess } from "@/lib/access";
 
 type DashboardPageProps = {
   searchParams?: Promise<{ forbidden?: string }>;

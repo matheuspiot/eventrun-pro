@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useUiFeedback } from "@/components/ui-feedback-provider";
 import { EventDto } from "@/modules/events/types";
 
 type EventPayload = {
@@ -20,6 +21,27 @@ type EventPayload = {
   fornecedores: string;
   status: "PLANEJAMENTO" | "EM_ANDAMENTO" | "FINALIZADO";
 };
+
+type FormStep = 0 | 1 | 2 | 3;
+
+const steps = [
+  {
+    title: "Identificação",
+    description: "Nome, data, cidade e base da largada.",
+  },
+  {
+    title: "Operação",
+    description: "Modalidades, distâncias, capacidade e cronograma.",
+  },
+  {
+    title: "Organização",
+    description: "Organizador, CNPJ, parceiros e fornecedores.",
+  },
+  {
+    title: "Revisão",
+    description: "Validação final antes de salvar o evento.",
+  },
+] as const;
 
 const initialForm: EventPayload = {
   nomeEvento: "",
@@ -47,17 +69,102 @@ function summarize(value: string | null, fallback: string) {
   return value.length > 60 ? `${value.slice(0, 60)}...` : value;
 }
 
+function getFieldCount(step: FormStep, form: EventPayload) {
+  switch (step) {
+    case 0:
+      return [
+        form.nomeEvento,
+        form.dataEvento,
+        form.cidade,
+        form.estado,
+        form.localLargada,
+      ].filter(Boolean).length;
+    case 1:
+      return [
+        form.modalidades,
+        form.distancias,
+        form.capacidadeMaxima,
+        form.limiteTecnico,
+        form.cronogramaResumo,
+      ].filter(Boolean).length;
+    case 2:
+      return [
+        form.organizador,
+        form.cnpjOrganizador,
+        form.patrocinadores,
+        form.fornecedores,
+      ].filter(Boolean).length;
+    default:
+      return 0;
+  }
+}
+
+function getStepStatus(index: number, currentStep: FormStep, form: EventPayload) {
+  if (index === 3) {
+    const readyForReview =
+      Boolean(form.nomeEvento) &&
+      Boolean(form.dataEvento) &&
+      Boolean(form.cidade) &&
+      Boolean(form.estado) &&
+      Boolean(form.localLargada) &&
+      Boolean(form.organizador) &&
+      Boolean(form.cnpjOrganizador);
+
+    if (currentStep === 3) {
+      return "current";
+    }
+
+    return readyForReview ? "done" : "pending";
+  }
+
+  const count = getFieldCount(index as FormStep, form);
+  if (currentStep === index) {
+    return "current";
+  }
+  if (count >= 3 || (index === 0 && count >= 5)) {
+    return "done";
+  }
+  return "pending";
+}
+
 export function EventsManager() {
+  const { confirm, showToast } = useUiFeedback();
   const [events, setEvents] = useState<EventDto[]>([]);
   const [form, setForm] = useState<EventPayload>(initialForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [formStep, setFormStep] = useState<FormStep>(0);
 
   const buttonLabel = useMemo(
-    () => (editingId ? "Salvar projeto" : "Criar novo projeto"),
+    () => (editingId ? "Salvar evento" : "Criar evento"),
     [editingId],
+  );
+
+  const reviewItems = useMemo(
+    () => [
+      { label: "Evento", value: form.nomeEvento || "Não informado" },
+      {
+        label: "Data e local",
+        value:
+          form.dataEvento && form.cidade && form.estado
+            ? `${new Date(form.dataEvento).toLocaleDateString("pt-BR")} · ${form.cidade}/${form.estado}`
+            : "Não informado",
+      },
+      { label: "Largada", value: form.localLargada || "Não informado" },
+      { label: "Modalidades", value: form.modalidades || "Não informado" },
+      { label: "Distâncias", value: form.distancias || "Não informado" },
+      {
+        label: "Capacidade",
+        value: form.capacidadeMaxima ? `${form.capacidadeMaxima} atletas` : "Não informada",
+      },
+      { label: "Organizador", value: form.organizador || "Não informado" },
+      { label: "CNPJ", value: form.cnpjOrganizador || "Não informado" },
+      { label: "Patrocinadores", value: form.patrocinadores || "Não informado" },
+      { label: "Fornecedores", value: form.fornecedores || "Não informado" },
+    ],
+    [form],
   );
 
   async function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit) {
@@ -79,7 +186,7 @@ export function EventsManager() {
       const response = await fetchWithTimeout("/api/events", { cache: "no-store" });
 
       if (!response.ok) {
-        setError("Não foi possível carregar os projetos.");
+        setError("Não foi possível carregar os eventos.");
         setLoading(false);
         return;
       }
@@ -88,7 +195,7 @@ export function EventsManager() {
       setEvents(Array.isArray(data.events) ? data.events : []);
       setLoading(false);
     } catch {
-      setError("Falha de conexão ao carregar projetos.");
+      setError("Falha de conexão ao carregar eventos.");
       setLoading(false);
     }
   }, []);
@@ -100,6 +207,16 @@ export function EventsManager() {
   function resetForm() {
     setForm(initialForm);
     setEditingId(null);
+    setFormStep(0);
+    setError("");
+  }
+
+  function handleNextStep() {
+    setFormStep((prev) => Math.min(3, prev + 1) as FormStep);
+  }
+
+  function handlePreviousStep() {
+    setFormStep((prev) => Math.max(0, prev - 1) as FormStep);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -122,36 +239,64 @@ export function EventsManager() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(data.error ?? "Não foi possível salvar o projeto.");
+        setError(data.error ?? "Não foi possível salvar o evento.");
+        showToast({
+          tone: "error",
+          title: "Falha ao salvar evento",
+          message: "Revise os dados obrigatórios e tente novamente.",
+        });
         return;
       }
 
       resetForm();
       await loadEvents();
+      showToast({
+        tone: "success",
+        title: editingId ? "Evento atualizado" : "Evento criado",
+        message: "O cadastro foi salvo com sucesso.",
+      });
     } catch {
-      setError("Falha de conexão ao salvar projeto.");
+      setError("Falha de conexão ao salvar evento.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, eventName: string) {
+    const confirmed = await confirm({
+      title: "Remover evento",
+      description: `Deseja remover "${eventName}"? Essa ação não pode ser desfeita.`,
+      confirmLabel: "Remover evento",
+      cancelLabel: "Cancelar",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       const response = await fetchWithTimeout(`/api/events/${id}`, { method: "DELETE" });
 
       if (!response.ok) {
-        setError("Não foi possível remover o projeto.");
+        setError("Não foi possível remover o evento.");
         return;
       }
 
       await loadEvents();
+      showToast({
+        tone: "info",
+        title: "Evento removido",
+        message: "A lista foi atualizada.",
+      });
     } catch {
-      setError("Falha de conexão ao remover projeto.");
+      setError("Falha de conexão ao remover evento.");
     }
   }
 
   function handleEdit(event: EventDto) {
     setEditingId(event.id);
+    setFormStep(0);
     setForm({
       nomeEvento: event.nomeEvento,
       dataEvento: event.dataEvento.slice(0, 10),
@@ -172,241 +317,320 @@ export function EventsManager() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[460px_1fr]">
+    <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-3xl border border-border bg-surface p-6 shadow-sm"
+        className="space-y-5 rounded-[32px] border border-border bg-surface p-6 shadow-sm"
       >
         <div>
-          <h3 className="text-2xl font-heading text-zinc-900">
-            {editingId ? "Editar projeto" : "Criar projeto"}
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+            Cadastro assistido
+          </p>
+          <h3 className="mt-2 text-3xl font-heading text-zinc-900">
+            {editingId ? "Editar evento" : "Novo evento"}
           </h3>
-          <p className="mt-1 text-sm text-zinc-600">
-            Cadastre dados operacionais para melhorar o planejamento do evento.
+          <p className="mt-2 text-sm leading-6 text-zinc-600">
+            Preencha por etapas para não esquecer dados operacionais importantes.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-            Identificação
-          </p>
-          <div className="mt-3 space-y-3">
-            <input
-              required
-              value={form.nomeEvento}
-              onChange={(event) => setForm((prev) => ({ ...prev, nomeEvento: event.target.value }))}
-              placeholder="Nome do evento"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
+        <div className="space-y-3">
+          {steps.map((step, index) => {
+            const status = getStepStatus(index, formStep, form);
 
-            <input
-              type="date"
-              required
-              value={form.dataEvento}
-              onChange={(event) => setForm((prev) => ({ ...prev, dataEvento: event.target.value }))}
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
+            return (
+              <button
+                key={step.title}
+                type="button"
+                onClick={() => setFormStep(index as FormStep)}
+                className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
+                  status === "current"
+                    ? "border-accent bg-accent-soft"
+                    : status === "done"
+                      ? "border-emerald-200 bg-emerald-50"
+                      : "border-border bg-surface-muted/60"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                      Etapa {index + 1}
+                    </p>
+                    <p className="mt-2 text-lg font-heading text-zinc-900">{step.title}</p>
+                    <p className="mt-1 text-sm text-zinc-600">{step.description}</p>
+                  </div>
+                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-zinc-700">
+                    {status === "current" ? "Em edição" : status === "done" ? "OK" : "Pendente"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                required
-                value={form.cidade}
-                onChange={(event) => setForm((prev) => ({ ...prev, cidade: event.target.value }))}
-                placeholder="Cidade"
-                className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+        <div className="rounded-3xl border border-border bg-surface-muted/60 p-4">
+          {formStep === 0 ? (
+            <div className="space-y-3">
+              <SectionHeader
+                title="Identificação do evento"
+                description="Cadastre o básico para o time reconhecer a prova rapidamente."
               />
               <input
                 required
-                value={form.estado}
-                onChange={(event) => setForm((prev) => ({ ...prev, estado: event.target.value }))}
-                placeholder="Estado"
-                className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
-
-            <input
-              required
-              value={form.localLargada}
-              onChange={(event) => setForm((prev) => ({ ...prev, localLargada: event.target.value }))}
-              placeholder="Local de largada"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-            Operação
-          </p>
-          <div className="mt-3 space-y-3">
-            <input
-              value={form.modalidades}
-              onChange={(event) => setForm((prev) => ({ ...prev, modalidades: event.target.value }))}
-              placeholder="Modalidades (ex.: corrida, caminhada, kids)"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
-
-            <input
-              value={form.distancias}
-              onChange={(event) => setForm((prev) => ({ ...prev, distancias: event.target.value }))}
-              placeholder="Distâncias (ex.: 5K, 10K, 21K)"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <input
-                type="number"
-                min="1"
-                value={form.capacidadeMaxima}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, capacidadeMaxima: event.target.value }))
-                }
-                placeholder="Capacidade máxima"
-                className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                value={form.nomeEvento}
+                onChange={(event) => setForm((prev) => ({ ...prev, nomeEvento: event.target.value }))}
+                placeholder="Nome do evento"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
               />
               <input
-                value={form.limiteTecnico}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, limiteTecnico: event.target.value }))
-                }
-                placeholder="Limite técnico"
-                className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                type="date"
+                required
+                value={form.dataEvento}
+                onChange={(event) => setForm((prev) => ({ ...prev, dataEvento: event.target.value }))}
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  required
+                  value={form.cidade}
+                  onChange={(event) => setForm((prev) => ({ ...prev, cidade: event.target.value }))}
+                  placeholder="Cidade"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+                />
+                <input
+                  required
+                  value={form.estado}
+                  onChange={(event) => setForm((prev) => ({ ...prev, estado: event.target.value }))}
+                  placeholder="Estado"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <input
+                required
+                value={form.localLargada}
+                onChange={(event) => setForm((prev) => ({ ...prev, localLargada: event.target.value }))}
+                placeholder="Local de largada"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
               />
             </div>
+          ) : null}
 
-            <textarea
-              rows={4}
-              value={form.cronogramaResumo}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, cronogramaResumo: event.target.value }))
-              }
-              placeholder="Cronograma principal do evento"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
-          </div>
+          {formStep === 1 ? (
+            <div className="space-y-3">
+              <SectionHeader
+                title="Configuração operacional"
+                description="Defina o porte da prova e os dados de execução do evento."
+              />
+              <input
+                value={form.modalidades}
+                onChange={(event) => setForm((prev) => ({ ...prev, modalidades: event.target.value }))}
+                placeholder="Modalidades: corrida, caminhada, kids"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              />
+              <input
+                value={form.distancias}
+                onChange={(event) => setForm((prev) => ({ ...prev, distancias: event.target.value }))}
+                placeholder="Distâncias: 5K, 10K, 21K"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <input
+                  type="number"
+                  min="1"
+                  value={form.capacidadeMaxima}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, capacidadeMaxima: event.target.value }))
+                  }
+                  placeholder="Capacidade máxima"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+                />
+                <input
+                  value={form.limiteTecnico}
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, limiteTecnico: event.target.value }))
+                  }
+                  placeholder="Limite técnico"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
+              <textarea
+                rows={4}
+                value={form.cronogramaResumo}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, cronogramaResumo: event.target.value }))
+                }
+                placeholder="Resumo do cronograma principal"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              />
+            </div>
+          ) : null}
+
+          {formStep === 2 ? (
+            <div className="space-y-3">
+              <SectionHeader
+                title="Organização e parceiros"
+                description="Garanta que a base legal e comercial esteja ligada ao evento."
+              />
+              <input
+                required
+                value={form.organizador}
+                onChange={(event) => setForm((prev) => ({ ...prev, organizador: event.target.value }))}
+                placeholder="Organizador responsável"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              />
+              <input
+                required
+                value={form.cnpjOrganizador}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, cnpjOrganizador: event.target.value }))
+                }
+                placeholder="CNPJ do organizador"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              />
+              <input
+                value={form.patrocinadores}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, patrocinadores: event.target.value }))
+                }
+                placeholder="Patrocinadores principais"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              />
+              <input
+                value={form.fornecedores}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, fornecedores: event.target.value }))
+                }
+                placeholder="Fornecedores principais"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              />
+              <select
+                value={form.status}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    status: event.target.value as EventPayload["status"],
+                  }))
+                }
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent"
+              >
+                <option value="PLANEJAMENTO">Planejamento</option>
+                <option value="EM_ANDAMENTO">Em andamento</option>
+                <option value="FINALIZADO">Finalizado</option>
+              </select>
+            </div>
+          ) : null}
+
+          {formStep === 3 ? (
+            <div className="space-y-4">
+              <SectionHeader
+                title="Revisão final"
+                description="Confira o resumo antes de salvar o evento no sistema."
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                {reviewItems.map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-border bg-surface p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-sm text-zinc-800">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-            Organização
-          </p>
-          <div className="mt-3 space-y-3">
-            <input
-              required
-              value={form.organizador}
-              onChange={(event) => setForm((prev) => ({ ...prev, organizador: event.target.value }))}
-              placeholder="Organizador"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
-            <input
-              required
-              value={form.cnpjOrganizador}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, cnpjOrganizador: event.target.value }))
-              }
-              placeholder="CNPJ do organizador"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
-            <input
-              value={form.patrocinadores}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, patrocinadores: event.target.value }))
-              }
-              placeholder="Patrocinadores principais"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
-            <input
-              value={form.fornecedores}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, fornecedores: event.target.value }))
-              }
-              placeholder="Fornecedores principais"
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-            />
-          </div>
-        </div>
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-        <select
-          value={form.status}
-          onChange={(event) =>
-            setForm((prev) => ({
-              ...prev,
-              status: event.target.value as EventPayload["status"],
-            }))
-          }
-          className="w-full rounded-xl border border-border bg-surface-muted px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-        >
-          <option value="PLANEJAMENTO">Planejamento</option>
-          <option value="EM_ANDAMENTO">Em andamento</option>
-          <option value="FINALIZADO">Finalizado</option>
-        </select>
-
-        {error && <p className="text-sm text-red-600">{error}</p>}
-
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
-            type="submit"
-            disabled={submitting}
-            className="flex-1 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+            type="button"
+            onClick={handlePreviousStep}
+            disabled={formStep === 0}
+            className="rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm font-semibold text-zinc-700 disabled:opacity-50"
           >
-            {submitting ? "Salvando..." : buttonLabel}
+            Voltar
           </button>
-          {editingId && (
+          {formStep < 3 ? (
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-800"
+            >
+              Avançar etapa
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {submitting ? "Salvando..." : buttonLabel}
+            </button>
+          )}
+          {editingId ? (
             <button
               type="button"
               onClick={resetForm}
-              className="rounded-xl border border-border bg-surface-muted px-4 py-3 text-sm font-medium text-zinc-700"
+              className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-700"
             >
-              Cancelar
+              Cancelar edição
             </button>
-          )}
+          ) : null}
         </div>
       </form>
 
-      <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+      <section className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h3 className="text-2xl font-heading text-zinc-900">Lista de projetos</h3>
-            <p className="mt-1 text-sm text-zinc-600">
-              Cada evento agora guarda dados operacionais para execução e venda.
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              Eventos
             </p>
+            <h3 className="mt-2 text-3xl font-heading text-zinc-900">Pipeline de projetos</h3>
+            <p className="mt-2 text-sm text-zinc-600">
+              Cada prova já traz visão rápida dos dados operacionais cadastrados.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface-muted/70 px-4 py-3 text-right">
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Total</p>
+            <p className="mt-1 text-2xl font-heading text-zinc-900">{events.length}</p>
           </div>
         </div>
 
         {loading ? (
-          <p className="mt-4 text-sm text-zinc-600">Carregando...</p>
+          <p className="mt-4 text-sm text-zinc-600">Carregando eventos...</p>
         ) : (
-          <div className="mt-4 space-y-3">
+          <div className="mt-5 space-y-3">
             {events.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-surface-muted p-6 text-center text-zinc-500">
-                Nenhum projeto cadastrado ainda.
+                Nenhum evento cadastrado ainda.
               </div>
             ) : (
               events.map((item) => (
                 <article
                   key={item.id}
-                  className="rounded-2xl border border-border bg-surface-muted/60 p-4"
+                  className="rounded-3xl border border-border bg-surface-muted/60 p-5"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <h4 className="text-xl font-heading text-zinc-900">{item.nomeEvento}</h4>
+                      <h4 className="text-2xl font-heading text-zinc-900">{item.nomeEvento}</h4>
                       <p className="text-sm text-zinc-600">
-                        {new Date(item.dataEvento).toLocaleDateString("pt-BR")} - {item.cidade}/
+                        {new Date(item.dataEvento).toLocaleDateString("pt-BR")} · {item.cidade}/
                         {item.estado}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => handleEdit(item)}
-                        className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-zinc-700"
+                        className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-zinc-700"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDelete(item.id)}
-                        className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600"
+                        onClick={() => void handleDelete(item.id, item.nomeEvento)}
+                        className="rounded-xl border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-600"
                       >
                         Remover
                       </button>
@@ -425,7 +649,11 @@ export function EventsManager() {
                     />
                     <InfoCard
                       label="Capacidade"
-                      value={item.capacidadeMaxima ? `${item.capacidadeMaxima} atletas` : "Não informado"}
+                      value={
+                        item.capacidadeMaxima
+                          ? `${item.capacidadeMaxima} atletas`
+                          : "Não informada"
+                      }
                     />
                     <InfoCard
                       label="Limite técnico"
@@ -454,9 +682,18 @@ export function EventsManager() {
   );
 }
 
+function SectionHeader({ title, description }: { title: string; description: string }) {
+  return (
+    <div>
+      <p className="text-lg font-heading text-zinc-900">{title}</p>
+      <p className="mt-1 text-sm text-zinc-600">{description}</p>
+    </div>
+  );
+}
+
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-white/70 p-3">
+    <div className="rounded-2xl border border-border bg-white/80 p-3">
       <p className="text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">{label}</p>
       <p className="mt-2 text-sm text-zinc-800">{value}</p>
     </div>

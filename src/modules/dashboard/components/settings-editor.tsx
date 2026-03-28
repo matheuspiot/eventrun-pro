@@ -21,11 +21,11 @@ type NewUserForm = {
   role: UserRole;
 };
 
-const roleOptions: Array<{ value: UserRole; label: string }> = [
-  { value: "ADMIN", label: "Administrador" },
-  { value: "FINANCEIRO", label: "Financeiro" },
-  { value: "OPERACIONAL", label: "Operacional" },
-  { value: "MARKETING", label: "Marketing" },
+const roleOptions: Array<{ value: UserRole; label: string; description: string }> = [
+  { value: "ADMIN", label: "Administrador", description: "Acessa todos os módulos e gerencia a equipe." },
+  { value: "FINANCEIRO", label: "Financeiro", description: "Trabalha com orçamento e indicadores financeiros." },
+  { value: "OPERACIONAL", label: "Operacional", description: "Controla checklist, regulamento e execução." },
+  { value: "MARKETING", label: "Marketing", description: "Cuida de propostas e materiais comerciais." },
 ];
 
 const initialNewUserForm: NewUserForm = {
@@ -73,6 +73,7 @@ export function SettingsEditor({
 
     const nextUserName = userName.trim();
     const nextOrganizationName = organizationName.trim();
+
     const response = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -181,9 +182,7 @@ export function SettingsEditor({
 
   async function handleDeleteUser(userId: string) {
     const user = users.find((item) => item.id === userId);
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     const confirmed = await confirm({
       title: "Remover usuário",
@@ -193,9 +192,7 @@ export function SettingsEditor({
       tone: "danger",
     });
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     setUsersSaving(true);
     setUsersError("");
@@ -228,9 +225,7 @@ export function SettingsEditor({
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
           Configurações
         </p>
-        <h2 className="mt-3 text-4xl font-heading text-slate-950">
-          Conta, equipe e permissões
-        </h2>
+        <h2 className="mt-3 text-4xl font-heading text-slate-950">Conta, equipe e permissões</h2>
         <p className="mt-3 max-w-3xl text-[15px] leading-7 text-slate-600">
           Centralize dados da organização, ajuste acessos por papel e mantenha a equipe operando
           com clareza.
@@ -253,7 +248,7 @@ export function SettingsEditor({
       </header>
 
       <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
-        <article className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+        <article className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-2xl font-heading text-slate-950">Dados principais</h3>
@@ -346,7 +341,7 @@ export function SettingsEditor({
           {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
         </article>
 
-        <article className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+        <article className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
           <h3 className="text-2xl font-heading text-slate-950">Leitura rápida</h3>
           <div className="mt-5 space-y-3">
             <InfoCard
@@ -368,7 +363,7 @@ export function SettingsEditor({
       <section className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <form
           onSubmit={handleCreateUser}
-          className="rounded-3xl border border-border bg-surface p-6 shadow-sm"
+          className="rounded-[32px] border border-border bg-surface p-6 shadow-sm"
         >
           <h3 className="text-2xl font-heading text-slate-950">Novo usuário</h3>
           <p className="mt-2 text-sm text-slate-600">
@@ -413,6 +408,15 @@ export function SettingsEditor({
             </select>
           </div>
 
+          <div className="mt-4 rounded-2xl border border-border bg-surface-muted/70 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Papel selecionado
+            </p>
+            <p className="mt-2 text-sm text-slate-700">
+              {roleOptions.find((role) => role.value === userForm.role)?.description}
+            </p>
+          </div>
+
           <button
             type="submit"
             disabled={usersSaving}
@@ -424,7 +428,7 @@ export function SettingsEditor({
           {usersError ? <p className="mt-4 text-sm text-red-600">{usersError}</p> : null}
         </form>
 
-        <article className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+        <article className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-2xl font-heading text-slate-950">Equipe da organização</h3>
@@ -444,7 +448,7 @@ export function SettingsEditor({
               return (
                 <div
                   key={user.id}
-                  className="grid gap-3 rounded-3xl border border-border bg-surface-muted/70 p-4 md:grid-cols-[1fr_190px_auto]"
+                  className="grid gap-3 rounded-3xl border border-border bg-surface-muted/70 p-4 md:grid-cols-[1fr_220px_auto]"
                 >
                   <div>
                     <p className="font-semibold text-slate-950">{user.name}</p>

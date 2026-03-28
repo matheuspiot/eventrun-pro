@@ -83,6 +83,7 @@ export function EventBudgetPlanner() {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [plannerStep, setPlannerStep] = useState<"cenario" | "custos" | "analise">("cenario");
 
   const currentDraft = useMemo<BudgetDraft>(
     () => ({
@@ -116,6 +117,29 @@ export function EventBudgetPlanner() {
     () => filterCostItems(costItems, costItemCategory, costItemSearch),
     [costItemCategory, costItemSearch, costItems],
   );
+  const plannerGuide = useMemo(() => {
+    if (items.length === 0) {
+      return {
+        step: "custos" as const,
+        title: "Adicione os custos principais",
+        description: "Selecione itens da biblioteca para começar a montar a operação financeira.",
+      };
+    }
+
+    if (!metaInscritos || Number(metaInscritos) <= 0) {
+      return {
+        step: "cenario" as const,
+        title: "Defina a meta de inscritos",
+        description: "A meta de inscritos direciona preço, break-even e custos variáveis.",
+      };
+    }
+
+    return {
+      step: "analise" as const,
+      title: "Revise os indicadores",
+      description: "Agora valide margem, preço mínimo e cenário de receita antes de salvar.",
+    };
+  }, [items.length, metaInscritos]);
 
   const loadCostItems = useCallback(async (categoria?: string, search?: string) => {
     const params = new URLSearchParams();
@@ -723,30 +747,47 @@ export function EventBudgetPlanner() {
 
   return (
     <>
-      <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-        <div>
-          <h2 className="text-3xl font-heading text-zinc-900">Orçamento do Evento</h2>
-          <p className="text-sm text-zinc-600">
-            Selecione custos da biblioteca e simule cenários de inscrição.
-          </p>
+      <section className="rounded-[32px] border border-border bg-surface p-6 shadow-sm">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              Orçamento guiado
+            </p>
+            <h2 className="mt-2 text-3xl font-heading text-zinc-900">Planejamento financeiro por etapas</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600">
+              Separe o raciocínio em cenário, composição de custos e análise final antes de salvar.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface-muted/70 px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Próximo foco</p>
+            <p className="mt-1 text-lg font-heading text-zinc-900">{plannerGuide.title}</p>
+            <p className="mt-1 text-sm text-zinc-600">{plannerGuide.description}</p>
+          </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Etapa 1</p>
-            <p className="mt-2 text-lg font-heading text-zinc-900">Defina o cenário</p>
-            <p className="mt-2 text-sm text-zinc-600">Meta de inscritos, taxas, patrocínio e logo.</p>
-          </div>
-          <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Etapa 2</p>
-            <p className="mt-2 text-lg font-heading text-zinc-900">Monte os custos</p>
-            <p className="mt-2 text-sm text-zinc-600">Filtre a biblioteca e adicione apenas o que faz sentido.</p>
-          </div>
-          <div className="rounded-2xl border border-border bg-surface-muted/70 p-4">
-            <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Etapa 3</p>
-            <p className="mt-2 text-lg font-heading text-zinc-900">Valide o resultado</p>
-            <p className="mt-2 text-sm text-zinc-600">Compare preço mínimo, lucro e cenários de receita.</p>
-          </div>
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          {[
+            ["cenario", "Etapa 1", "Defina o cenário", "Meta de inscritos, taxas, patrocínio e logo."],
+            ["custos", "Etapa 2", "Monte os custos", "Filtre a biblioteca e adicione apenas o que faz sentido."],
+            ["analise", "Etapa 3", "Valide o resultado", "Compare preço mínimo, lucro e cenários de receita."],
+          ].map(([step, label, title, description]) => (
+            <button
+              key={step}
+              type="button"
+              onClick={() => setPlannerStep(step as "cenario" | "custos" | "analise")}
+              className={`rounded-2xl border p-4 text-left transition ${
+                plannerStep === step
+                  ? "border-accent bg-accent-soft"
+                  : plannerGuide.step === step
+                    ? "border-amber-200 bg-amber-50"
+                    : "border-border bg-surface-muted/70"
+              }`}
+            >
+              <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">{label}</p>
+              <p className="mt-2 text-lg font-heading text-zinc-900">{title}</p>
+              <p className="mt-2 text-sm text-zinc-600">{description}</p>
+            </button>
+          ))}
         </div>
 
         <form onSubmit={handleSave} className="mt-6 space-y-6">
@@ -864,162 +905,199 @@ export function EventBudgetPlanner() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-              Logo para o PDF do orçamento
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => handleBudgetLogoUpload(event.target.files?.[0] ?? null)}
-              className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
-            />
-            {logoDataUrl && (
-              <div className="mt-3 rounded-xl border border-border bg-white p-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={logoDataUrl} alt="Logo do orçamento" className="max-h-20 w-auto" />
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-border bg-surface-muted/60 p-4">
-            <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                  Buscar custo
-                </label>
-                <input
-                  value={costItemSearch}
-                  onChange={(event) => setCostItemSearch(event.target.value)}
-                  placeholder="Nome ou unidade"
-                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                  Categoria
-                </label>
-                <select
-                  value={costItemCategory}
-                  onChange={(event) => setCostItemCategory(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                >
-                  <option value="">Todas</option>
-                  {Object.entries(costCategoryLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="lg:col-span-2">
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                  Custos filtrados
-                </label>
-                <select
-                  value={newCostItemId}
-                  onChange={(event) => setNewCostItemId(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
-                  disabled={filteredCostItems.length === 0}
-                >
-                  {filteredCostItems.length === 0 ? (
-                    <option value="">Nenhum custo encontrado</option>
-                  ) : (
-                    filteredCostItems.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.nome} - {costCategoryLabels[item.categoria]}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-              <div className="lg:col-span-2 flex flex-wrap items-end gap-3">
-                <button
-                  type="button"
-                  onClick={addCostItem}
-                  disabled={!newCostItemId}
-                  className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-zinc-700 disabled:opacity-60"
-                >
-                  Selecionar custo
-                </button>
-                <p className="text-xs text-zinc-500">
-                  {filteredCostItems.length} custo(s) disponivel(is) no filtro atual.
+          {plannerStep === "cenario" ? (
+            <div className="rounded-3xl border border-border bg-surface-muted/55 p-4">
+              <div className="mb-4">
+                <p className="text-lg font-heading text-zinc-900">Cenário financeiro</p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  Ajuste premissas da prova antes de entrar nos custos.
                 </p>
               </div>
+              <div className="rounded-2xl border border-border bg-white/80 p-4">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                  Logo para o PDF do orçamento
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleBudgetLogoUpload(event.target.files?.[0] ?? null)}
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-accent"
+                />
+                {logoDataUrl && (
+                  <div className="mt-3 rounded-xl border border-border bg-white p-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={logoDataUrl} alt="Logo do orçamento" className="max-h-20 w-auto" />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ) : null}
 
-          <div className="overflow-x-auto rounded-2xl border border-border">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border bg-surface-muted text-zinc-600">
-                  <th className="px-3 py-2">Custo</th>
-                  <th className="px-3 py-2">Tipo</th>
-                  <th className="px-3 py-2">Quantidade</th>
-                  <th className="px-3 py-2">Valor unitário</th>
-                  <th className="px-3 py-2">Subtotal</th>
-                  <th className="px-3 py-2">Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-6 text-center text-zinc-500">
-                      Selecione custos da biblioteca para montar o orçamento.
-                    </td>
-                  </tr>
-                ) : (
-                  items.map((item) => {
-                    const effectiveQuantity =
-                      item.tipoCusto === "VARIAVEL_ATLETA"
-                        ? Number(metaInscritos) || 0
-                        : Number(item.quantidade) || 0;
-                    const subtotal = effectiveQuantity * (Number(item.valorUnitario) || 0);
+          {plannerStep === "custos" ? (
+            <>
+              <div className="rounded-3xl border border-border bg-surface-muted/60 p-4">
+                <div className="mb-4">
+                  <p className="text-lg font-heading text-zinc-900">Biblioteca de custos</p>
+                  <p className="mt-1 text-sm text-zinc-600">
+                    Filtre por categoria, selecione o item e inclua somente o que faz sentido para esta prova.
+                  </p>
+                </div>
+                <div className="grid gap-3 lg:grid-cols-[1fr_220px]">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                      Buscar custo
+                    </label>
+                    <input
+                      value={costItemSearch}
+                      onChange={(event) => setCostItemSearch(event.target.value)}
+                      placeholder="Nome ou unidade"
+                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                      Categoria
+                    </label>
+                    <select
+                      value={costItemCategory}
+                      onChange={(event) => setCostItemCategory(event.target.value)}
+                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="">Todas</option>
+                      {Object.entries(costCategoryLabels).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="lg:col-span-2">
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                      Custos filtrados
+                    </label>
+                    <select
+                      value={newCostItemId}
+                      onChange={(event) => setNewCostItemId(event.target.value)}
+                      className="w-full rounded-xl border border-border bg-surface px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+                      disabled={filteredCostItems.length === 0}
+                    >
+                      {filteredCostItems.length === 0 ? (
+                        <option value="">Nenhum custo encontrado</option>
+                      ) : (
+                        filteredCostItems.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.nome} - {costCategoryLabels[item.categoria]}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                  <div className="lg:col-span-2 flex flex-wrap items-end gap-3">
+                    <button
+                      type="button"
+                      onClick={addCostItem}
+                      disabled={!newCostItemId}
+                      className="rounded-xl border border-border bg-surface px-4 py-2 text-sm font-medium text-zinc-700 disabled:opacity-60"
+                    >
+                      Selecionar custo
+                    </button>
+                    <p className="text-xs text-zinc-500">
+                      {filteredCostItems.length} custo(s) disponível(is) no filtro atual.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                    return (
-                      <tr key={item.costItemId} className="border-b border-border/70">
-                        <td className="px-3 py-3">
-                          <p className="font-medium text-zinc-900">{item.nome}</p>
-                          <p className="text-xs text-zinc-500">Unidade: {item.unidade}</p>
-                        </td>
-                        <td className="px-3 py-3 text-zinc-600">{item.tipoCusto}</td>
-                        <td className="px-3 py-3">
-                          {item.tipoCusto === "VARIAVEL_ATLETA" ? (
-                            <input
-                              type="number"
-                              value={effectiveQuantity}
-                              readOnly
-                              className="w-28 rounded-lg border border-border bg-zinc-100 px-2 py-1 text-zinc-600"
-                            />
-                          ) : (
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={item.quantidade}
-                              onChange={(event) =>
-                                updateItem(item.costItemId, "quantidade", event.target.value)
-                              }
-                              className="w-28 rounded-lg border border-border bg-surface px-2 py-1 outline-none focus:ring-2 focus:ring-accent"
-                            />
-                          )}
-                        </td>
-                        <td className="px-3 py-3">
-                          <input type="number" min="0" step="0.01" value={item.valorUnitario} onChange={(event) => updateItem(item.costItemId, "valorUnitario", event.target.value)} className="w-32 rounded-lg border border-border bg-surface px-2 py-1 outline-none focus:ring-2 focus:ring-accent" />
-                        </td>
-                        <td className="px-3 py-3 text-zinc-700">{brl(subtotal)}</td>
-                        <td className="px-3 py-3">
-                          <button type="button" onClick={() => void removeItem(item.costItemId)} className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600">Remover</button>
+              <div className="overflow-x-auto rounded-2xl border border-border">
+                <table className="min-w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-surface-muted text-zinc-600">
+                      <th className="px-3 py-2">Custo</th>
+                      <th className="px-3 py-2">Tipo</th>
+                      <th className="px-3 py-2">Quantidade</th>
+                      <th className="px-3 py-2">Valor unitário</th>
+                      <th className="px-3 py-2">Subtotal</th>
+                      <th className="px-3 py-2">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-3 py-6 text-center text-zinc-500">
+                          Selecione custos da biblioteca para montar o orçamento.
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                    ) : (
+                      items.map((item) => {
+                        const effectiveQuantity =
+                          item.tipoCusto === "VARIAVEL_ATLETA"
+                            ? Number(metaInscritos) || 0
+                            : Number(item.quantidade) || 0;
+                        const subtotal = effectiveQuantity * (Number(item.valorUnitario) || 0);
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        return (
+                          <tr key={item.costItemId} className="border-b border-border/70">
+                            <td className="px-3 py-3">
+                              <p className="font-medium text-zinc-900">{item.nome}</p>
+                              <p className="text-xs text-zinc-500">Unidade: {item.unidade}</p>
+                            </td>
+                            <td className="px-3 py-3 text-zinc-600">{item.tipoCusto}</td>
+                            <td className="px-3 py-3">
+                              {item.tipoCusto === "VARIAVEL_ATLETA" ? (
+                                <input
+                                  type="number"
+                                  value={effectiveQuantity}
+                                  readOnly
+                                  className="w-28 rounded-lg border border-border bg-zinc-100 px-2 py-1 text-zinc-600"
+                                />
+                              ) : (
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={item.quantidade}
+                                  onChange={(event) =>
+                                    updateItem(item.costItemId, "quantidade", event.target.value)
+                                  }
+                                  className="w-28 rounded-lg border border-border bg-surface px-2 py-1 outline-none focus:ring-2 focus:ring-accent"
+                                />
+                              )}
+                            </td>
+                            <td className="px-3 py-3">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.valorUnitario}
+                                onChange={(event) =>
+                                  updateItem(item.costItemId, "valorUnitario", event.target.value)
+                                }
+                                className="w-32 rounded-lg border border-border bg-surface px-2 py-1 outline-none focus:ring-2 focus:ring-accent"
+                              />
+                            </td>
+                            <td className="px-3 py-3 text-zinc-700">{brl(subtotal)}</td>
+                            <td className="px-3 py-3">
+                              <button
+                                type="button"
+                                onClick={() => void removeItem(item.costItemId)}
+                                className="rounded-lg border border-red-300 px-3 py-1 text-xs font-medium text-red-600"
+                              >
+                                Remover
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : null}
+
+          {plannerStep === "analise" ? (
+            <>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <ResultCard label="Total de custos fixos" value={calculations.totalCustosFixos} valueClass="text-zinc-900" />
             <ResultCard label="Custo variável por atleta" value={calculations.custoVariavelPorAtleta} valueClass="text-zinc-900" />
             <ResultCard label="Custo total estimado" value={calculations.custoTotalEstimado} valueClass="text-zinc-900" />
@@ -1029,14 +1107,51 @@ export function EventBudgetPlanner() {
             <div className="rounded-2xl border border-border bg-surface-muted/70 p-4"><p className="text-xs uppercase tracking-[0.15em] text-zinc-500">Alíquota total de taxas</p><p className={`mt-2 text-2xl font-heading ${calculations.aliquotaTotalPercentual < 0 ? "text-red-600" : "text-zinc-900"}`}>{calculations.aliquotaTotalPercentual.toFixed(2)}%</p></div>
             <ResultCard label="Receita líquida por inscrição" value={calculations.receitaLiquidaPorInscricao} valueClass="text-zinc-900" />
             <ResultCard label="Lucro líquido por inscrição" value={calculations.lucroLiquidoEstimado} valueClass="text-zinc-900" />
-          </div>
+              </div>
 
-          <div className="rounded-2xl border border-border bg-surface-muted/50 p-4"><h3 className="text-xl font-heading text-zinc-900">Cenário de receita (60%, 80%, 100%)</h3><div className="mt-4 space-y-3">{scenarios.map((scenario) => {const maxRevenue = Math.max(...scenarios.map((item) => item.receita), 1);const width = (scenario.receita / maxRevenue) * 100;const positive = scenario.resultado >= 0;return (<div key={scenario.label}><div className="mb-1 flex items-center justify-between text-xs text-zinc-600"><span>{scenario.label} ({scenario.inscritos} inscritos)</span><span>Receita: {brl(scenario.receita)} | Resultado: {brl(scenario.resultado)}</span></div><div className="h-3 overflow-hidden rounded-full bg-zinc-200"><div className={`h-full rounded-full ${positive ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${Math.max(6, width)}%` }} /></div></div>);})}</div></div>
+              <div className="rounded-2xl border border-border bg-surface-muted/50 p-4"><h3 className="text-xl font-heading text-zinc-900">Cenário de receita (60%, 80%, 100%)</h3><div className="mt-4 space-y-3">{scenarios.map((scenario) => {const maxRevenue = Math.max(...scenarios.map((item) => item.receita), 1);const width = (scenario.receita / maxRevenue) * 100;const positive = scenario.resultado >= 0;return (<div key={scenario.label}><div className="mb-1 flex items-center justify-between text-xs text-zinc-600"><span>{scenario.label} ({scenario.inscritos} inscritos)</span><span>Receita: {brl(scenario.receita)} | Resultado: {brl(scenario.resultado)}</span></div><div className="h-3 overflow-hidden rounded-full bg-zinc-200"><div className={`h-full rounded-full ${positive ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${Math.max(6, width)}%` }} /></div></div>);})}</div></div>
+            </>
+          ) : null}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           {success && <p className="text-sm text-emerald-700">{success}</p>}
 
-          <div className="space-y-2"><div className="flex flex-wrap gap-2"><button type="submit" disabled={saving} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70">{saving ? "Salvando..." : "Salvar orçamento"}</button><button type="button" onClick={handleExportPdf} disabled={exporting} className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-surface-muted disabled:opacity-70">{exporting ? "Exportando..." : "Exportar orçamento em PDF"}</button></div><p className="text-xs text-zinc-500">Rascunho salvo automaticamente neste navegador para o evento selecionado.</p></div>
+          <div className="flex flex-wrap justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={plannerStep === "cenario"}
+                onClick={() =>
+                  setPlannerStep((prev) =>
+                    prev === "analise" ? "custos" : "cenario",
+                  )
+                }
+                className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-700 disabled:opacity-50"
+              >
+                Voltar etapa
+              </button>
+              {plannerStep !== "analise" ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPlannerStep((prev) =>
+                      prev === "cenario" ? "custos" : "analise",
+                    )
+                  }
+                  className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-800"
+                >
+                  Próxima etapa
+                </button>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
+                <button type="submit" disabled={saving} className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-70">{saving ? "Salvando..." : "Salvar orçamento"}</button>
+                <button type="button" onClick={handleExportPdf} disabled={exporting} className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-surface-muted disabled:opacity-70">{exporting ? "Exportando..." : "Exportar orçamento em PDF"}</button>
+              </div>
+              <p className="text-xs text-zinc-500">Rascunho salvo automaticamente neste navegador para o evento selecionado.</p>
+            </div>
+          </div>
         </form>
       </section>
 

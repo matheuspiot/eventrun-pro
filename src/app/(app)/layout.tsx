@@ -63,7 +63,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const notifications: Parameters<typeof AppTopbar>[0]["notifications"] = [
     nextEvent
       ? {
-          id: "next-event",
+          id: `next-event-${nextEvent.id}-${nextEvent.dataEvento.toISOString()}`,
           title: `Próximo evento: ${nextEvent.nomeEvento}`,
           description: `${nextEvent.cidade}/${nextEvent.estado} em ${new Date(nextEvent.dataEvento).toLocaleDateString("pt-BR")}.`,
           href: "/dashboard",
@@ -72,7 +72,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : null,
     pendingBudgetCount > 0
       ? {
-          id: "pending-budgets",
+          id: `pending-budgets-${pendingBudgetCount}`,
           title: `${pendingBudgetCount} orçamento(s) pendente(s)`,
           description: "Há eventos ativos sem projeção financeira concluída.",
           href: "/orcamento",
@@ -81,7 +81,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : null,
     pendingRegulationCount > 0
       ? {
-          id: "pending-regulations",
+          id: `pending-regulations-${pendingRegulationCount}`,
           title: `${pendingRegulationCount} regulamento(s) pendente(s)`,
           description: "Alguns eventos ainda não têm documentação final publicada.",
           href: "/regulamento",
@@ -90,7 +90,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : null,
     pendingTaskCount > 0
       ? {
-          id: "pending-tasks",
+          id: `pending-tasks-${pendingTaskCount}`,
           title: `${pendingTaskCount} tarefa(s) operacional(is) aberta(s)`,
           description: "Vale revisar responsáveis e prazos para evitar gargalos.",
           href: "/operacao",
@@ -118,7 +118,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="mx-auto max-w-[1680px]">
             <AppTopbar
               organizationName={organization?.name ?? "Organização"}
-              userName={auth.name}
               userRole={auth.role}
               notifications={notifications}
             />
