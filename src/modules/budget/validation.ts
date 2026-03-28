@@ -15,7 +15,7 @@ const costTypes = ["FIXO", "VARIAVEL_ATLETA", "VARIAVEL_UNIDADE"] as const;
 const units = ["UN", "PESSOA", "HORA", "KM", "LOTE", "ATLETA"] as const;
 
 export const costItemSchema = z.object({
-  nome: z.string().min(2, "Nome e obrigatorio"),
+  nome: z.string().min(2, "Nome é obrigatório"),
   categoria: z.enum(categories),
   tipoCusto: z.enum(costTypes),
   unidade: z.enum(units),

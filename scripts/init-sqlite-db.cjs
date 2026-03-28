@@ -176,6 +176,7 @@ CREATE TABLE IF NOT EXISTS "EventOperationTask" (
   "descricao" TEXT,
   "responsavel" TEXT,
   "prazo" DATETIME,
+  "lembreteEm" DATETIME,
   "status" TEXT NOT NULL DEFAULT 'PENDENTE',
   "observacoes" TEXT,
   "ordem" INTEGER NOT NULL DEFAULT 0,

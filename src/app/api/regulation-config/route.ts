@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
   const eventId = request.nextUrl.searchParams.get("eventId");
   if (!eventId) {
-    return NextResponse.json({ error: "eventId e obrigatorio" }, { status: 400 });
+    return NextResponse.json({ error: "eventId é obrigatório" }, { status: 400 });
   }
 
   const config = await getRegulationConfigByEvent(auth.organizationId, eventId);

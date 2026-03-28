@@ -1,13 +1,13 @@
 import { z } from "zod";
 
 export const eventBudgetItemInputSchema = z.object({
-  costItemId: z.string().min(1, "Cost item e obrigatorio"),
+  costItemId: z.string().min(1, "Cost item é obrigatório"),
   quantidade: z.coerce.number().positive("Quantidade deve ser maior que zero"),
   valorUnitario: z.coerce.number().nonnegative("Valor unitário inválido"),
 });
 
 export const eventBudgetInputSchema = z.object({
-  eventId: z.string().min(1, "Evento e obrigatorio"),
+  eventId: z.string().min(1, "Evento é obrigatório"),
   logoDataUrl: z
     .string()
     .regex(/^data:image\/(png|jpeg|jpg|webp);base64,/, "Logo inválida")

@@ -32,9 +32,9 @@ export const eventFormSchema = z.object({
   nomeEvento: z.string().min(3, "Nome do evento deve ter ao menos 3 caracteres"),
   dataEvento: z.string().min(1, "Data do evento e obrigatoria"),
   cidade: z.string().min(2, "Cidade e obrigatoria"),
-  estado: z.string().min(2, "Estado e obrigatorio"),
-  localLargada: z.string().min(3, "Local de largada e obrigatorio"),
-  organizador: z.string().min(3, "Organizador e obrigatorio"),
+  estado: z.string().min(2, "Estado é obrigatório"),
+  localLargada: z.string().min(3, "Local de largada é obrigatório"),
+  organizador: z.string().min(3, "Organizador é obrigatório"),
   cnpjOrganizador: z
     .string()
     .transform((value) => normalizeDigits(value))

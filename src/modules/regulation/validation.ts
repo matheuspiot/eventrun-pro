@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const regulationConfigSchema = z
   .object({
-    eventId: z.string().min(1, "Evento e obrigatorio"),
+    eventId: z.string().min(1, "Evento é obrigatório"),
     templateTipo: z.enum(["CORRIDA_RUA", "TRAIL_RUN", "CORRIDA_KIDS"]),
     possuiKids: z.boolean(),
     possuiChip: z.boolean(),

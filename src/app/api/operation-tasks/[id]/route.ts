@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { canAccessModule, getAuthFromRequest } from "@/lib/auth";
-import {
-  deleteOperationTaskForOrganization,
-  updateOperationTaskForOrganization,
-} from "@/modules/operations/service";
+import { deleteOperationTaskForOrganization, updateOperationTaskForOrganization } from "@/modules/operations/service";
 import { OperationTaskDto } from "@/modules/operations/types";
 import { operationTaskSchema } from "@/modules/operations/validation";
 
-type OperationTaskRecord = Omit<
-  OperationTaskDto,
-  "prazo" | "criadoEm" | "atualizadoEm"
-> & {
+type OperationTaskRecord = Omit<OperationTaskDto, "prazo" | "lembreteEm" | "criadoEm" | "atualizadoEm"> & {
   prazo: Date | null;
+  lembreteEm: Date | null;
   criadoEm: Date;
   atualizadoEm: Date;
 };
@@ -20,6 +15,7 @@ function serializeTask(task: OperationTaskRecord) {
   return {
     ...task,
     prazo: task.prazo?.toISOString() ?? null,
+    lembreteEm: task.lembreteEm?.toISOString() ?? null,
     criadoEm: task.criadoEm.toISOString(),
     atualizadoEm: task.atualizadoEm.toISOString(),
   };

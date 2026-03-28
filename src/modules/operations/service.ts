@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { defaultOperationTasks, normalizeOperationTaskSeed } from "./default-tasks";
 import { OperationTaskInput } from "./validation";
-import { defaultOperationTasks } from "./default-tasks";
 
 async function ensureEventBelongsToOrganization(organizationId: string, eventId: string) {
   return prisma.event.findFirst({
@@ -9,10 +9,17 @@ async function ensureEventBelongsToOrganization(organizationId: string, eventId:
   });
 }
 
-export async function listOperationTasksByEvent(
-  organizationId: string,
-  eventId: string,
-) {
+async function getNextOrder(eventId: string) {
+  const lastTask = await prisma.eventOperationTask.findFirst({
+    where: { eventId },
+    orderBy: [{ ordem: "desc" }, { criadoEm: "desc" }],
+    select: { ordem: true },
+  });
+
+  return (lastTask?.ordem ?? 0) + 10;
+}
+
+export async function listOperationTasksByEvent(organizationId: string, eventId: string) {
   const event = await ensureEventBelongsToOrganization(organizationId, eventId);
   if (!event) {
     return null;
@@ -31,20 +38,61 @@ export async function listOperationTasksByEvent(
     });
   }
 
-  return prisma.eventOperationTask.findMany({
+  const tasks = await prisma.eventOperationTask.findMany({
     where: { eventId },
     orderBy: [{ ordem: "asc" }, { criadoEm: "asc" }],
   });
+
+  const normalizedTasks = tasks.map((task) => {
+    const normalized = normalizeOperationTaskSeed({
+      fase: task.fase,
+      titulo: task.titulo,
+      descricao: task.descricao ?? "",
+      ordem: task.ordem,
+    });
+
+    return {
+      ...task,
+      fase: normalized.fase,
+      titulo: normalized.titulo,
+      descricao: normalized.descricao || null,
+    };
+  });
+
+  const changedTasks = normalizedTasks.filter((task, index) => {
+    const current = tasks[index];
+    return (
+      task.fase !== current.fase ||
+      task.titulo !== current.titulo ||
+      (task.descricao ?? null) !== (current.descricao ?? null)
+    );
+  });
+
+  if (changedTasks.length > 0) {
+    await Promise.all(
+      changedTasks.map((task) =>
+        prisma.eventOperationTask.update({
+          where: { id: task.id },
+          data: {
+            fase: task.fase,
+            titulo: task.titulo,
+            descricao: task.descricao,
+          },
+        }),
+      ),
+    );
+  }
+
+  return normalizedTasks;
 }
 
-export async function createOperationTaskForEvent(
-  organizationId: string,
-  input: OperationTaskInput,
-) {
+export async function createOperationTaskForEvent(organizationId: string, input: OperationTaskInput) {
   const event = await ensureEventBelongsToOrganization(organizationId, input.eventId);
   if (!event) {
     return { error: "Evento não encontrado" as const };
   }
+
+  const ordem = input.ordem > 0 ? input.ordem : await getNextOrder(input.eventId);
 
   const task = await prisma.eventOperationTask.create({
     data: {
@@ -54,9 +102,10 @@ export async function createOperationTaskForEvent(
       descricao: input.descricao || null,
       responsavel: input.responsavel || null,
       prazo: input.prazo ? new Date(input.prazo) : null,
+      lembreteEm: input.lembreteEm ? new Date(input.lembreteEm) : null,
       status: input.status,
       observacoes: input.observacoes || null,
-      ordem: input.ordem,
+      ordem,
     },
   });
 
@@ -90,6 +139,9 @@ export async function updateOperationTaskForOrganization(
       ...(input.descricao !== undefined ? { descricao: input.descricao || null } : {}),
       ...(input.responsavel !== undefined ? { responsavel: input.responsavel || null } : {}),
       ...(input.prazo !== undefined ? { prazo: input.prazo ? new Date(input.prazo) : null } : {}),
+      ...(input.lembreteEm !== undefined
+        ? { lembreteEm: input.lembreteEm ? new Date(input.lembreteEm) : null }
+        : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
       ...(input.observacoes !== undefined ? { observacoes: input.observacoes || null } : {}),
       ...(input.ordem !== undefined ? { ordem: input.ordem } : {}),
@@ -99,10 +151,7 @@ export async function updateOperationTaskForOrganization(
   return { task };
 }
 
-export async function deleteOperationTaskForOrganization(
-  organizationId: string,
-  taskId: string,
-) {
+export async function deleteOperationTaskForOrganization(organizationId: string, taskId: string) {
   const current = await prisma.eventOperationTask.findUnique({
     where: { id: taskId },
     select: { id: true, eventId: true },

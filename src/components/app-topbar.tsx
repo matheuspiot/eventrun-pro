@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AppModule, canAccessModule, UserRole } from "@/lib/auth";
+import { useMemo, useState } from "react";
 import { BaseModal } from "@/components/base-modal";
 import { UiIcon } from "@/components/ui-icon";
+import { AppModule, canAccessModule, UserRole } from "@/lib/auth";
 
 type NotificationItem = {
   id: string;
+  readKey: string;
   title: string;
   description: string;
   href: string;
@@ -100,7 +101,7 @@ const roleLabels: Record<UserRole, string> = {
   MARKETING: "Marketing",
 };
 
-const seenNotificationsStorageKey = "eventrun_seen_notifications";
+const seenNotificationsStorageKey = "eventrun_seen_notifications_v2";
 
 function BellIcon() {
   return (
@@ -111,20 +112,23 @@ function BellIcon() {
   );
 }
 
+function readSeenNotificationKeys() {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(seenNotificationsStorageKey);
+    const parsed = raw ? (JSON.parse(raw) as string[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export function AppTopbar({ organizationName, userRole, notifications }: AppTopbarProps) {
   const pathname = usePathname();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
-  const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = window.localStorage.getItem(seenNotificationsStorageKey);
-      const parsed = raw ? (JSON.parse(raw) as string[]) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const [seenNotificationKeys, setSeenNotificationKeys] = useState<string[]>(() => readSeenNotificationKeys());
 
   const currentPage = pageMeta[pathname] ?? {
     eyebrow: "Workspace",
@@ -137,20 +141,21 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
     [userRole],
   );
 
-  function persistSeen(ids: string[]) {
-    setSeenNotificationIds(ids);
+  function persistSeen(keys: string[]) {
+    const nextKeys = Array.from(new Set(keys));
+    setSeenNotificationKeys(nextKeys);
+
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(seenNotificationsStorageKey, JSON.stringify(ids));
+      window.localStorage.setItem(seenNotificationsStorageKey, JSON.stringify(nextKeys));
     }
   }
 
-  function markNotificationsAsSeen(ids: string[]) {
-    if (ids.length === 0) return;
-    const nextIds = Array.from(new Set([...seenNotificationIds, ...ids]));
-    persistSeen(nextIds);
+  function markNotificationsAsSeen(keys: string[]) {
+    if (keys.length === 0) return;
+    persistSeen([...seenNotificationKeys, ...keys]);
   }
 
-  const unreadNotifications = notifications.filter((item) => !seenNotificationIds.includes(item.id));
+  const unreadNotifications = notifications.filter((item) => !seenNotificationKeys.includes(item.readKey));
   const notificationBadge = unreadNotifications.length > 9 ? "9+" : String(unreadNotifications.length);
 
   return (
@@ -191,7 +196,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
                     setShowNotifications(nextOpen);
                     setShowQuickActions(false);
                     if (nextOpen) {
-                      markNotificationsAsSeen(notifications.map((item) => item.id));
+                      markNotificationsAsSeen(notifications.map((item) => item.readKey));
                     }
                   }}
                   className="relative inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-950"
@@ -222,7 +227,7 @@ export function AppTopbar({ organizationName, userRole, notifications }: AppTopb
                             key={item.id}
                             href={item.href}
                             onClick={() => {
-                              markNotificationsAsSeen([item.id]);
+                              markNotificationsAsSeen([item.readKey]);
                               setShowNotifications(false);
                             }}
                             className="block rounded-2xl border border-slate-200 bg-slate-50/80 p-4 transition hover:border-slate-300 hover:bg-white"

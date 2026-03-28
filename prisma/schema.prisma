@@ -76,6 +76,7 @@ model EventOperationTask {
   descricao   String?
   responsavel String?
   prazo       DateTime?
+  lembreteEm  DateTime?
   status      OperationTaskStatus @default(PENDENTE)
   observacoes String?
   ordem       Int                 @default(0)
